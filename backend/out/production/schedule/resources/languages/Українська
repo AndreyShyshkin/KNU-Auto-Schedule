@@ -1,0 +1,139 @@
+title = Розклад
+
+menu.file = Файл
+menu.file.new = Новий
+menu.file.load = Завантажити
+menu.file.save = Зберегти
+menu.file.saveas = Зберегти як...
+menu.file.saveResults = Зберегти результати
+menu.file.exit = Вихід
+
+menu.options = Опції
+menu.options.language = Мова
+
+menu.help = Допомога
+
+input.date = Час
+input.date.time.label = Години
+input.date.time.column.belong =
+input.date.time.column.start = Початок
+input.date.time.column.end = Кінець
+input.date.time.add = Додати
+input.date.time.remove = Видалити
+input.date.day.label = Дні
+input.date.day.column.enable = Активний
+input.date.day.column.name = Ім'я
+input.date.day.add = Додати
+input.date.day.remove = Видалити
+
+input.chair = Кафедри
+input.chair.faculty.label = Факультети
+input.chair.faculty.column.enable = Активний
+input.chair.faculty.column.name = Ім'я
+input.chair.faculty.add = Додати
+input.chair.faculty.remove = Видалити
+input.chair.faculty.description.label = Опис
+input.chair.department.label = Кафедри
+input.chair.department.column.enable = Активний
+input.chair.department.column.name = Ім'я
+input.chair.department.add = Додати
+input.chair.department.remove = Видалити
+input.chair.department.description.label = Опис
+
+input.speciality = Спеціальності
+input.speciality.faculty.label = Факультети
+input.speciality.faculty.column.enable = Активний
+input.speciality.faculty.column.name = Ім'я
+input.speciality.faculty.add = Додати
+input.speciality.faculty.remove = Видалити
+input.speciality.faculty.description.label = Опис
+input.speciality.department.label = Спеціальності
+input.speciality.department.column.enable = Активний
+input.speciality.department.column.name = Ім'я
+input.speciality.department.add = Додати
+input.speciality.department.remove = Видалити
+input.speciality.department.description.label = Опис
+
+input.teacher = Викладачі
+input.teacher.faculty.label = Факультет
+input.teacher.department.label = Кафедра
+input.teacher.label = Викладачі
+input.teacher.column.enable = Активний
+input.teacher.column.name = Ім'я
+input.teacher.add = Додати
+input.teacher.remove = Видалити
+input.teacher.restriction.label = Обмеження
+
+input.group = Групи
+input.group.faculty.label = Факультет
+input.group.department.label = Спеціальність
+input.group.label = Групи
+input.group.column.enable = Активний
+input.group.column.name = Ім'я
+input.group.column.year = Курс
+input.group.column.size = Розмір
+input.group.add = Додати
+input.group.remove = Видалити
+input.group.restriction.label = Обмеження
+
+input.placement = Аудиторії
+input.placement.earmark.label = Типи аудиторій
+input.placement.earmark.column.enable = Активний
+input.placement.earmark.column.name = Ім'я
+input.placement.earmark.column.size = Розмір
+input.placement.earmark.add = Додати
+input.placement.earmark.remove = Видалити
+input.placement.auditorium.label = Аудиторії
+input.placement.auditorium.column.enable = Активний
+input.placement.auditorium.column.name = Ім'я
+input.placement.auditorium.add = Додати
+input.placement.auditorium.remove = Видалити
+
+input.subject = Предмети
+input.subject.label = Предмети
+input.subject.column.enable = Активний
+input.subject.column.name = Ім'я
+input.subject.add = Додати
+input.subject.remove = Видалити
+
+input.lesson = Заняття
+input.lesson.subject.label = Предмет
+input.lesson.label = Заняття
+input.lesson.column.enable = Активний
+input.lesson.column.subject = Предмет
+input.lesson.column.earmark = Тип аудиторій
+input.lesson.column.count = Кількість
+input.lesson.add = Додати
+input.lesson.remove = Видалити
+input.lesson.faculty.label = Факультет
+input.lesson.teacher.department.label = Кафедра
+input.lesson.teacher.label = Викладачі
+input.lesson.teacher.column.belong =
+input.lesson.teacher.column.name = Ім'я
+input.lesson.teacher.column.department = Кафедра
+input.lesson.group.department.label = Спеціальність
+input.lesson.group.label = Групи
+input.lesson.group.column.belong =
+input.lesson.group.column.name = Ім'я
+input.lesson.group.column.department = Спеціальність
+
+grade.NONE = Не важливо
+grade.BAD = Погано
+grade.TERRIBLE = Жахливо
+
+year.FIRST = 1
+year.SECOND = 2
+year.THIRD = 3
+year.FOURTH = 4
+year.FIFTH = 5
+year.SIXTH = 6
+
+build.teacher = Розклад для викладачів
+build.group = Розклад для груп
+build.build = Знайти
+build.pause = Пауза
+build.stop = Стоп
+build.progress.BUILD = Пошук
+build.progress.PAUSE = Пауза
+build.progress.STOP = Зупинено
+build.progress.DONE = Зроблено

@@ -1,0 +1,56 @@
+package ua.kiev.univ.schedule.model.placement;
+
+import ua.kiev.univ.schedule.model.core.NamedEntity;
+import ua.kiev.univ.schedule.model.lesson.Lesson;
+import ua.kiev.univ.schedule.service.core.DataService;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.Iterator;
+
+public class Earmark extends NamedEntity {
+
+    private Integer size = 30;
+
+    @Override
+    public void read(DataInputStream is) throws IOException {
+        super.read(is);
+        size = is.readInt();
+    }
+
+    @Override
+    public void write(DataOutputStream os) throws IOException {
+        super.write(os);
+        os.writeInt(size);
+    }
+
+    @Override
+    public void onRemove() {
+        super.onRemove();
+        // Якщо видаляється призначення (наприклад, "Комп'ютерний клас"),
+        // то видаляємо і всі аудиторії цього типу.
+        Iterator<Auditorium> iterator = DataService.getEntities(Auditorium.class).iterator();
+        while (iterator.hasNext()) {
+            Auditorium auditorium = iterator.next();
+            if (auditorium.getEarmark() == this) {
+                iterator.remove();
+                auditorium.onRemove();
+            }
+        }
+
+        for (Lesson lesson : DataService.getEntities(Lesson.class)) {
+            if (lesson.getEarmark() == this) {
+                lesson.setEarmark(null);
+            }
+        }
+    }
+
+    public Integer getSize() {
+        return size;
+    }
+
+    public void setSize(Integer size) {
+        this.size = size;
+    }
+}
