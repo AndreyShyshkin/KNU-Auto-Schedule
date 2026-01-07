@@ -1,8 +1,10 @@
+ua/kiev/univ/schedule/dto/FacultyDto.class
 ua/kiev/univ/schedule/model/core/RWable.class
 ua/kiev/univ/schedule/service/lesson/MemberService.class
 ua/kiev/univ/schedule/service/placement/EarmarkService.class
 ua/kiev/univ/schedule/view/menu/MenuBar.class
 ua/kiev/univ/schedule/view/menu/file/SaveResultsItem.class
+ua/kiev/univ/schedule/dto/TeacherDto.class
 ua/kiev/univ/schedule/service/core/DataService.class
 ua/kiev/univ/schedule/view/input/lesson/MemberedPane.class
 ua/kiev/univ/schedule/service/lesson/LessonService.class
@@ -81,6 +83,7 @@ ua/kiev/univ/schedule/service/core/table/BaseTableService.class
 ua/kiev/univ/schedule/util/StringUtils.class
 ua/kiev/univ/schedule/service/lesson/SubjectedEntityService.class
 ua/kiev/univ/schedule/view/input/description/DescriptionTextArea.class
+ua/kiev/univ/schedule/controller/GroupController.class
 ua/kiev/univ/schedule/view/input/member/restriction/RestrictionTable.class
 ua/kiev/univ/schedule/scheduler/auditoriumRepository/BothAuditoriumRepository.class
 ua/kiev/univ/schedule/view/input/table/cell/EntityEditor.class
@@ -103,10 +106,12 @@ ua/kiev/univ/schedule/service/core/property/BeanProperty.class
 ua/kiev/univ/schedule/repository/SpecialityRepository.class
 ua/kiev/univ/schedule/model/date/Day.class
 ua/kiev/univ/schedule/view/input/DepartmentPane.class
+ua/kiev/univ/schedule/controller/TeacherController.class
 ua/kiev/univ/schedule/view/menu/file/ExitItem.class
 ua/kiev/univ/schedule/model/appointment/HalvedAppointment.class
 ua/kiev/univ/schedule/repository/LessonRepository.class
 ua/kiev/univ/schedule/model/date/Date.class
+ua/kiev/univ/schedule/dto/ChairDto.class
 ua/kiev/univ/schedule/service/member/TeacherService.class
 ua/kiev/univ/schedule/repository/ChairRepository.class
 ua/kiev/univ/schedule/service/lesson/MemberService$1.class
@@ -117,10 +122,13 @@ ua/kiev/univ/schedule/view/menu/options/LanguageItem.class
 ua/kiev/univ/schedule/model/placement/Earmark.class
 ua/kiev/univ/schedule/service/member/MemberService.class
 ua/kiev/univ/schedule/service/member/GroupService.class
+ua/kiev/univ/schedule/controller/SubjectController.class
 ua/kiev/univ/schedule/view/input/DatePane.class
 ua/kiev/univ/schedule/model/subject/Subject.class
 ua/kiev/univ/schedule/scheduler/point/Point.class
 ua/kiev/univ/schedule/model/placement/Auditorium.class
+ua/kiev/univ/schedule/controller/ChairController.class
+ua/kiev/univ/schedule/controller/FacultyController.class
 ua/kiev/univ/schedule/view/input/description/DescriptionedPane.class
 ua/kiev/univ/schedule/view/menu/file/SaveItem.class
 ua/kiev/univ/schedule/view/input/table/EntityTablePane.class
@@ -134,6 +142,8 @@ ua/kiev/univ/schedule/view/menu/options/OptionsMenu.class
 ua/kiev/univ/schedule/view/input/lesson/member/DepartmentComboBox.class
 ua/kiev/univ/schedule/view/input/SubjectPane.class
 ua/kiev/univ/schedule/service/core/property/Property.class
+ua/kiev/univ/schedule/dto/GroupDto.class
+ua/kiev/univ/schedule/mapper/DtoMapper.class
 ua/kiev/univ/schedule/model/member/Member.class
 ua/kiev/univ/schedule/view/input/member/MemberPane.class
 ua/kiev/univ/schedule/view/build/AppointmentPane.class
@@ -155,6 +165,7 @@ ua/kiev/univ/schedule/model/appointment/Part.class
 ua/kiev/univ/schedule/model/core/NamedEntity.class
 ua/kiev/univ/schedule/util/ExecutionException.class
 ua/kiev/univ/schedule/view/menu/file/SaveasItem.class
+ua/kiev/univ/schedule/dto/SubjectDto.class
 ua/kiev/univ/schedule/view/core/Table.class
 ua/kiev/univ/schedule/scheduler/Progress.class
 ua/kiev/univ/schedule/service/department/SpecialityService.class

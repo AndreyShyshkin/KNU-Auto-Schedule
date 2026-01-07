@@ -14,6 +14,7 @@
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/view/build/StopButton.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/scheduler/Scheduler.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/view/menu/file/SaveasItem.java
+/Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/dto/GroupDto.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/model/lesson/SubjectedEntity.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/view/input/lesson/subject/SubjectComboBox.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/model/lesson/Lesson.java
@@ -25,9 +26,11 @@
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/view/core/SplitPane.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/view/menu/options/OptionsMenu.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/repository/AppointmentRepository.java
+/Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/controller/TeacherController.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/scheduler/auditoriumRepository/PartAuditoriumRepository.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/scheduler/auditoriumRepository/AuditoriumRepositoryFactory.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/model/core/RWable.java
+/Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/controller/ChairController.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/view/input/table/cell/EntityRenderer.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/service/subject/SubjectService.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/repository/GroupRepository.java
@@ -51,8 +54,10 @@
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/service/core/property/Property.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/view/menu/file/ExitItem.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/view/input/DepartmentPane.java
+/Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/dto/ChairDto.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/service/core/table/EditableTableService.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/repository/FacultyRepository.java
+/Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/controller/GroupController.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/view/core/Panel.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/view/core/ComboBox.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/view/Frame.java
@@ -112,9 +117,11 @@
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/service/lesson/SubjectedEntityService.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/view/build/PauseButton.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/view/menu/options/LanguageMenu.java
+/Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/dto/FacultyDto.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/repository/SubjectRepository.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/view/menu/file/FileMenu.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/service/member/RestrictorService.java
+/Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/controller/FacultyController.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/scheduler/auditoriumRepository/AuditoriumRepository.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/view/input/SpecialityPane.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/view/input/description/DescriptionTextArea.java
@@ -127,6 +134,7 @@
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/model/member/Restriction.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/model/appointment/Appointment.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/service/department/DescriptionedEntityService.java
+/Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/dto/TeacherDto.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/util/EntityFilter.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/ScheduleApplication.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/util/HtmlUtils.java
@@ -135,6 +143,9 @@
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/service/department/DepartmentService.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/model/subject/Subject.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/service/department/SpecialityService.java
+/Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/dto/SubjectDto.java
+/Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/mapper/DtoMapper.java
+/Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/controller/SubjectController.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/view/core/TableModel.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/view/input/table/cell/EntityEditor.java
 /Users/shyshkinandrey/Documents/work/KNU-Auto-Schedule/backend/src/main/java/ua/kiev/univ/schedule/model/appointment/Part.java
