@@ -1,0 +1,140 @@
+title = Розклад
+
+menu.file = Файл
+menu.file.new = Новий
+menu.file.load = Відкрити
+menu.file.save = Зберегти
+menu.file.saveas = Зберегти як...
+menu.file.saveResults = Зберегти результати
+menu.file.exit = Вихід
+
+menu.options = Опції
+menu.options.language = Мова
+
+menu.help = Допомога
+
+input.date = Дата
+input.date.time.label = Пари
+input.date.time.column.belong = Нал.
+input.date.time.column.start = Початок
+input.date.time.column.end = Кінець
+input.date.time.add = Додати
+input.date.time.remove = Видалити
+input.date.day.label = Дні
+input.date.day.column.enable = Вкл.
+input.date.day.column.name = Назва
+input.date.day.add = Додати
+input.date.day.remove = Видалити
+
+input.chair = Кафедра
+input.chair.faculty.label = Факультети
+input.chair.faculty.column.enable = Вкл.
+input.chair.faculty.column.name = Назва
+input.chair.faculty.add = Додати
+input.chair.faculty.remove = Видалити
+input.chair.faculty.description.label = Опис
+input.chair.department.label = Кафедри
+input.chair.department.column.enable = Вкл.
+input.chair.department.column.name = Назва
+input.chair.department.add = Додати
+input.chair.department.remove = Видалити
+input.chair.department.description.label = Опис
+
+input.speciality = Спеціальність
+input.speciality.faculty.label = Факультети
+input.speciality.faculty.column.enable = Вкл.
+input.speciality.faculty.column.name = Назва
+input.speciality.faculty.add = Додати
+input.speciality.faculty.remove = Видалити
+input.speciality.faculty.description.label = Опис
+input.speciality.department.label = Спеціальності
+input.speciality.department.column.enable = Вкл.
+input.speciality.department.column.name = Назва
+input.speciality.department.add = Додати
+input.speciality.department.remove = Видалити
+input.speciality.department.description.label = Опис
+
+input.teacher = Викладач
+input.teacher.faculty.label = Факультет
+input.teacher.department.label = Кафедра
+input.teacher.label = Викладачі
+input.teacher.column.enable = Вкл.
+input.teacher.column.name = Ім`я
+input.teacher.add = Додати
+input.teacher.remove = Видалити
+input.teacher.restriction.label = Обмеження
+
+input.group = Група
+input.group.faculty.label = Факультет
+input.group.department.label = Спеціальність
+input.group.label = Групи
+input.group.column.enable = Вкл.
+input.group.column.name = Назва
+input.group.column.year = Курс
+input.group.column.size = Розмір
+input.group.add = Додати
+input.group.remove = Видалити
+input.group.restriction.label = Обмеження
+
+input.placement = Аудиторії
+input.placement.earmark.label = Типи аудиторій
+input.placement.earmark.column.enable = Вкл.
+input.placement.earmark.column.name = Назва
+input.placement.earmark.column.size = Розмір
+input.placement.earmark.add = Додати
+input.placement.earmark.remove = Видалити
+input.placement.auditorium.label = Аудиторії
+input.placement.auditorium.column.enable = Вкл.
+input.placement.auditorium.column.name = Назва
+input.placement.auditorium.add = Додати
+input.placement.auditorium.remove = Видалити
+
+input.subject = Предмет
+input.subject.label = Предмети
+input.subject.column.enable = Вкл.
+input.subject.column.name = Назва
+input.subject.add = Додати
+input.subject.remove = Видалити
+
+input.lesson = Заняття
+input.lesson.subject.label = Предмет
+input.lesson.label = Заняття
+input.lesson.column.enable = Вкл.
+input.lesson.column.subject = Предмет
+input.lesson.column.earmark = Тип ауд.
+input.lesson.column.count = Кількість
+input.lesson.add = Додати
+input.lesson.remove = Видалити
+input.lesson.faculty.label = Факультет
+input.lesson.teacher.department.label = Кафедра
+input.lesson.teacher.label = Викладачі
+input.lesson.teacher.column.belong = Нал.
+input.lesson.teacher.column.name = Ім`я
+input.lesson.teacher.column.department = Кафедра
+input.lesson.group.department.label = Спеціальність
+input.lesson.group.label = Групи
+input.lesson.group.column.belong = Нал.
+input.lesson.group.column.name = Назва
+input.lesson.group.column.department = Спеціальність
+
+grade.NONE = Не бажано
+grade.BAD = Погано
+grade.TERRIBLE = Жахливо
+
+year.FIRST = 1
+year.SECOND = 2
+year.THIRD = 3
+year.FOURTH = 4
+year.FIFTH = 5
+year.SIXTH = 6
+
+build.teacher = Розклад викладача
+build.group = Розклад групи
+build.build = Побудувати
+build.pause = Пауза
+build.stop = Стоп
+build.progress.BUILD = Будується
+build.progress.PAUSE = Пауза
+build.progress.STOP = Зупинено
+build.progress.DONE = Готово
+build.progress.FAIL = Помилка
