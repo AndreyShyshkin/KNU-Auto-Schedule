@@ -22,7 +22,7 @@ public class MemberService<D extends Department, E extends Member<D>> extends Ba
     protected List<D> departments = new LinkedList<>();
     protected D selectedDepartment;
 
-    protected Property<Boolean, E> belongProperty = new Property<Boolean, E>("belong", Boolean.class) {
+    protected Property<Boolean, E> belongProperty = new Property<>("belong", Boolean.class) {
 
         @Override
         public Boolean getValue(E member) {

@@ -31,26 +31,159 @@ public class DatabaseService {
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement()) {
 
-            stmt.execute("CREATE TABLE IF NOT EXISTS time_slot (id BIGSERIAL PRIMARY KEY, start_time VARCHAR(255), end_time VARCHAR(255), enable BOOLEAN)");
-            stmt.execute("CREATE TABLE IF NOT EXISTS day (id BIGSERIAL PRIMARY KEY, name VARCHAR(255), enable BOOLEAN)");
-            stmt.execute("CREATE TABLE IF NOT EXISTS day_time_slot (day_id BIGINT REFERENCES day(id), time_slot_id BIGINT REFERENCES time_slot(id), PRIMARY KEY (day_id, time_slot_id))");
-            stmt.execute("CREATE TABLE IF NOT EXISTS faculty (id BIGSERIAL PRIMARY KEY, name VARCHAR(255), description TEXT, enable BOOLEAN)");
-            stmt.execute("CREATE TABLE IF NOT EXISTS earmark (id BIGSERIAL PRIMARY KEY, name VARCHAR(255), size INT, enable BOOLEAN)");
-            stmt.execute("CREATE TABLE IF NOT EXISTS subject (id BIGSERIAL PRIMARY KEY, name VARCHAR(255), enable BOOLEAN)");
-            stmt.execute("CREATE TABLE IF NOT EXISTS chair (id BIGSERIAL PRIMARY KEY, name VARCHAR(255), description TEXT, enable BOOLEAN, faculty_id BIGINT REFERENCES faculty(id))");
-            stmt.execute("CREATE TABLE IF NOT EXISTS speciality (id BIGSERIAL PRIMARY KEY, name VARCHAR(255), description TEXT, enable BOOLEAN, faculty_id BIGINT REFERENCES faculty(id))");
-            stmt.execute("CREATE TABLE IF NOT EXISTS auditorium (id BIGSERIAL PRIMARY KEY, name VARCHAR(255), earmark_id BIGINT REFERENCES earmark(id), enable BOOLEAN)");
-            stmt.execute("CREATE TABLE IF NOT EXISTS restriction (id BIGSERIAL PRIMARY KEY)");
-            stmt.execute("CREATE TABLE IF NOT EXISTS restriction_entry (restriction_id BIGINT REFERENCES restriction(id), day_id BIGINT REFERENCES day(id), time_slot_id BIGINT REFERENCES time_slot(id), grade INT)");
-            stmt.execute("CREATE TABLE IF NOT EXISTS teacher (id BIGSERIAL PRIMARY KEY, name VARCHAR(255), enable BOOLEAN, department_id BIGINT REFERENCES chair(id), restriction_id BIGINT REFERENCES restriction(id))");
-            stmt.execute("CREATE TABLE IF NOT EXISTS student_group (id BIGSERIAL PRIMARY KEY, name VARCHAR(255), enable BOOLEAN, department_id BIGINT REFERENCES speciality(id), year_val INT, size INT, restriction_id BIGINT REFERENCES restriction(id))");
-            stmt.execute("CREATE TABLE IF NOT EXISTS lesson (id BIGSERIAL PRIMARY KEY, enable BOOLEAN, subject_id BIGINT REFERENCES subject(id), earmark_id BIGINT REFERENCES earmark(id), count INT)");
-            stmt.execute("CREATE TABLE IF NOT EXISTS lesson_teacher (lesson_id BIGINT REFERENCES lesson(id), teacher_id BIGINT REFERENCES teacher(id))");
-            stmt.execute("CREATE TABLE IF NOT EXISTS lesson_group (lesson_id BIGINT REFERENCES lesson(id), group_id BIGINT REFERENCES student_group(id))");
-            stmt.execute("CREATE TABLE IF NOT EXISTS appointment (id BIGSERIAL PRIMARY KEY, enable BOOLEAN, subject_id BIGINT REFERENCES subject(id))");
-            stmt.execute("CREATE TABLE IF NOT EXISTS appointment_teacher (appointment_id BIGINT REFERENCES appointment(id), teacher_id BIGINT REFERENCES teacher(id))");
-            stmt.execute("CREATE TABLE IF NOT EXISTS appointment_group (appointment_id BIGINT REFERENCES appointment(id), group_id BIGINT REFERENCES student_group(id))");
-            stmt.execute("CREATE TABLE IF NOT EXISTS appointment_entry (appointment_id BIGINT REFERENCES appointment(id), day_id BIGINT REFERENCES day(id), time_slot_id BIGINT REFERENCES time_slot(id), auditorium_id BIGINT REFERENCES auditorium(id))");
+            // Independent Tables
+            stmt.execute("""
+                CREATE TABLE IF NOT EXISTS time_slot (
+                    id BIGSERIAL PRIMARY KEY, 
+                    start_time VARCHAR(255), 
+                    end_time VARCHAR(255), 
+                    enable BOOLEAN
+                )""");
+
+            stmt.execute("""
+                CREATE TABLE IF NOT EXISTS day (
+                    id BIGSERIAL PRIMARY KEY, 
+                    name VARCHAR(255), 
+                    enable BOOLEAN
+                )""");
+
+            stmt.execute("""
+                CREATE TABLE IF NOT EXISTS day_time_slot (
+                    day_id BIGINT REFERENCES day(id), 
+                    time_slot_id BIGINT REFERENCES time_slot(id), 
+                    PRIMARY KEY (day_id, time_slot_id)
+                )""");
+
+            stmt.execute("""
+                CREATE TABLE IF NOT EXISTS faculty (
+                    id BIGSERIAL PRIMARY KEY, 
+                    name VARCHAR(255), 
+                    description TEXT, 
+                    enable BOOLEAN
+                )""");
+
+            stmt.execute("""
+                CREATE TABLE IF NOT EXISTS earmark (
+                    id BIGSERIAL PRIMARY KEY, 
+                    name VARCHAR(255), 
+                    size INT, 
+                    enable BOOLEAN
+                )""");
+
+            stmt.execute("""
+                CREATE TABLE IF NOT EXISTS subject (
+                    id BIGSERIAL PRIMARY KEY, 
+                    name VARCHAR(255), 
+                    enable BOOLEAN
+                )""");
+
+            // Dependent Tables
+            stmt.execute("""
+                CREATE TABLE IF NOT EXISTS chair (
+                    id BIGSERIAL PRIMARY KEY, 
+                    name VARCHAR(255), 
+                    description TEXT, 
+                    enable BOOLEAN, 
+                    faculty_id BIGINT REFERENCES faculty(id)
+                )""");
+
+            stmt.execute("""
+                CREATE TABLE IF NOT EXISTS speciality (
+                    id BIGSERIAL PRIMARY KEY, 
+                    name VARCHAR(255), 
+                    description TEXT, 
+                    enable BOOLEAN, 
+                    faculty_id BIGINT REFERENCES faculty(id)
+                )""");
+
+            stmt.execute("""
+                CREATE TABLE IF NOT EXISTS auditorium (
+                    id BIGSERIAL PRIMARY KEY, 
+                    name VARCHAR(255), 
+                    earmark_id BIGINT REFERENCES earmark(id), 
+                    enable BOOLEAN
+                )""");
+
+            stmt.execute("""
+                CREATE TABLE IF NOT EXISTS restriction (
+                    id BIGSERIAL PRIMARY KEY
+                )""");
+
+            stmt.execute("""
+                CREATE TABLE IF NOT EXISTS restriction_entry (
+                    restriction_id BIGINT REFERENCES restriction(id), 
+                    day_id BIGINT REFERENCES day(id), 
+                    time_slot_id BIGINT REFERENCES time_slot(id), 
+                    grade INT
+                )""");
+
+            stmt.execute("""
+                CREATE TABLE IF NOT EXISTS teacher (
+                    id BIGSERIAL PRIMARY KEY, 
+                    name VARCHAR(255), 
+                    enable BOOLEAN, 
+                    department_id BIGINT REFERENCES chair(id), 
+                    restriction_id BIGINT REFERENCES restriction(id)
+                )""");
+
+            stmt.execute("""
+                CREATE TABLE IF NOT EXISTS student_group (
+                    id BIGSERIAL PRIMARY KEY, 
+                    name VARCHAR(255), 
+                    enable BOOLEAN, 
+                    department_id BIGINT REFERENCES speciality(id), 
+                    year_val INT, 
+                    size INT, 
+                    restriction_id BIGINT REFERENCES restriction(id)
+                )""");
+
+            stmt.execute("""
+                CREATE TABLE IF NOT EXISTS lesson (
+                    id BIGSERIAL PRIMARY KEY, 
+                    enable BOOLEAN, 
+                    subject_id BIGINT REFERENCES subject(id), 
+                    earmark_id BIGINT REFERENCES earmark(id), 
+                    count INT
+                )""");
+
+            stmt.execute("""
+                CREATE TABLE IF NOT EXISTS lesson_teacher (
+                    lesson_id BIGINT REFERENCES lesson(id), 
+                    teacher_id BIGINT REFERENCES teacher(id)
+                )""");
+
+            stmt.execute("""
+                CREATE TABLE IF NOT EXISTS lesson_group (
+                    lesson_id BIGINT REFERENCES lesson(id), 
+                    group_id BIGINT REFERENCES student_group(id)
+                )""");
+
+            stmt.execute("""
+                CREATE TABLE IF NOT EXISTS appointment (
+                    id BIGSERIAL PRIMARY KEY, 
+                    enable BOOLEAN, 
+                    subject_id BIGINT REFERENCES subject(id)
+                )""");
+
+            stmt.execute("""
+                CREATE TABLE IF NOT EXISTS appointment_teacher (
+                    appointment_id BIGINT REFERENCES appointment(id), 
+                    teacher_id BIGINT REFERENCES teacher(id)
+                )""");
+
+            stmt.execute("""
+                CREATE TABLE IF NOT EXISTS appointment_group (
+                    appointment_id BIGINT REFERENCES appointment(id), 
+                    group_id BIGINT REFERENCES student_group(id)
+                )""");
+
+            stmt.execute("""
+                CREATE TABLE IF NOT EXISTS appointment_entry (
+                    appointment_id BIGINT REFERENCES appointment(id), 
+                    day_id BIGINT REFERENCES day(id), 
+                    time_slot_id BIGINT REFERENCES time_slot(id), 
+                    auditorium_id BIGINT REFERENCES auditorium(id)
+                )""");
 
             System.out.println("Database initialized successfully.");
 
