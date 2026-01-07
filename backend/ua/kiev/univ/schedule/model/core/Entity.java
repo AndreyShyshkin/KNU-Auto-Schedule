@@ -10,6 +10,16 @@ import java.util.List;
 
 public abstract class Entity implements RWable {
 
+    private Long id;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     protected <E extends Entity> E readEntity(Class<E> entityClass, DataInputStream is) throws IOException {
         // DataService буде створено пізніше, зараз IDE може лаятися на цей рядок
         List<E> entities = DataService.getEntities(entityClass);

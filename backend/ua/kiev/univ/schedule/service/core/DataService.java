@@ -63,17 +63,9 @@ public class DataService {
     }
 
     public static void read(File file) throws IOException {
-        try (DataInputStream is = new DataInputStream(new FileInputStream(file))) {
-            for (EntityList<?> list : entitiesMap.values()) {
-                // TODO fix: оригінальна логіка пропускає читання Appointment
-                if (list.entityClass != Appointment.class) {
-                    // Безпечне приведення типів завдяки generic helper method
-                    readHelper(list, is);
-                } else {
-                    list.clear();
-                }
-            }
-        }
+        System.out.println("Loading from Database (ignoring file: " + file.getName() + ")");
+        DatabaseService.initDatabase();
+        DatabaseService.loadAll();
     }
 
     // Допоміжний метод для захоплення wildcard типу
@@ -89,14 +81,8 @@ public class DataService {
     }
 
     public static void write(File file) throws IOException {
-        try (DataOutputStream os = new DataOutputStream(new FileOutputStream(file))) {
-            for (EntityList<?> list : entitiesMap.values()) {
-                // TODO fix: оригінальна логіка пропускає запис Appointment
-                if (list.entityClass != Appointment.class) {
-                    writeHelper(list, os);
-                }
-            }
-        }
+        System.out.println("Saving to Database (ignoring file: " + file.getName() + ")");
+        DatabaseService.saveAll();
     }
 
     private static <E extends Entity> void writeHelper(EntityList<E> list, DataOutputStream os) throws IOException {

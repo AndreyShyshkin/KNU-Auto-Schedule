@@ -12,7 +12,7 @@ public class TimeService extends EditableTableService<Time> {
     protected DayService dayService;
 
     // Віртуальна властивість: чи належить цей час вибраному дню
-    protected Property<Boolean, Time> belongProperty = new Property<>("belong", Boolean.class) {
+    protected Property<Boolean, Time> belongProperty = new Property<Boolean, Time>("belong", Boolean.class) {
 
         @Override
         public Boolean getValue(Time time) {

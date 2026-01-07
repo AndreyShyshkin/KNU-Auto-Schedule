@@ -17,6 +17,10 @@ public class Restriction extends Entity {
 
     private final Map<Date, Grade> gradeMap = new HashMap<>();
 
+    public Map<Date, Grade> getGradeMap() {
+        return gradeMap;
+    }
+
     @Override
     public void read(DataInputStream is) throws IOException {
         gradeMap.clear();

@@ -1,13 +1,13 @@
 package ua.kiev.univ.schedule.model.date;
 
-import ua.kiev.univ.schedule.model.core.ActivableEntity;
+import ua.kiev.univ.schedule.model.core.EnablableEntity;
 import ua.kiev.univ.schedule.util.StringUtils;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-public class Time extends ActivableEntity {
+public class Time extends EnablableEntity {
 
     private String start = "";
     private String end = "";
