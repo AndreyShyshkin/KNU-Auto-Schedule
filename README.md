@@ -13,3 +13,5 @@ docker run -d \
  -e POSTGRES_PASSWORD=password \
  -e POSTGRES_DB=schedule_db \
  postgres:latest
+
+run: mvn spring-boot:run

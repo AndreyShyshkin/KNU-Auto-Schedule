@@ -1,1 +1,0 @@
-java ua.kiev.univ.schedule.view.Frame

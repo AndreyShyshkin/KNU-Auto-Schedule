@@ -1,5 +1,8 @@
 package ua.kiev.univ.schedule.model.appointment;
 
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Transient;
 import ua.kiev.univ.schedule.model.date.Date;
 import ua.kiev.univ.schedule.model.placement.Auditorium;
 
@@ -8,11 +11,31 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.List;
 
+@Entity
+@DiscriminatorValue("HALVED")
 public class HalvedAppointment extends Appointment {
 
+    @Transient
     private Date date;
+    @Transient
     private List<Auditorium> auditoriums;
+    @Transient
     private Part part;
+
+    // Snapshot fields
+    private String halvedDayName;
+    private String halvedTimeRange;
+    private String halvedAuditoriumNames;
+    private String halvedPartName;
+
+    public String getHalvedDayName() { return halvedDayName; }
+    public void setHalvedDayName(String s) { this.halvedDayName = s; }
+    public String getHalvedTimeRange() { return halvedTimeRange; }
+    public void setHalvedTimeRange(String s) { this.halvedTimeRange = s; }
+    public String getHalvedAuditoriumNames() { return halvedAuditoriumNames; }
+    public void setHalvedAuditoriumNames(String s) { this.halvedAuditoriumNames = s; }
+    public String getHalvedPartName() { return halvedPartName; }
+    public void setHalvedPartName(String s) { this.halvedPartName = s; }
 
     @Override
     public void read(DataInputStream is) throws IOException {

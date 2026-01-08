@@ -1,6 +1,8 @@
 package ua.kiev.univ.schedule.model.placement;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
+import jakarta.persistence.OneToMany;
 import ua.kiev.univ.schedule.model.core.NamedEntity;
 import ua.kiev.univ.schedule.model.lesson.Lesson;
 import ua.kiev.univ.schedule.service.core.DataService;
@@ -8,10 +10,23 @@ import ua.kiev.univ.schedule.service.core.DataService;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 @Entity
 public class Earmark extends NamedEntity {
+
+    @OneToMany(mappedBy = "earmark", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Auditorium> auditoriums = new ArrayList<>();
+
+    public List<Auditorium> getAuditoriums() {
+        return auditoriums;
+    }
+
+    public void setAuditoriums(List<Auditorium> auditoriums) {
+        this.auditoriums = auditoriums;
+    }
 
     private Integer size = 30;
 

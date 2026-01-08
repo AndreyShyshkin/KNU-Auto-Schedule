@@ -31,7 +31,7 @@ public abstract class Member<E extends Department> extends NamedEntity {
 
     @Override
     public boolean isActive() {
-        return super.isActive() && department.isActive();
+        return super.isActive() && getDepartment() != null && getDepartment().isActive();
     }
 
     public E getDepartment() {

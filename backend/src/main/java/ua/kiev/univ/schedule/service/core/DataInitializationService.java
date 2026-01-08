@@ -1,10 +1,12 @@
 package ua.kiev.univ.schedule.service.core;
 
-import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ua.kiev.univ.schedule.model.appointment.Appointment;
+import ua.kiev.univ.schedule.model.appointment.AppointmentEntry;
+import ua.kiev.univ.schedule.model.appointment.HalvedAppointment;
 import ua.kiev.univ.schedule.model.core.Entity;
+import ua.kiev.univ.schedule.model.date.Date;
 import ua.kiev.univ.schedule.model.date.Day;
 import ua.kiev.univ.schedule.model.date.Time;
 import ua.kiev.univ.schedule.model.department.Chair;
@@ -18,7 +20,10 @@ import ua.kiev.univ.schedule.model.placement.Earmark;
 import ua.kiev.univ.schedule.model.subject.Subject;
 import ua.kiev.univ.schedule.repository.*;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class DataInitializationService {
@@ -56,14 +61,19 @@ public class DataInitializationService {
         this.appointmentRepository = appointmentRepository;
     }
 
-    @PostConstruct
     @Transactional
-    public void init() {
+    public void initializeData() {
         DataService.setPersistenceService(this);
         System.out.println("Initializing DataService from Spring Repositories...");
         
         load(Time.class, timeRepository.findAll());
-        load(Day.class, dayRepository.findAll());
+        
+        List<Day> days = dayRepository.findAll();
+        for (Day day : days) {
+            day.getTimes().size(); 
+        }
+        load(Day.class, days);
+        
         load(Faculty.class, facultyRepository.findAll());
         load(Earmark.class, earmarkRepository.findAll());
         load(Subject.class, subjectRepository.findAll());
@@ -72,8 +82,20 @@ public class DataInitializationService {
         load(Auditorium.class, auditoriumRepository.findAll());
         load(Teacher.class, teacherRepository.findAll());
         load(Group.class, groupRepository.findAll());
-        load(Lesson.class, lessonRepository.findAll());
-        load(Appointment.class, appointmentRepository.findAll());
+        
+        List<Lesson> lessons = lessonRepository.findAll();
+        for (Lesson l : lessons) {
+            l.getTeachers().size();
+            l.getGroups().size();
+        }
+        load(Lesson.class, lessons);
+        
+        List<Appointment> appointments = appointmentRepository.findAll();
+        for (Appointment a : appointments) {
+            // Reconstruct transient fields for legacy logic if needed
+            // But display usually relies on snapshots now.
+        }
+        load(Appointment.class, appointments);
         
         System.out.println("DataService initialized.");
     }
@@ -84,7 +106,6 @@ public class DataInitializationService {
         list.addAll(entities);
     }
     
-    // Метод для сохранения (вызывается из DataService)
     @Transactional
     public void saveAll() {
         timeRepository.saveAll(DataService.getEntities(Time.class));
@@ -98,6 +119,45 @@ public class DataInitializationService {
         teacherRepository.saveAll(DataService.getEntities(Teacher.class));
         groupRepository.saveAll(DataService.getEntities(Group.class));
         lessonRepository.saveAll(DataService.getEntities(Lesson.class));
-        appointmentRepository.saveAll(DataService.getEntities(Appointment.class));
+        
+        List<Appointment> appointments = DataService.getEntities(Appointment.class);
+        for (Appointment app : appointments) {
+            if (app.getSubject() != null) {
+                app.setSubjectName(app.getSubject().getName());
+            }
+            app.setTeacherNames(app.getTeachers().stream().map(Teacher::getName).collect(Collectors.joining(", ")));
+            app.setGroupNames(app.getGroups().stream().map(Group::getName).collect(Collectors.joining(", ")));
+            
+            app.setTeacherIds(app.getTeachers().stream().map(t -> t.getId().toString()).collect(Collectors.joining(",")));
+            app.setGroupIds(app.getGroups().stream().map(g -> g.getId().toString()).collect(Collectors.joining(",")));
+
+            if (app instanceof HalvedAppointment) {
+                HalvedAppointment happ = (HalvedAppointment) app;
+                if (happ.getDate() != null) {
+                    happ.setHalvedDayName(happ.getDate().getDay().getName());
+                    happ.setHalvedTimeRange(happ.getDate().getTime().getStart() + " - " + happ.getDate().getTime().getEnd());
+                }
+                if (happ.getAuditoriums() != null) {
+                    happ.setHalvedAuditoriumNames(happ.getAuditoriums().stream().map(Auditorium::getName).collect(Collectors.joining(", ")));
+                }
+                if (happ.getPart() != null) {
+                    happ.setHalvedPartName(happ.getPart().name());
+                }
+            }
+
+            app.getEntries().clear();
+            for (Map.Entry<Date, List<Auditorium>> mapEntry : app.getAuditoriumMap().entrySet()) {
+                Date date = mapEntry.getKey();
+                String dayName = date.getDay().getName();
+                String start = date.getTime().getStart();
+                String end = date.getTime().getEnd();
+                
+                for (Auditorium aud : mapEntry.getValue()) {
+                    AppointmentEntry entry = new AppointmentEntry(app, dayName, start, end, aud.getName());
+                    app.getEntries().add(entry);
+                }
+            }
+        }
+        appointmentRepository.saveAll(appointments);
     }
 }

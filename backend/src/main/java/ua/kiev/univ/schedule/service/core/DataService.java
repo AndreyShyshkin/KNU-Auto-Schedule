@@ -62,7 +62,7 @@ public class DataService {
     public static void read(File file) throws IOException {
         System.out.println("Reloading data (ignoring file argument)...");
         if (persistenceService != null) {
-            persistenceService.init();
+            persistenceService.initializeData();
         }
     }
 
