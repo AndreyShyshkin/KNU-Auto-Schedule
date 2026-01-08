@@ -1,21 +1,21 @@
-import type { Metadata } from "next";
-import Providers from "./providers";
+import type { Metadata } from 'next'
+import Providers from './providers'
 
 export const metadata: Metadata = {
-  title: "KNU Schedule",
-  description: "Automated Scheduling System",
-};
+	title: 'KNU Schedule',
+	description: 'Automated Scheduling System',
+}
 
 export default function RootLayout({
-  children,
+	children,
 }: Readonly<{
-  children: React.ReactNode;
+	children: React.ReactNode
 }>) {
-  return (
-    <html lang="en">
-      <body>
-        <Providers>{children}</Providers>
-      </body>
-    </html>
-  );
+	return (
+		<html lang='en'>
+			<body>
+				<Providers>{children}</Providers>
+			</body>
+		</html>
+	)
 }
