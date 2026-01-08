@@ -8,6 +8,8 @@ import ua.kiev.univ.schedule.model.lesson.Lesson;
 import ua.kiev.univ.schedule.model.member.Group;
 import ua.kiev.univ.schedule.model.member.Teacher;
 import ua.kiev.univ.schedule.repository.*;
+import ua.kiev.univ.schedule.service.core.DataInitializationService;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -21,15 +23,20 @@ public class LessonController {
     private final EarmarkRepository earmarkRepository;
     private final TeacherRepository teacherRepository;
     private final GroupRepository groupRepository;
+    private final DataInitializationService dataInitializationService;
+    private final JdbcTemplate jdbcTemplate;
 
     public LessonController(LessonRepository lessonRepository, SubjectRepository subjectRepository,
                             EarmarkRepository earmarkRepository, TeacherRepository teacherRepository,
-                            GroupRepository groupRepository) {
+                            GroupRepository groupRepository, DataInitializationService dataInitializationService,
+                            JdbcTemplate jdbcTemplate) {
         this.lessonRepository = lessonRepository;
         this.subjectRepository = subjectRepository;
         this.earmarkRepository = earmarkRepository;
         this.teacherRepository = teacherRepository;
         this.groupRepository = groupRepository;
+        this.dataInitializationService = dataInitializationService;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @GetMapping
@@ -43,22 +50,35 @@ public class LessonController {
     public ResponseEntity<LessonDto> create(@RequestBody LessonDto dto) {
         Lesson lesson = new Lesson();
         updateLessonFromDto(lesson, dto);
-        return ResponseEntity.ok(DtoMapper.toDto(lessonRepository.save(lesson)));
+        Lesson saved = lessonRepository.save(lesson);
+        dataInitializationService.initializeData();
+        return ResponseEntity.ok(DtoMapper.toDto(saved));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<LessonDto> update(@PathVariable Long id, @RequestBody LessonDto dto) {
-        if (!lessonRepository.existsById(id)) return ResponseEntity.notFound().build();
-        Lesson lesson = lessonRepository.findById(id).orElseThrow();
-        updateLessonFromDto(lesson, dto);
-        return ResponseEntity.ok(DtoMapper.toDto(lessonRepository.save(lesson)));
+        return lessonRepository.findById(id).map(existing -> {
+            updateLessonFromDto(existing, dto);
+            Lesson saved = lessonRepository.save(existing);
+            dataInitializationService.initializeData();
+            return ResponseEntity.ok(DtoMapper.toDto(saved));
+        }).orElse(ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
+    @org.springframework.transaction.annotation.Transactional
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        if (!lessonRepository.existsById(id)) return ResponseEntity.notFound().build();
-        lessonRepository.deleteById(id);
-        return ResponseEntity.ok().build();
+        return lessonRepository.findById(id).map(lesson -> {
+            // Manually clear join tables for this specific lesson
+            jdbcTemplate.execute("DELETE FROM lesson_teachers WHERE lesson_id = " + id);
+            jdbcTemplate.execute("DELETE FROM lesson_groups WHERE lesson_id = " + id);
+            
+            lessonRepository.delete(lesson);
+            lessonRepository.flush();
+            
+            dataInitializationService.initializeData();
+            return ResponseEntity.ok().<Void>build();
+        }).orElse(ResponseEntity.notFound().build());
     }
 
     private void updateLessonFromDto(Lesson lesson, LessonDto dto) {

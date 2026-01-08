@@ -1,7 +1,6 @@
 package ua.kiev.univ.schedule.model.lesson;
 
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.*;
 import ua.kiev.univ.schedule.model.member.Group;
 import ua.kiev.univ.schedule.model.member.Member;
 import ua.kiev.univ.schedule.model.member.Teacher;
@@ -13,12 +12,22 @@ import java.util.LinkedList;
 import java.util.List;
 
 @MappedSuperclass
-public class MemberedEntity extends SubjectedEntity {
+public abstract class MemberedEntity extends SubjectedEntity {
 
     @ManyToMany
+    @JoinTable(
+        name = "lesson_teachers",
+        joinColumns = @JoinColumn(name = "lesson_id"),
+        inverseJoinColumns = @JoinColumn(name = "teacher_id")
+    )
     private List<Teacher> teachers = new LinkedList<>();
 
     @ManyToMany
+    @JoinTable(
+        name = "lesson_groups",
+        joinColumns = @JoinColumn(name = "lesson_id"),
+        inverseJoinColumns = @JoinColumn(name = "group_id")
+    )
     private List<Group> groups = new LinkedList<>();
 
     @Override

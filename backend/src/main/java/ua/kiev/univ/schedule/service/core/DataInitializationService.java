@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ua.kiev.univ.schedule.model.appointment.Appointment;
 import ua.kiev.univ.schedule.model.appointment.AppointmentEntry;
+import ua.kiev.univ.schedule.model.appointment.HalvedAppointment;
 import ua.kiev.univ.schedule.model.core.Entity;
 import ua.kiev.univ.schedule.model.date.Date;
 import ua.kiev.univ.schedule.model.date.Day;
@@ -22,6 +23,7 @@ import ua.kiev.univ.schedule.repository.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class DataInitializationService {
@@ -67,7 +69,6 @@ public class DataInitializationService {
         load(Time.class, timeRepository.findAll());
         
         List<Day> days = dayRepository.findAll();
-        // Force initialization of lazy collection for Swing UI compatibility
         for (Day day : days) {
             day.getTimes().size(); 
         }
@@ -91,14 +92,8 @@ public class DataInitializationService {
         
         List<Appointment> appointments = appointmentRepository.findAll();
         for (Appointment a : appointments) {
-            a.getTeachers().size();
-            a.getGroups().size();
-            // Populate transient map from entries for Swing UI/Executor
-            for (AppointmentEntry entry : a.getEntries()) {
-                Date date = new Date(entry.getDay(), entry.getTimeSlot());
-                List<Auditorium> auds = a.getAuditoriumMap().computeIfAbsent(date, k -> new ArrayList<>());
-                auds.add(entry.getAuditorium());
-            }
+            // Reconstruct transient fields for legacy logic if needed
+            // But display usually relies on snapshots now.
         }
         load(Appointment.class, appointments);
         
@@ -127,12 +122,38 @@ public class DataInitializationService {
         
         List<Appointment> appointments = DataService.getEntities(Appointment.class);
         for (Appointment app : appointments) {
-            // Populate entries from transient map before saving to DB
+            if (app.getSubject() != null) {
+                app.setSubjectName(app.getSubject().getName());
+            }
+            app.setTeacherNames(app.getTeachers().stream().map(Teacher::getName).collect(Collectors.joining(", ")));
+            app.setGroupNames(app.getGroups().stream().map(Group::getName).collect(Collectors.joining(", ")));
+            
+            app.setTeacherIds(app.getTeachers().stream().map(t -> t.getId().toString()).collect(Collectors.joining(",")));
+            app.setGroupIds(app.getGroups().stream().map(g -> g.getId().toString()).collect(Collectors.joining(",")));
+
+            if (app instanceof HalvedAppointment) {
+                HalvedAppointment happ = (HalvedAppointment) app;
+                if (happ.getDate() != null) {
+                    happ.setHalvedDayName(happ.getDate().getDay().getName());
+                    happ.setHalvedTimeRange(happ.getDate().getTime().getStart() + " - " + happ.getDate().getTime().getEnd());
+                }
+                if (happ.getAuditoriums() != null) {
+                    happ.setHalvedAuditoriumNames(happ.getAuditoriums().stream().map(Auditorium::getName).collect(Collectors.joining(", ")));
+                }
+                if (happ.getPart() != null) {
+                    happ.setHalvedPartName(happ.getPart().name());
+                }
+            }
+
             app.getEntries().clear();
             for (Map.Entry<Date, List<Auditorium>> mapEntry : app.getAuditoriumMap().entrySet()) {
                 Date date = mapEntry.getKey();
+                String dayName = date.getDay().getName();
+                String start = date.getTime().getStart();
+                String end = date.getTime().getEnd();
+                
                 for (Auditorium aud : mapEntry.getValue()) {
-                    AppointmentEntry entry = new AppointmentEntry(app, date.getDay(), date.getTime(), aud);
+                    AppointmentEntry entry = new AppointmentEntry(app, dayName, start, end, aud.getName());
                     app.getEntries().add(entry);
                 }
             }

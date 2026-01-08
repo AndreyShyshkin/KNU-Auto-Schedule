@@ -27,26 +27,27 @@ public class ScheduleQueryService {
     public List<ScheduleEntryDto> getTeacherSchedule(Long teacherId) {
         List<Appointment> appointments = appointmentRepository.findAll();
         List<ScheduleEntryDto> result = new ArrayList<>();
+        String searchId = teacherId.toString();
 
         for (Appointment app : appointments) {
-            boolean hasTeacher = app.getTeachers().stream().anyMatch(t -> t.getId().equals(teacherId));
-            if (!hasTeacher) continue;
-
-            String subjectName = app.getSubject().getName();
-            String groups = app.getGroups().stream().map(g -> g.getName()).collect(Collectors.joining(", "));
+            // Check if searchId is in the teacherIds string (comma separated)
+            String ids = app.getTeacherIds();
+            if (ids == null) continue;
+            boolean found = false;
+            for (String id : ids.split(",")) {
+                if (id.equals(searchId)) { found = true; break; }
+            }
+            if (!found) continue;
 
             for (AppointmentEntry entry : app.getEntries()) {
-                String audName = entry.getAuditorium().getName();
-                String type = (entry.getAuditorium().getEarmark() == null) ? "" : entry.getAuditorium().getEarmark().getName();
-
                 result.add(new ScheduleEntryDto(
-                        entry.getDay().getName(),
-                        entry.getTimeSlot().getStart(),
-                        entry.getTimeSlot().getEnd(),
-                        subjectName,
-                        type,
-                        audName,
-                        groups
+                        entry.getDayName(),
+                        entry.getTimeStart(),
+                        entry.getTimeEnd(),
+                        app.getSubjectName(),
+                        "", 
+                        entry.getAuditoriumName(),
+                        app.getGroupNames()
                 ));
             }
         }
@@ -57,26 +58,26 @@ public class ScheduleQueryService {
     public List<ScheduleEntryDto> getGroupSchedule(Long groupId) {
         List<Appointment> appointments = appointmentRepository.findAll();
         List<ScheduleEntryDto> result = new ArrayList<>();
+        String searchId = groupId.toString();
 
         for (Appointment app : appointments) {
-            boolean hasGroup = app.getGroups().stream().anyMatch(g -> g.getId().equals(groupId));
-            if (!hasGroup) continue;
-
-            String subjectName = app.getSubject().getName();
-            String teachers = app.getTeachers().stream().map(t -> t.getName()).collect(Collectors.joining(", "));
+            String ids = app.getGroupIds();
+            if (ids == null) continue;
+            boolean found = false;
+            for (String id : ids.split(",")) {
+                if (id.equals(searchId)) { found = true; break; }
+            }
+            if (!found) continue;
 
             for (AppointmentEntry entry : app.getEntries()) {
-                String audName = entry.getAuditorium().getName();
-                String type = (entry.getAuditorium().getEarmark() == null) ? "" : entry.getAuditorium().getEarmark().getName();
-
                 result.add(new ScheduleEntryDto(
-                        entry.getDay().getName(),
-                        entry.getTimeSlot().getStart(),
-                        entry.getTimeSlot().getEnd(),
-                        subjectName,
-                        type,
-                        audName,
-                        teachers
+                        entry.getDayName(),
+                        entry.getTimeStart(),
+                        entry.getTimeEnd(),
+                        app.getSubjectName(),
+                        "",
+                        entry.getAuditoriumName(),
+                        app.getTeacherNames()
                 ));
             }
         }

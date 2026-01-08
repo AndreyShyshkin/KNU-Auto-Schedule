@@ -1,9 +1,6 @@
 package ua.kiev.univ.schedule.model.appointment;
 
 import jakarta.persistence.*;
-import ua.kiev.univ.schedule.model.date.Day;
-import ua.kiev.univ.schedule.model.date.Time;
-import ua.kiev.univ.schedule.model.placement.Auditorium;
 
 @Entity
 @Table(name = "appointment_entry")
@@ -16,32 +13,31 @@ public class AppointmentEntry {
     @ManyToOne
     private Appointment appointment;
 
-    @ManyToOne
-    private Day day;
-
-    @ManyToOne
-    private Time timeSlot;
-
-    @ManyToOne
-    private Auditorium auditorium;
+    private String dayName;
+    private String timeStart;
+    private String timeEnd;
+    private String auditoriumName;
 
     public AppointmentEntry() {}
 
-    public AppointmentEntry(Appointment appointment, Day day, Time timeSlot, Auditorium auditorium) {
+    public AppointmentEntry(Appointment appointment, String dayName, String timeStart, String timeEnd, String auditoriumName) {
         this.appointment = appointment;
-        this.day = day;
-        this.timeSlot = timeSlot;
-        this.auditorium = auditorium;
+        this.dayName = dayName;
+        this.timeStart = timeStart;
+        this.timeEnd = timeEnd;
+        this.auditoriumName = auditoriumName;
     }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public Appointment getAppointment() { return appointment; }
     public void setAppointment(Appointment appointment) { this.appointment = appointment; }
-    public Day getDay() { return day; }
-    public void setDay(Day day) { this.day = day; }
-    public Time getTimeSlot() { return timeSlot; }
-    public void setTimeSlot(Time timeSlot) { this.timeSlot = timeSlot; }
-    public Auditorium getAuditorium() { return auditorium; }
-    public void setAuditorium(Auditorium auditorium) { this.auditorium = auditorium; }
+    public String getDayName() { return dayName; }
+    public void setDayName(String dayName) { this.dayName = dayName; }
+    public String getTimeStart() { return timeStart; }
+    public void setTimeStart(String timeStart) { this.timeStart = timeStart; }
+    public String getTimeEnd() { return timeEnd; }
+    public void setTimeEnd(String timeEnd) { this.timeEnd = timeEnd; }
+    public String getAuditoriumName() { return auditoriumName; }
+    public void setAuditoriumName(String auditoriumName) { this.auditoriumName = auditoriumName; }
 }

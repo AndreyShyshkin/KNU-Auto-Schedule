@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { 
   Box, AppBar, Toolbar, Typography, Tabs, Tab, Paper, Button, CircularProgress 
 } from '@mui/material';
@@ -149,6 +150,7 @@ export default function Home() {
                   Click the button below to start the scheduling algorithm.
                 </Typography>
                 
+// In Build tab:
                 <Button 
                   variant="contained" 
                   onClick={handleBuild} 
@@ -156,6 +158,21 @@ export default function Home() {
                   sx={{ mt: 2 }}
                 >
                   {isBuilding ? 'Building...' : 'Build Schedule'}
+                </Button>
+
+                <Button 
+                  variant="outlined" 
+                  color="error"
+                  onClick={async () => {
+                    if (confirm('Clear all generated results?')) {
+                      await axios.delete('/api/schedule/clear');
+                      alert('Results cleared');
+                    }
+                  }} 
+                  disabled={isBuilding}
+                  sx={{ mt: 1 }}
+                >
+                  Clear Results
                 </Button>
                 
                 {isBuilding && <CircularProgress sx={{ mt: 2 }} />}

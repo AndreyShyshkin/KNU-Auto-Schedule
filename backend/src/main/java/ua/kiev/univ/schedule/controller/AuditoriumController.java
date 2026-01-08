@@ -18,10 +18,12 @@ public class AuditoriumController {
 
     private final AuditoriumRepository auditoriumRepository;
     private final EarmarkRepository earmarkRepository;
+    private final ua.kiev.univ.schedule.service.core.DataInitializationService dataInitializationService;
 
-    public AuditoriumController(AuditoriumRepository auditoriumRepository, EarmarkRepository earmarkRepository) {
+    public AuditoriumController(AuditoriumRepository auditoriumRepository, EarmarkRepository earmarkRepository, ua.kiev.univ.schedule.service.core.DataInitializationService dataInitializationService) {
         this.auditoriumRepository = auditoriumRepository;
         this.earmarkRepository = earmarkRepository;
+        this.dataInitializationService = dataInitializationService;
     }
 
     @GetMapping
@@ -38,25 +40,29 @@ public class AuditoriumController {
             earmark = earmarkRepository.findById(dto.getEarmarkId()).orElse(null);
         }
         Auditorium auditorium = DtoMapper.toEntity(dto, earmark);
-        return ResponseEntity.ok(DtoMapper.toDto(auditoriumRepository.save(auditorium)));
+        Auditorium saved = auditoriumRepository.save(auditorium);
+        dataInitializationService.initializeData();
+        return ResponseEntity.ok(DtoMapper.toDto(saved));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<AuditoriumDto> update(@PathVariable Long id, @RequestBody AuditoriumDto dto) {
-        if (!auditoriumRepository.existsById(id)) return ResponseEntity.notFound().build();
-        dto.setId(id);
-        Earmark earmark = null;
-        if (dto.getEarmarkId() != null) {
-            earmark = earmarkRepository.findById(dto.getEarmarkId()).orElse(null);
-        }
-        Auditorium auditorium = DtoMapper.toEntity(dto, earmark);
-        return ResponseEntity.ok(DtoMapper.toDto(auditoriumRepository.save(auditorium)));
+        return auditoriumRepository.findById(id).map(existing -> {
+            existing.setName(dto.getName());
+            if (dto.getEarmarkId() != null) {
+                existing.setEarmark(earmarkRepository.findById(dto.getEarmarkId()).orElse(null));
+            }
+            Auditorium saved = auditoriumRepository.save(existing);
+            dataInitializationService.initializeData();
+            return ResponseEntity.ok(DtoMapper.toDto(saved));
+        }).orElse(ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         if (!auditoriumRepository.existsById(id)) return ResponseEntity.notFound().build();
         auditoriumRepository.deleteById(id);
+        dataInitializationService.initializeData();
         return ResponseEntity.ok().build();
     }
 }
