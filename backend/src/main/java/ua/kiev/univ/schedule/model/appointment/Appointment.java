@@ -1,6 +1,8 @@
 package ua.kiev.univ.schedule.model.appointment;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Transient;
 import ua.kiev.univ.schedule.model.date.Date;
 import ua.kiev.univ.schedule.model.lesson.MemberedEntity;
@@ -9,6 +11,7 @@ import ua.kiev.univ.schedule.model.placement.Auditorium;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +22,17 @@ public class Appointment extends MemberedEntity {
 
     @Transient
     private final Map<Date, List<Auditorium>> auditoriumMap = new HashMap<>();
+
+    @OneToMany(mappedBy = "appointment", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<AppointmentEntry> entries = new ArrayList<>();
+
+    public List<AppointmentEntry> getEntries() {
+        return entries;
+    }
+
+    public void setEntries(List<AppointmentEntry> entries) {
+        this.entries = entries;
+    }
 
     public Map<Date, List<Auditorium>> getAuditoriumMap() {
         return auditoriumMap;

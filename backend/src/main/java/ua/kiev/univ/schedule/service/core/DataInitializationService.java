@@ -1,10 +1,11 @@
 package ua.kiev.univ.schedule.service.core;
 
-import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ua.kiev.univ.schedule.model.appointment.Appointment;
+import ua.kiev.univ.schedule.model.appointment.AppointmentEntry;
 import ua.kiev.univ.schedule.model.core.Entity;
+import ua.kiev.univ.schedule.model.date.Date;
 import ua.kiev.univ.schedule.model.date.Day;
 import ua.kiev.univ.schedule.model.date.Time;
 import ua.kiev.univ.schedule.model.department.Chair;
@@ -18,7 +19,9 @@ import ua.kiev.univ.schedule.model.placement.Earmark;
 import ua.kiev.univ.schedule.model.subject.Subject;
 import ua.kiev.univ.schedule.repository.*;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class DataInitializationService {
@@ -56,14 +59,20 @@ public class DataInitializationService {
         this.appointmentRepository = appointmentRepository;
     }
 
-    @PostConstruct
     @Transactional
-    public void init() {
+    public void initializeData() {
         DataService.setPersistenceService(this);
         System.out.println("Initializing DataService from Spring Repositories...");
         
         load(Time.class, timeRepository.findAll());
-        load(Day.class, dayRepository.findAll());
+        
+        List<Day> days = dayRepository.findAll();
+        // Force initialization of lazy collection for Swing UI compatibility
+        for (Day day : days) {
+            day.getTimes().size(); 
+        }
+        load(Day.class, days);
+        
         load(Faculty.class, facultyRepository.findAll());
         load(Earmark.class, earmarkRepository.findAll());
         load(Subject.class, subjectRepository.findAll());
@@ -72,8 +81,26 @@ public class DataInitializationService {
         load(Auditorium.class, auditoriumRepository.findAll());
         load(Teacher.class, teacherRepository.findAll());
         load(Group.class, groupRepository.findAll());
-        load(Lesson.class, lessonRepository.findAll());
-        load(Appointment.class, appointmentRepository.findAll());
+        
+        List<Lesson> lessons = lessonRepository.findAll();
+        for (Lesson l : lessons) {
+            l.getTeachers().size();
+            l.getGroups().size();
+        }
+        load(Lesson.class, lessons);
+        
+        List<Appointment> appointments = appointmentRepository.findAll();
+        for (Appointment a : appointments) {
+            a.getTeachers().size();
+            a.getGroups().size();
+            // Populate transient map from entries for Swing UI/Executor
+            for (AppointmentEntry entry : a.getEntries()) {
+                Date date = new Date(entry.getDay(), entry.getTimeSlot());
+                List<Auditorium> auds = a.getAuditoriumMap().computeIfAbsent(date, k -> new ArrayList<>());
+                auds.add(entry.getAuditorium());
+            }
+        }
+        load(Appointment.class, appointments);
         
         System.out.println("DataService initialized.");
     }
@@ -84,7 +111,6 @@ public class DataInitializationService {
         list.addAll(entities);
     }
     
-    // Метод для сохранения (вызывается из DataService)
     @Transactional
     public void saveAll() {
         timeRepository.saveAll(DataService.getEntities(Time.class));
@@ -98,6 +124,19 @@ public class DataInitializationService {
         teacherRepository.saveAll(DataService.getEntities(Teacher.class));
         groupRepository.saveAll(DataService.getEntities(Group.class));
         lessonRepository.saveAll(DataService.getEntities(Lesson.class));
-        appointmentRepository.saveAll(DataService.getEntities(Appointment.class));
+        
+        List<Appointment> appointments = DataService.getEntities(Appointment.class);
+        for (Appointment app : appointments) {
+            // Populate entries from transient map before saving to DB
+            app.getEntries().clear();
+            for (Map.Entry<Date, List<Auditorium>> mapEntry : app.getAuditoriumMap().entrySet()) {
+                Date date = mapEntry.getKey();
+                for (Auditorium aud : mapEntry.getValue()) {
+                    AppointmentEntry entry = new AppointmentEntry(app, date.getDay(), date.getTime(), aud);
+                    app.getEntries().add(entry);
+                }
+            }
+        }
+        appointmentRepository.saveAll(appointments);
     }
 }
