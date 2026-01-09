@@ -6,6 +6,7 @@ _ Port: `5432`
 _ Database: `schedule_db`
 _ User: `postgres` \* Password: `password`
 
+```
 docker run -d \
  --name schedule_pg_container \
  -p 5432:5432 \
@@ -13,5 +14,16 @@ docker run -d \
  -e POSTGRES_PASSWORD=password \
  -e POSTGRES_DB=schedule_db \
  postgres:latest
+```
 
-run: mvn spring-boot:run
+run backend 
+```
+mvn clean install
+mvn spring-boot:run
+```
+
+run frontend
+```
+npm install
+npm run dev
+```
