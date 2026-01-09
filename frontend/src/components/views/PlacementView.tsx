@@ -196,8 +196,7 @@ export default function PlacementView() {
 		<Grid container spacing={2} sx={{ height: '100%' }}>
 			{/* Left Pane: Earmarks */}
 			<Grid
-				item
-				xs={6}
+				size={6}
 				sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}
 			>
 				<Box
@@ -252,8 +251,7 @@ export default function PlacementView() {
 
 			{/* Right Pane: Auditoriums */}
 			<Grid
-				item
-				xs={6}
+				size={6}
 				sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}
 			>
 				<Box

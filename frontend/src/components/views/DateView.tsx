@@ -220,9 +220,9 @@ export default function DateView() {
 	return (
 		<Grid container spacing={2} sx={{ height: '100%' }}>
 			{/* Left Pane: Days */}
+			{/* Left Pane: Days */}
 			<Grid
-				item
-				xs={6}
+				size={6}
 				sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}
 			>
 				<Box
@@ -276,9 +276,9 @@ export default function DateView() {
 			</Grid>
 
 			{/* Right Pane: Times */}
+			{/* Left Pane: Days */}
 			<Grid
-				item
-				xs={6}
+				size={6}
 				sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}
 			>
 				<Box

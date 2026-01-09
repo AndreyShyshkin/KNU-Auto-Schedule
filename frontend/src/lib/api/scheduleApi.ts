@@ -363,7 +363,7 @@ export interface ScheduleEntry {
 	timeStart: string
 	timeEnd: string
 	subjectName: string
-	type: string
+	earmarkName: string
 	auditoriumName: string
 	additionalInfo: string
 }

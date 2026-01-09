@@ -101,8 +101,7 @@ export default function SubjectView() {
 	return (
 		<Grid container spacing={2} sx={{ height: '100%' }}>
 			<Grid
-				item
-				xs={12}
+				size={12}
 				sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}
 			>
 				<Box

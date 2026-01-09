@@ -148,8 +148,7 @@ export default function LessonView() {
 	return (
 		<Grid container spacing={2} sx={{ height: '100%' }}>
 			<Grid
-				item
-				xs={12}
+				size={12}
 				sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}
 			>
 				<Box
@@ -260,7 +259,7 @@ export default function LessonView() {
 							<InputLabel>Teachers</InputLabel>
 							<Select
 								multiple
-								value={formData.teacherIds || []}
+								value={(formData.teacherIds || []) as any}
 								onChange={(e: SelectChangeEvent<number[]>) => {
 									const value = e.target.value
 									setFormData({
@@ -272,7 +271,7 @@ export default function LessonView() {
 									})
 								}}
 								input={<OutlinedInput label='Teachers' />}
-								renderValue={selected => (
+								renderValue={(selected: any[]) => (
 									<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
 										{selected.map(value => {
 											const teacher = teachers.find(t => t.id === value)
@@ -296,7 +295,7 @@ export default function LessonView() {
 							<InputLabel>Groups</InputLabel>
 							<Select
 								multiple
-								value={formData.groupIds || []}
+								value={(formData.groupIds || []) as any}
 								onChange={(e: SelectChangeEvent<number[]>) => {
 									const value = e.target.value
 									setFormData({
@@ -308,7 +307,7 @@ export default function LessonView() {
 									})
 								}}
 								input={<OutlinedInput label='Groups' />}
-								renderValue={selected => (
+								renderValue={(selected: any[]) => (
 									<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
 										{selected.map(value => {
 											const group = groups.find(g => g.id === value)

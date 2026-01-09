@@ -194,8 +194,7 @@ export default function ChairView() {
 		<Grid container spacing={2} sx={{ height: '100%' }}>
 			{/* Left Pane: Faculties */}
 			<Grid
-				item
-				xs={6}
+				size={6}
 				sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}
 			>
 				<Box
@@ -250,8 +249,7 @@ export default function ChairView() {
 
 			{/* Right Pane: Chairs */}
 			<Grid
-				item
-				xs={6}
+				size={6}
 				sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}
 			>
 				<Box

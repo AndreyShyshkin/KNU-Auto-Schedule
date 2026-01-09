@@ -48,7 +48,7 @@ export default function ScheduleView() {
 		{ field: 'timeStart', headerName: 'Start', width: 90 },
 		{ field: 'timeEnd', headerName: 'End', width: 90 },
 		{ field: 'subjectName', headerName: 'Subject', flex: 1 },
-		{ field: 'type', headerName: 'Type', width: 100 },
+		{ field: 'earmarkName', headerName: 'Type', width: 100 },
 		{ field: 'auditoriumName', headerName: 'Auditorium', width: 100 },
 		{
 			field: 'additionalInfo',
@@ -66,7 +66,7 @@ export default function ScheduleView() {
 			spacing={2}
 			sx={{ height: '100%', flexDirection: 'column' }}
 		>
-			<Grid item>
+			<Grid>
 				<Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
 					<ToggleButtonGroup
 						value={mode}
@@ -109,7 +109,7 @@ export default function ScheduleView() {
 				</Box>
 			</Grid>
 
-			<Grid item sx={{ flexGrow: 1 }}>
+			<Grid sx={{ flexGrow: 1 }}>
 				<Paper sx={{ height: '100%' }}>
 					<DataGrid
 						rows={rows}
