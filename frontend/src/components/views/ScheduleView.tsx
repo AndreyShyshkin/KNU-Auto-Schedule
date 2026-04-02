@@ -7,6 +7,8 @@ import {
 	fetchTeacherSchedule,
 	fetchScheduleVersions,
 	fetchAllSchedule,
+	exportScheduleExcel,
+	exportSchedulePdf,
 	ScheduleVersion,
 } from '@/lib/api/scheduleApi'
 import {
@@ -22,15 +24,19 @@ import {
 	Select,
 	MenuItem,
 	Typography,
+	Button,
 } from '@mui/material'
-import { DataGrid, GridColDef } from '@mui/x-data-grid'
+import { DataGrid, GridColDef, useGridApiRef } from '@mui/x-data-grid'
 import { useQuery } from '@tanstack/react-query'
 import { useState, useEffect } from 'react'
+import FileDownloadIcon from '@mui/icons-material/FileDownload'
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
 
 export default function ScheduleView() {
 	const [mode, setMode] = useState<'teacher' | 'group' | 'all'>('all')
 	const [selectedId, setSelectedId] = useState<number | null>(null)
 	const [selectedVersionId, setSelectedVersionId] = useState<number | ''>('')
+	const apiRef = useGridApiRef()
 
 	const { data: versions = [] } = useQuery({
 		queryKey: ['scheduleVersions'],
@@ -87,6 +93,30 @@ export default function ScheduleView() {
 	// Client-side mapping for unique IDs required by DataGrid
 	const rows = schedule.map((entry, index) => ({ id: index, ...entry }))
 
+	const getExportData = () => {
+		// Use apiRef to get filtered and sorted rows
+		const api = apiRef.current
+		if (!api) return []
+		const visibleRowIds = api.getSortedRowIds()
+		return visibleRowIds.map(id => {
+			const row = api.getRow(id)
+			const { id: _, ...data } = row
+			return data
+		})
+	}
+
+	const handleExportExcel = async () => {
+		const data = getExportData()
+		const title = `Розклад - ${mode === 'all' ? 'Всі' : mode === 'teacher' ? teachers.find(t => t.id === selectedId)?.name : groups.find(g => g.id === selectedId)?.name}`
+		await exportScheduleExcel(data, title)
+	}
+
+	const handleExportPdf = async () => {
+		const data = getExportData()
+		const title = `Розклад - ${mode === 'all' ? 'Всі' : mode === 'teacher' ? teachers.find(t => t.id === selectedId)?.name : groups.find(g => g.id === selectedId)?.name}`
+		await exportSchedulePdf(data, title)
+	}
+
 	return (
 		<Grid
 			container
@@ -94,7 +124,7 @@ export default function ScheduleView() {
 			sx={{ height: '100%', flexDirection: 'column' }}
 		>
 			<Grid>
-				<Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+				<Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
 					<FormControl size='small' sx={{ minWidth: 200 }}>
 						<InputLabel>Версія розкладу</InputLabel>
 						<Select
@@ -155,12 +185,37 @@ export default function ScheduleView() {
 							</Typography>
 						)}
 					</Box>
+
+					<Box sx={{ flexGrow: 1 }} />
+
+					<Box sx={{ display: 'flex', gap: 1 }}>
+						<Button
+							variant="outlined"
+							size="small"
+							startIcon={<FileDownloadIcon />}
+							onClick={handleExportExcel}
+							disabled={rows.length === 0}
+						>
+							Excel
+						</Button>
+						<Button
+							variant="outlined"
+							size="small"
+							color="secondary"
+							startIcon={<PictureAsPdfIcon />}
+							onClick={handleExportPdf}
+							disabled={rows.length === 0}
+						>
+							PDF
+						</Button>
+					</Box>
 				</Box>
 			</Grid>
 
 			<Grid sx={{ flexGrow: 1 }}>
 				<Paper sx={{ height: '100%' }}>
 					<DataGrid
+						apiRef={apiRef}
 						rows={rows}
 						columns={columns}
 						loading={isLoading}

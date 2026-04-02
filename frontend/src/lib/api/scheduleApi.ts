@@ -413,6 +413,32 @@ export const fetchAllSchedule = async (
 	return data
 }
 
+export const exportScheduleExcel = async (data: ScheduleEntry[], title: string) => {
+	const response = await axios.post(`/api/schedule/export/excel?title=${encodeURIComponent(title)}`, data, {
+		responseType: 'blob'
+	})
+	const url = window.URL.createObjectURL(new Blob([response.data]))
+	const link = document.createElement('a')
+	link.href = url
+	link.setAttribute('download', 'schedule.xlsx')
+	document.body.appendChild(link)
+	link.click()
+	link.remove()
+}
+
+export const exportSchedulePdf = async (data: ScheduleEntry[], title: string) => {
+	const response = await axios.post(`/api/schedule/export/pdf?title=${encodeURIComponent(title)}`, data, {
+		responseType: 'blob'
+	})
+	const url = window.URL.createObjectURL(new Blob([response.data]))
+	const link = document.createElement('a')
+	link.href = url
+	link.setAttribute('download', 'schedule.pdf')
+	document.body.appendChild(link)
+	link.click()
+	link.remove()
+}
+
 // --- Data Exchange ---
 export const fetchAvailableTables = async (): Promise<string[]> => {
 	const { data } = await axios.get('/api/data/export/available')
