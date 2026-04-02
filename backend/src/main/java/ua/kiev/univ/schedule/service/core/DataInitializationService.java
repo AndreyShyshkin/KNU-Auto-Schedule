@@ -40,13 +40,15 @@ public class DataInitializationService {
     private final GroupRepository groupRepository;
     private final LessonRepository lessonRepository;
     private final AppointmentRepository appointmentRepository;
+    private final ScheduleVersionRepository scheduleVersionRepository;
 
     public DataInitializationService(TimeRepository timeRepository, DayRepository dayRepository,
                                      FacultyRepository facultyRepository, EarmarkRepository earmarkRepository,
                                      SubjectRepository subjectRepository, ChairRepository chairRepository,
                                      SpecialityRepository specialityRepository, AuditoriumRepository auditoriumRepository,
                                      TeacherRepository teacherRepository, GroupRepository groupRepository,
-                                     LessonRepository lessonRepository, AppointmentRepository appointmentRepository) {
+                                     LessonRepository lessonRepository, AppointmentRepository appointmentRepository,
+                                     ScheduleVersionRepository scheduleVersionRepository) {
         this.timeRepository = timeRepository;
         this.dayRepository = dayRepository;
         this.facultyRepository = facultyRepository;
@@ -59,6 +61,7 @@ public class DataInitializationService {
         this.groupRepository = groupRepository;
         this.lessonRepository = lessonRepository;
         this.appointmentRepository = appointmentRepository;
+        this.scheduleVersionRepository = scheduleVersionRepository;
     }
 
     @Transactional
@@ -90,10 +93,9 @@ public class DataInitializationService {
         }
         load(Lesson.class, lessons);
         
-        List<Appointment> appointments = appointmentRepository.findAll();
+        List<Appointment> appointments = appointmentRepository.findByVersionIsCurrentTrue();
         for (Appointment a : appointments) {
             // Reconstruct transient fields for legacy logic if needed
-            // But display usually relies on snapshots now.
         }
         load(Appointment.class, appointments);
         
@@ -121,6 +123,32 @@ public class DataInitializationService {
         lessonRepository.saveAll(DataService.getEntities(Lesson.class));
         
         List<Appointment> appointments = DataService.getEntities(Appointment.class);
+        if (!appointments.isEmpty()) {
+            // Check if we need to create a new version (e.g. if appointments don't have a version set)
+            boolean needsNewVersion = appointments.stream().anyMatch(a -> a.getVersion() == null);
+            
+            if (needsNewVersion) {
+                // Mark current versions as not current
+                List<ua.kiev.univ.schedule.model.appointment.ScheduleVersion> allVersions = scheduleVersionRepository.findAll();
+                for (ua.kiev.univ.schedule.model.appointment.ScheduleVersion v : allVersions) {
+                    if (v.isCurrent()) {
+                        v.setCurrent(false);
+                    }
+                }
+                scheduleVersionRepository.saveAll(allVersions);
+                
+                // Create new version
+                java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
+                String name = "Згенеровано " + java.time.LocalDateTime.now().format(formatter);
+                ua.kiev.univ.schedule.model.appointment.ScheduleVersion newVersion = new ua.kiev.univ.schedule.model.appointment.ScheduleVersion(name, java.time.LocalDateTime.now(), true);
+                newVersion = scheduleVersionRepository.save(newVersion);
+                
+                for (Appointment app : appointments) {
+                    app.setVersion(newVersion);
+                }
+            }
+        }
+
         for (Appointment app : appointments) {
             if (app.getSubject() != null) {
                 app.setSubjectName(app.getSubject().getName());

@@ -5,6 +5,9 @@ import {
 	fetchGroupSchedule,
 	fetchTeachers,
 	fetchTeacherSchedule,
+	fetchScheduleVersions,
+	fetchAllSchedule,
+	ScheduleVersion,
 } from '@/lib/api/scheduleApi'
 import {
 	Autocomplete,
@@ -14,14 +17,36 @@ import {
 	TextField,
 	ToggleButton,
 	ToggleButtonGroup,
+	FormControl,
+	InputLabel,
+	Select,
+	MenuItem,
+	Typography,
 } from '@mui/material'
 import { DataGrid, GridColDef } from '@mui/x-data-grid'
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export default function ScheduleView() {
-	const [mode, setMode] = useState<'teacher' | 'group'>('teacher')
+	const [mode, setMode] = useState<'teacher' | 'group' | 'all'>('all')
 	const [selectedId, setSelectedId] = useState<number | null>(null)
+	const [selectedVersionId, setSelectedVersionId] = useState<number | ''>('')
+
+	const { data: versions = [] } = useQuery({
+		queryKey: ['scheduleVersions'],
+		queryFn: fetchScheduleVersions,
+	})
+
+	useEffect(() => {
+		if (versions.length > 0 && selectedVersionId === '') {
+			const current = versions.find(v => v.current)
+			if (current) {
+				setSelectedVersionId(current.id)
+			} else {
+				setSelectedVersionId(versions[0].id)
+			}
+		}
+	}, [versions, selectedVersionId])
 
 	const { data: teachers = [] } = useQuery({
 		queryKey: ['teachers'],
@@ -35,12 +60,14 @@ export default function ScheduleView() {
 	})
 
 	const { data: schedule = [], isLoading } = useQuery({
-		queryKey: ['schedule', mode, selectedId],
-		queryFn: () =>
-			mode === 'teacher'
-				? fetchTeacherSchedule(selectedId!)
-				: fetchGroupSchedule(selectedId!),
-		enabled: !!selectedId,
+		queryKey: ['schedule', mode, selectedId, selectedVersionId],
+		queryFn: () => {
+			if (mode === 'all') return fetchAllSchedule(selectedVersionId !== '' ? (selectedVersionId as number) : undefined)
+			return mode === 'teacher'
+				? fetchTeacherSchedule(selectedId!, selectedVersionId !== '' ? (selectedVersionId as number) : undefined)
+				: fetchGroupSchedule(selectedId!, selectedVersionId !== '' ? (selectedVersionId as number) : undefined)
+		},
+		enabled: selectedVersionId !== '' && (mode === 'all' || !!selectedId),
 	})
 
 	const columns: GridColDef[] = [
@@ -52,7 +79,7 @@ export default function ScheduleView() {
 		{ field: 'auditoriumName', headerName: 'Auditorium', width: 100 },
 		{
 			field: 'additionalInfo',
-			headerName: mode === 'teacher' ? 'Groups' : 'Teachers',
+			headerName: mode === 'teacher' ? 'Groups' : mode === 'group' ? 'Teachers' : 'Teachers | Groups',
 			flex: 1,
 		},
 	]
@@ -68,6 +95,21 @@ export default function ScheduleView() {
 		>
 			<Grid>
 				<Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+					<FormControl size='small' sx={{ minWidth: 200 }}>
+						<InputLabel>Версія розкладу</InputLabel>
+						<Select
+							value={selectedVersionId}
+							label='Версія розкладу'
+							onChange={(e) => setSelectedVersionId(e.target.value as number)}
+						>
+							{versions.map((v) => (
+								<MenuItem key={v.id} value={v.id}>
+									{v.name} {v.current ? '(Поточна)' : ''}
+								</MenuItem>
+							))}
+						</Select>
+					</FormControl>
+					
 					<ToggleButtonGroup
 						value={mode}
 						exclusive
@@ -79,12 +121,13 @@ export default function ScheduleView() {
 						}}
 						size='small'
 					>
+						<ToggleButton value='all'>All</ToggleButton>
 						<ToggleButton value='teacher'>Teacher</ToggleButton>
 						<ToggleButton value='group'>Group</ToggleButton>
 					</ToggleButtonGroup>
 
 					<Box sx={{ width: 300 }}>
-						{mode === 'teacher' ? (
+						{mode === 'teacher' && (
 							<Autocomplete
 								options={teachers}
 								getOptionLabel={option => option.name}
@@ -94,7 +137,8 @@ export default function ScheduleView() {
 								onChange={(e, value) => setSelectedId(value?.id || null)}
 								value={teachers.find(t => t.id === selectedId) || null}
 							/>
-						) : (
+						)}
+						{mode === 'group' && (
 							<Autocomplete
 								options={groups}
 								getOptionLabel={option => option.name}
@@ -104,6 +148,11 @@ export default function ScheduleView() {
 								onChange={(e, value) => setSelectedId(value?.id || null)}
 								value={groups.find(g => g.id === selectedId) || null}
 							/>
+						)}
+						{mode === 'all' && (
+							<Typography variant="body2" color="text.secondary">
+								Показ повного розкладу для версії
+							</Typography>
 						)}
 					</Box>
 				</Box>

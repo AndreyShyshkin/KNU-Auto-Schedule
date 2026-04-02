@@ -23,6 +23,7 @@ import {
 } from '@mui/material'
 import axios from 'axios'
 import { useEffect, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 
 interface TabPanelProps {
 	children?: React.ReactNode
@@ -51,6 +52,8 @@ export default function Home() {
 	const [value, setValue] = useState(0)
 	const [rightTab, setRightTab] = useState(0)
 	const [isBuilding, setIsBuilding] = useState(false)
+	const [lastStatus, setLastStatus] = useState<any>(null)
+	const queryClient = useQueryClient()
 
 	const handleChange = (event: React.SyntheticEvent, newValue: number) => {
 		setValue(newValue)
@@ -60,6 +63,7 @@ export default function Home() {
 		try {
 			await startBuild()
 			setIsBuilding(true)
+			setLastStatus(null)
 		} catch (error) {
 			console.error('Failed to start build', error)
 		}
@@ -71,9 +75,13 @@ export default function Home() {
 			interval = setInterval(async () => {
 				try {
 					const status = await getBuildStatus()
-					setIsBuilding(status)
-					if (!status) {
-						alert('Build finished!')
+					setIsBuilding(status.building)
+					setLastStatus(status)
+					if (!status.building) {
+						if (status.lastResult === 'DONE') {
+							alert('Build finished successfully!')
+							queryClient.invalidateQueries({ queryKey: ['scheduleVersions'] })
+						}
 					}
 				} catch (e) {
 					console.error(e)
@@ -81,7 +89,7 @@ export default function Home() {
 			}, 1000)
 		}
 		return () => clearInterval(interval)
-	}, [isBuilding])
+	}, [isBuilding, queryClient])
 
 	return (
 		<Box
@@ -209,13 +217,33 @@ export default function Home() {
 								>
 									Click the button below to start the scheduling algorithm.
 								</Typography>
+
+								{lastStatus?.lastResult && lastStatus.lastResult !== 'DONE' && (
+									<Box sx={{ width: '100%', mb: 2, p: 1, bgcolor: '#fff0f0', border: '1px solid #ffcccc', borderRadius: 1 }}>
+										<Typography variant="subtitle2" color="error" gutterBottom align="center">
+											Build Failed ({lastStatus.lastResult})
+										</Typography>
+										<Typography variant="caption" color="error" component="div" align="center">
+											{lastStatus.lastError}
+										</Typography>
+									</Box>
+								)}
+
+								{lastStatus?.lastResult === 'DONE' && (
+									<Box sx={{ width: '100%', mb: 2, p: 1, bgcolor: '#f0fff0', border: '1px solid #ccffcc', borderRadius: 1 }}>
+										<Typography variant="subtitle2" color="success.main" gutterBottom align="center">
+											Schedule generated in {lastStatus.steps} steps!
+										</Typography>
+									</Box>
+								)}
+
 								<Button
 									variant='contained'
 									onClick={handleBuild}
 									disabled={isBuilding}
 									sx={{ mt: 2 }}
 								>
-									{isBuilding ? 'Building...' : 'Build Schedule'}
+									{isBuilding ? `Building (Step ${lastStatus?.steps || 0})...` : 'Build Schedule'}
 								</Button>
 								<Button
 									variant='outlined'
@@ -224,6 +252,7 @@ export default function Home() {
 										if (confirm('Clear all generated results?')) {
 											await axios.delete('/api/schedule/clear')
 											alert('Results cleared')
+											setLastStatus(null)
 										}
 									}}
 									disabled={isBuilding}

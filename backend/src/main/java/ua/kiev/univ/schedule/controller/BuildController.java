@@ -22,7 +22,7 @@ public class BuildController {
     }
 
     @GetMapping("/status")
-    public boolean getStatus() {
-        return buildService.isBuilding();
+    public BuildService.BuildStatus getStatus() {
+        return buildService.getStatus();
     }
 }

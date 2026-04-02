@@ -24,8 +24,14 @@ public class ScheduleQueryService {
     }
 
     @Transactional(readOnly = true)
-    public List<ScheduleEntryDto> getTeacherSchedule(Long teacherId) {
-        List<Appointment> appointments = appointmentRepository.findAll();
+    public List<ScheduleEntryDto> getTeacherSchedule(Long teacherId, Long versionId) {
+        List<Appointment> appointments;
+        if (versionId != null) {
+            appointments = appointmentRepository.findByVersionId(versionId);
+        } else {
+            appointments = appointmentRepository.findByVersionIsCurrentTrue();
+        }
+        
         List<ScheduleEntryDto> result = new ArrayList<>();
         String searchId = teacherId.toString();
 
@@ -55,8 +61,14 @@ public class ScheduleQueryService {
     }
 
     @Transactional(readOnly = true)
-    public List<ScheduleEntryDto> getGroupSchedule(Long groupId) {
-        List<Appointment> appointments = appointmentRepository.findAll();
+    public List<ScheduleEntryDto> getGroupSchedule(Long groupId, Long versionId) {
+        List<Appointment> appointments;
+        if (versionId != null) {
+            appointments = appointmentRepository.findByVersionId(versionId);
+        } else {
+            appointments = appointmentRepository.findByVersionIsCurrentTrue();
+        }
+        
         List<ScheduleEntryDto> result = new ArrayList<>();
         String searchId = groupId.toString();
 
@@ -78,6 +90,32 @@ public class ScheduleQueryService {
                         "",
                         entry.getAuditoriumName(),
                         app.getTeacherNames()
+                ));
+            }
+        }
+        return sortSchedule(result);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ScheduleEntryDto> getAllSchedule(Long versionId) {
+        List<Appointment> appointments;
+        if (versionId != null) {
+            appointments = appointmentRepository.findByVersionId(versionId);
+        } else {
+            appointments = appointmentRepository.findByVersionIsCurrentTrue();
+        }
+        
+        List<ScheduleEntryDto> result = new ArrayList<>();
+        for (Appointment app : appointments) {
+            for (AppointmentEntry entry : app.getEntries()) {
+                result.add(new ScheduleEntryDto(
+                        entry.getDayName(),
+                        entry.getTimeStart(),
+                        entry.getTimeEnd(),
+                        app.getSubjectName(),
+                        "",
+                        entry.getAuditoriumName(),
+                        app.getTeacherNames() + " | " + app.getGroupNames()
                 ));
             }
         }

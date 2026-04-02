@@ -17,18 +17,37 @@ import java.util.concurrent.Executors;
 @Service
 public class BuildService {
 
+    public static class BuildStatus {
+        private boolean isBuilding;
+        private String lastResult;
+        private int steps;
+        private String lastError;
+
+        public boolean isBuilding() { return isBuilding; }
+        public void setBuilding(boolean building) { isBuilding = building; }
+        public String getLastResult() { return lastResult; }
+        public void setLastResult(String lastResult) { this.lastResult = lastResult; }
+        public int getSteps() { return steps; }
+        public void setSteps(int steps) { this.steps = steps; }
+        public String getLastError() { return lastError; }
+        public void setLastError(String lastError) { this.lastError = lastError; }
+    }
+
     private final ExecutorService threadPool = Executors.newSingleThreadExecutor();
-    private volatile boolean isBuilding = false;
+    private final BuildStatus currentStatus = new BuildStatus();
 
     public String buildSchedule() {
-        if (isBuilding) {
+        if (currentStatus.isBuilding()) {
             return "Build already in progress";
         }
-        isBuilding = true;
+        currentStatus.setBuilding(true);
+        currentStatus.setLastResult(null);
+        currentStatus.setLastError(null);
+        currentStatus.setSteps(0);
 
         CompletableFuture.runAsync(this::runBuildProcess, threadPool)
                 .thenRun(() -> {
-                    isBuilding = false;
+                    currentStatus.setBuilding(false);
                     System.out.println("Build finished.");
                 });
 
@@ -39,12 +58,21 @@ public class BuildService {
         try {
             System.out.println("Starting schedule generation...");
             
-            System.out.println("Lessons: " + DataService.getEntities(Lesson.class).size());
-            System.out.println("Days: " + DataService.getEntities(Day.class).size());
-            System.out.println("Times: " + DataService.getEntities(Time.class).size());
-            System.out.println("Earmarks: " + DataService.getEntities(Earmark.class).size());
-            System.out.println("Auditoriums: " + DataService.getEntities(Auditorium.class).size());
+            int lessonsCount = DataService.getEntities(Lesson.class).size();
+            int daysCount = DataService.getEntities(Day.class).size();
+            int timesCount = DataService.getEntities(Time.class).size();
             
+            if (lessonsCount == 0) {
+                currentStatus.setLastResult("FAIL");
+                currentStatus.setLastError("No lessons to schedule");
+                return;
+            }
+            if (daysCount == 0 || timesCount == 0) {
+                currentStatus.setLastResult("FAIL");
+                currentStatus.setLastError("No days or time slots configured");
+                return;
+            }
+
             Executor executor = new Executor();
             Progress progress = executor.initialize();
 
@@ -52,25 +80,38 @@ public class BuildService {
             while (progress == Progress.BUILD) {
                 progress = executor.step();
                 steps++;
+                currentStatus.setSteps(steps);
                 if (steps % 1000 == 0) {
                     System.out.println("Step " + steps + "...");
                 }
             }
 
+            currentStatus.setLastResult(progress.toString());
             if (progress == Progress.DONE) {
                 System.out.println("Schedule found! Steps: " + steps);
                 executor.setAppointments();
                 DataService.write(null);
             } else {
                 System.out.println("Failed to build schedule. Final status: " + progress + ". Steps: " + steps);
+                String error = "Could not find a valid combination for all lessons. ";
+                if (steps <= lessonsCount) {
+                    error += "Check if you have enough auditoriums or if there are conflicting restrictions for some lessons.";
+                }
+                currentStatus.setLastError(error);
             }
 
         } catch (Exception e) {
             e.printStackTrace();
+            currentStatus.setLastResult("ERROR");
+            currentStatus.setLastError("Internal error: " + e.getMessage());
         }
     }
     
+    public BuildStatus getStatus() {
+        return currentStatus;
+    }
+
     public boolean isBuilding() {
-        return isBuilding;
+        return currentStatus.isBuilding();
     }
 }

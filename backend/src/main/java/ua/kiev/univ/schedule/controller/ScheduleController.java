@@ -15,19 +15,23 @@ public class ScheduleController {
 
     @DeleteMapping("/clear")
     @org.springframework.transaction.annotation.Transactional
-    public ResponseEntity<Void> clearSchedule() {
-        // Clear ONLY generated results tables
-        String[] tables = {
-            "appointment_entry", "appointment"
-        };
-        for (String table : tables) {
-            try {
-                jdbcTemplate.execute("TRUNCATE TABLE " + table + " CASCADE");
-            } catch (Exception e) {
-                System.err.println("Could not truncate " + table + ": " + e.getMessage());
+    public ResponseEntity<Void> clearSchedule(@RequestParam(required = false) Long versionId) {
+        if (versionId != null) {
+            jdbcTemplate.update("DELETE FROM appointment_entry WHERE appointment_id IN (SELECT id FROM appointment WHERE version_id = ?)", versionId);
+            jdbcTemplate.update("DELETE FROM appointment WHERE version_id = ?", versionId);
+            jdbcTemplate.update("DELETE FROM schedule_version WHERE id = ?", versionId);
+        } else {
+            String[] tables = {
+                "appointment_entry", "appointment", "schedule_version"
+            };
+            for (String table : tables) {
+                try {
+                    jdbcTemplate.execute("TRUNCATE TABLE " + table + " CASCADE");
+                } catch (Exception e) {
+                    System.err.println("Could not truncate " + table + ": " + e.getMessage());
+                }
             }
         }
-        
         dataInitializationService.initializeData();
         return ResponseEntity.ok().build();
     }
@@ -47,12 +51,17 @@ public class ScheduleController {
     }
 
     @GetMapping("/teacher/{id}")
-    public List<ScheduleEntryDto> getTeacherSchedule(@PathVariable Long id) {
-        return scheduleQueryService.getTeacherSchedule(id);
+    public List<ScheduleEntryDto> getTeacherSchedule(@PathVariable Long id, @RequestParam(required = false) Long versionId) {
+        return scheduleQueryService.getTeacherSchedule(id, versionId);
     }
 
     @GetMapping("/group/{id}")
-    public List<ScheduleEntryDto> getGroupSchedule(@PathVariable Long id) {
-        return scheduleQueryService.getGroupSchedule(id);
+    public List<ScheduleEntryDto> getGroupSchedule(@PathVariable Long id, @RequestParam(required = false) Long versionId) {
+        return scheduleQueryService.getGroupSchedule(id, versionId);
+    }
+
+    @GetMapping("/all")
+    public List<ScheduleEntryDto> getAllSchedule(@RequestParam(required = false) Long versionId) {
+        return scheduleQueryService.getAllSchedule(versionId);
     }
 }

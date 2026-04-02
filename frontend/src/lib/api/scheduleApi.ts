@@ -346,13 +346,20 @@ export const deleteLesson = async (id: number): Promise<void> => {
 	await axios.delete(`/api/lessons/${id}`)
 }
 
+export interface BuildStatus {
+	building: boolean
+	lastResult?: string
+	steps: number
+	lastError?: string
+}
+
 // --- Build ---
 export const startBuild = async (): Promise<string> => {
 	const { data } = await axios.post('/api/build/start')
 	return data
 }
 
-export const getBuildStatus = async (): Promise<boolean> => {
+export const getBuildStatus = async (): Promise<BuildStatus> => {
 	const { data } = await axios.get('/api/build/status')
 	return data
 }
@@ -368,17 +375,41 @@ export interface ScheduleEntry {
 	additionalInfo: string
 }
 
+export interface ScheduleVersion {
+	id: number
+	name: string
+	createdAt: string
+	current: boolean
+}
+
+export const fetchScheduleVersions = async (): Promise<ScheduleVersion[]> => {
+	const { data } = await axios.get('/api/schedule/versions')
+	return data
+}
+
 export const fetchTeacherSchedule = async (
-	teacherId: number
+	teacherId: number,
+	versionId?: number
 ): Promise<ScheduleEntry[]> => {
-	const { data } = await axios.get(`/api/schedule/teacher/${teacherId}`)
+	const url = versionId ? `/api/schedule/teacher/${teacherId}?versionId=${versionId}` : `/api/schedule/teacher/${teacherId}`
+	const { data } = await axios.get(url)
 	return data
 }
 
 export const fetchGroupSchedule = async (
-	groupId: number
+	groupId: number,
+	versionId?: number
 ): Promise<ScheduleEntry[]> => {
-	const { data } = await axios.get(`/api/schedule/group/${groupId}`)
+	const url = versionId ? `/api/schedule/group/${groupId}?versionId=${versionId}` : `/api/schedule/group/${groupId}`
+	const { data } = await axios.get(url)
+	return data
+}
+
+export const fetchAllSchedule = async (
+	versionId?: number
+): Promise<ScheduleEntry[]> => {
+	const url = versionId ? `/api/schedule/all?versionId=${versionId}` : '/api/schedule/all'
+	const { data } = await axios.get(url)
 	return data
 }
 

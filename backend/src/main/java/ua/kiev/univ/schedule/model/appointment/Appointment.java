@@ -49,6 +49,10 @@ public class Appointment extends ua.kiev.univ.schedule.model.core.Entity {
     @Column(length = 1000)
     private String groupIds;
 
+    @ManyToOne
+    @JoinColumn(name = "version_id")
+    private ScheduleVersion version;
+
     public Appointment() {}
 
     // Геттеры и сеттеры для совместимости с Executor
@@ -75,6 +79,9 @@ public class Appointment extends ua.kiev.univ.schedule.model.core.Entity {
     public void setTeacherIds(String teacherIds) { this.teacherIds = teacherIds; }
     public String getGroupIds() { return groupIds; }
     public void setGroupIds(String groupIds) { this.groupIds = groupIds; }
+    
+    public ScheduleVersion getVersion() { return version; }
+    public void setVersion(ScheduleVersion version) { this.version = version; }
 
     @Override
     public void read(DataInputStream is) throws IOException {
