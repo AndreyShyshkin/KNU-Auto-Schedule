@@ -5,12 +5,12 @@ import DateView from '@/components/views/DateView'
 import GroupView from '@/components/views/GroupView'
 import LessonView from '@/components/views/LessonView'
 import PlacementView from '@/components/views/PlacementView'
-import ScheduleView from '@/components/views/ScheduleView'
 import SpecialityView from '@/components/views/SpecialityView'
 import SubjectView from '@/components/views/SubjectView'
 import TeacherView from '@/components/views/TeacherView'
 import DataExchangeView from '@/components/views/DataExchangeView'
 import { getBuildStatus, startBuild } from '@/lib/api/scheduleApi'
+import Link from 'next/link'
 import {
 	AppBar,
 	Box,
@@ -20,7 +20,9 @@ import {
 	Tabs,
 	Toolbar,
 	Typography,
+	Divider,
 } from '@mui/material'
+import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 import axios from 'axios'
 import { useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
@@ -50,7 +52,6 @@ function TabPanel(props: TabPanelProps) {
 
 export default function Home() {
 	const [value, setValue] = useState(0)
-	const [rightTab, setRightTab] = useState(0)
 	const [isBuilding, setIsBuilding] = useState(false)
 	const [lastStatus, setLastStatus] = useState<any>(null)
 	const queryClient = useQueryClient()
@@ -108,8 +109,17 @@ export default function Home() {
 						component='div'
 						sx={{ flexGrow: 1 }}
 					>
-						KNU Schedule
+						KNU Schedule - Управління
 					</Typography>
+					<Button
+						component={Link}
+						href="/results"
+						startIcon={<OpenInNewIcon />}
+						variant="outlined"
+						size="small"
+					>
+						Переглянути розклад
+					</Button>
 				</Toolbar>
 			</AppBar>
 
@@ -117,7 +127,7 @@ export default function Home() {
 				{/* Left Side: Input Pane (Tabs) */}
 				<Box
 					sx={{
-						width: '70%',
+						width: '75%',
 						display: 'flex',
 						flexDirection: 'column',
 						borderRight: 1,
@@ -176,98 +186,104 @@ export default function Home() {
 					</Box>
 				</Box>
 
-				{/* Right Side: Build Pane / Results */}
+				{/* Right Side: Build Pane / Status */}
 				<Box
 					sx={{
-						width: '30%',
+						width: '25%',
 						display: 'flex',
 						flexDirection: 'column',
 						borderLeft: 1,
 						borderColor: 'divider',
+						bgcolor: '#fafafa'
 					}}
 				>
-					<Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-						<Tabs
-							value={rightTab}
-							onChange={(e, v) => setRightTab(v)}
-							variant='fullWidth'
-						>
-							<Tab label='Build' />
-							<Tab label='Results' />
-						</Tabs>
+					<Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+						<Typography variant='h6'>Побудова розкладу</Typography>
 					</Box>
 
-					<Box sx={{ flexGrow: 1, p: 2, overflow: 'auto', bgcolor: '#fafafa' }}>
-						{rightTab === 0 && (
-							<Box
-								sx={{
-									display: 'flex',
-									flexDirection: 'column',
-									alignItems: 'center',
-								}}
-							>
-								<Typography variant='h6' gutterBottom>
-									Build Schedule
+					<Box sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+						<Typography
+							variant='body2'
+							color='text.secondary'
+							paragraph
+							align='center'
+						>
+							Натисніть кнопку нижче для запуску алгоритму автоматичної побудови.
+						</Typography>
+
+						{lastStatus?.lastResult && lastStatus.lastResult !== 'DONE' && (
+							<Box sx={{ width: '100%', mb: 2, p: 1, bgcolor: '#fff0f0', border: '1px solid #ffcccc', borderRadius: 1 }}>
+								<Typography variant="subtitle2" color="error" gutterBottom align="center">
+									Помилка побудови ({lastStatus.lastResult})
 								</Typography>
-								<Typography
-									variant='body2'
-									color='text.secondary'
-									paragraph
-									align='center'
-								>
-									Click the button below to start the scheduling algorithm.
+								<Typography variant="caption" color="error" component="div" align="center">
+									{lastStatus.lastError}
 								</Typography>
-
-								{lastStatus?.lastResult && lastStatus.lastResult !== 'DONE' && (
-									<Box sx={{ width: '100%', mb: 2, p: 1, bgcolor: '#fff0f0', border: '1px solid #ffcccc', borderRadius: 1 }}>
-										<Typography variant="subtitle2" color="error" gutterBottom align="center">
-											Build Failed ({lastStatus.lastResult})
-										</Typography>
-										<Typography variant="caption" color="error" component="div" align="center">
-											{lastStatus.lastError}
-										</Typography>
-									</Box>
-								)}
-
-								{lastStatus?.lastResult === 'DONE' && (
-									<Box sx={{ width: '100%', mb: 2, p: 1, bgcolor: '#f0fff0', border: '1px solid #ccffcc', borderRadius: 1 }}>
-										<Typography variant="subtitle2" color="success.main" gutterBottom align="center">
-											Schedule generated in {lastStatus.steps} steps!
-										</Typography>
-									</Box>
-								)}
-
-								<Button
-									variant='contained'
-									onClick={handleBuild}
-									disabled={isBuilding}
-									sx={{ mt: 2 }}
-								>
-									{isBuilding ? `Building (Step ${lastStatus?.steps || 0})...` : 'Build Schedule'}
-								</Button>
-								<Button
-									variant='outlined'
-									color='error'
-									onClick={async () => {
-										if (confirm('Clear all generated results?')) {
-											await axios.delete('/api/schedule/clear')
-											alert('Results cleared')
-											setLastStatus(null)
-										}
-									}}
-									disabled={isBuilding}
-									sx={{ mt: 1 }}
-								>
-									Clear Results
-								</Button>
-								{isBuilding && <CircularProgress sx={{ mt: 2 }} />}
 							</Box>
 						)}
 
-						{rightTab === 1 && <ScheduleView />}
+						{lastStatus?.lastResult === 'DONE' && (
+							<Box sx={{ width: '100%', mb: 2, p: 1, bgcolor: '#f0fff0', border: '1px solid #ccffcc', borderRadius: 1 }}>
+								<Typography variant="subtitle2" color="success.main" gutterBottom align="center">
+									Розклад згенеровано за {lastStatus.steps} кроків!
+								</Typography>
+								<Button
+									component={Link}
+									href="/results"
+									variant="outlined"
+									color="success"
+									fullWidth
+									size="small"
+									sx={{ mt: 1 }}
+								>
+									Переглянути результат
+								</Button>
+							</Box>
+						)}
+
+						<Button
+							variant='contained'
+							onClick={handleBuild}
+							disabled={isBuilding}
+							fullWidth
+							sx={{ mt: 2 }}
+						>
+							{isBuilding ? `Побудова (Крок ${lastStatus?.steps || 0})...` : 'Почати генерацію'}
+						</Button>
+
+						<Button
+							variant='outlined'
+							color='error'
+							onClick={async () => {
+								if (confirm('Очистити всі результати?')) {
+									await axios.delete('/api/schedule/clear')
+									alert('Результати очищено')
+									setLastStatus(null)
+								}
+							}}
+							disabled={isBuilding}
+							fullWidth
+							sx={{ mt: 1 }}
+						>
+							Очистити результати
+						</Button>
+
+						{isBuilding && <CircularProgress sx={{ mt: 2 }} />}
+						
+						<Divider sx={{ my: 3, width: '100%' }} />
+						
+						<Button
+							component={Link}
+							href="/results"
+							variant="text"
+							startIcon={<OpenInNewIcon />}
+						>
+							Повний розклад
+						</Button>
 					</Box>
 				</Box>
 			</Box>
 		</Box>
 	)
 }
+
