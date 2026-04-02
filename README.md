@@ -1,29 +1,35 @@
-# KNU-Auto-Schedule
+# KNU Auto Schedule
 
-**PostgreSQL**: Ensure PostgreSQL is installed and running.
-_ Host: `localhost`
-_ Port: `5432`
-_ Database: `schedule_db`
-_ User: `postgres` \* Password: `password`
+Система автоматизації складання розкладу для КНУ ім. Тараса Шевченка. Проект складається з Java (Spring Boot) бекенду, Next.js фронтенду та бази даних PostgreSQL.
 
-```
-docker run -d \
- --name schedule_pg_container \
- -p 5432:5432 \
- -e POSTGRES_USER=postgres \
- -e POSTGRES_PASSWORD=password \
- -e POSTGRES_DB=schedule_db \
- postgres:latest
+## Швидкий запуск (Docker)
+
+Найпростіший спосіб запустити весь проект — використати Docker Compose:
+
+```bash
+docker-compose up --build
 ```
 
-run backend 
-```
-mvn clean install
-mvn spring-boot:run
-```
+Після запуску:
+- **Frontend:** [http://localhost:3000](http://localhost:3000)
+- **Backend API:** [http://localhost:8080/api](http://localhost:8080/api)
+- **Swagger UI:** [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)
 
-run frontend
-```
-npm install
-npm run dev
-```
+## Структура проекту
+
+- `/backend` — Серверна частина на Java 21 (Spring Boot, Hibernate, PostgreSQL).
+- `/frontend` — Клієнтська частина на Next.js (React, MUI, TanStack Query).
+- `docker-compose.yml` — Конфігурація для запуску всього стеку в контейнерах.
+
+## Системні вимоги
+
+- Docker & Docker Compose
+- Java 21 (для локальної розробки бекенду)
+- Node.js 20+ (для локальної розробки фронтенду)
+
+## Налаштування TimeZone
+
+Проект налаштований на використання часового поясу `Europe/Kyiv`. Це сконфігуровано на рівнях:
+1. JVM (в коді бекенду).
+2. Spring/Jackson (в `application.properties`).
+3. Контейнерів Docker (через змінну `TZ`).

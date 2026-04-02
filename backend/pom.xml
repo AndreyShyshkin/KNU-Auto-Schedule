@@ -9,7 +9,7 @@
     <relativePath/> <!-- lookup parent from repository -->
   </parent>
 
-  <groupId>ua.kiev.univ</groupId>
+  <groupId>ua.kyiv.univ</groupId>
   <artifactId>schedule</artifactId>
   <version>1.0-SNAPSHOT</version>
   
