@@ -66,6 +66,26 @@ export default function DataExchangeView() {
 		)
 	}
 
+	const handleSelectAllExport = () => {
+		if (availableTables) {
+			if (selectedExport.length === availableTables.length) {
+				setSelectedExport([])
+			} else {
+				setSelectedExport([...availableTables])
+			}
+		}
+	}
+
+	const handleSelectAllImport = () => {
+		if (availableTables) {
+			if (selectedImport.length === availableTables.length) {
+				setSelectedImport([])
+			} else {
+				setSelectedImport([...availableTables])
+			}
+		}
+	}
+
 	if (isLoading) return <CircularProgress />
 
 	return (
@@ -78,6 +98,13 @@ export default function DataExchangeView() {
 					<Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
 						Оберіть таблиці, які ви бажаєте вивантажити у ZIP-архів.
 					</Typography>
+					<Button 
+						size="small" 
+						onClick={handleSelectAllExport}
+						sx={{ mb: 1 }}
+					>
+						{selectedExport.length === availableTables?.length ? 'Зняти виділення' : 'Вибрати все'}
+					</Button>
 					<Divider sx={{ mb: 2 }} />
 					<FormGroup sx={{ maxHeight: 300, overflow: 'auto' }}>
 						{availableTables?.map((table) => (
@@ -112,6 +139,13 @@ export default function DataExchangeView() {
 					<Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
 						Завантажте ZIP-архів та оберіть таблиці для імпорту.
 					</Typography>
+					<Button 
+						size="small" 
+						onClick={handleSelectAllImport}
+						sx={{ mb: 1 }}
+					>
+						{selectedImport.length === availableTables?.length ? 'Зняти виділення' : 'Вибрати все'}
+					</Button>
 					<Divider sx={{ mb: 2 }} />
 					<Box sx={{ mb: 3 }}>
 						<Button

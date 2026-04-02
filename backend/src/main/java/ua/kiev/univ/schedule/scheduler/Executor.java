@@ -10,6 +10,7 @@ import ua.kiev.univ.schedule.model.placement.Auditorium;
 import ua.kiev.univ.schedule.model.placement.Earmark;
 import ua.kiev.univ.schedule.scheduler.auditoriumRepository.AuditoriumRepository;
 import ua.kiev.univ.schedule.scheduler.auditoriumRepository.AuditoriumRepositoryFactory;
+import ua.kiev.univ.schedule.scheduler.auditoriumRepository.BuildingEarmark;
 import ua.kiev.univ.schedule.scheduler.point.HalvedPoint;
 import ua.kiev.univ.schedule.scheduler.point.Point;
 import ua.kiev.univ.schedule.scheduler.point.RestrictionMap;
@@ -43,7 +44,24 @@ public class Executor {
 
         List<Earmark> earmarks = EntityFilter.getActiveEntities(Earmark.class);
         List<Auditorium> auditoriums = EntityFilter.getActiveEntities(Auditorium.class);
-        repositoryFactory = new AuditoriumRepositoryFactory(count, earmarks, auditoriums);
+        
+        List<BuildingEarmark> types = new ArrayList<>();
+        for (Auditorium aud : auditoriums) {
+            BuildingEarmark be = new BuildingEarmark(aud.getBuilding(), aud.getEarmark());
+            if (!types.contains(be)) {
+                types.add(be);
+            }
+        }
+        
+        List<Lesson> lessons = EntityFilter.getActiveEntities(Lesson.class);
+        for (Lesson lesson : lessons) {
+            BuildingEarmark be = new BuildingEarmark(lesson.getBuilding(), lesson.getEarmark());
+            if (!types.contains(be)) {
+                types.add(be);
+            }
+        }
+
+        repositoryFactory = new AuditoriumRepositoryFactory(count, types, auditoriums, dates);
 
         points = new LinkedList<>();
         List<Group> groups = EntityFilter.getActiveEntities(Group.class);
@@ -53,9 +71,8 @@ public class Executor {
         Progress.DONE.value = 0;
         Progress.BUILD.value = 0;
 
-        List<Lesson> lessons = EntityFilter.getActiveEntities(Lesson.class);
         for (Lesson lesson : lessons) {
-            points.add(Point.getPoint(lesson, dates, earmarks, restrictionMap));
+            points.add(Point.getPoint(lesson, dates, types, restrictionMap));
         }
         Point.setVerges(points);
         // Сортуємо точки за кількістю зв'язків (евристика: починати з найскладніших)

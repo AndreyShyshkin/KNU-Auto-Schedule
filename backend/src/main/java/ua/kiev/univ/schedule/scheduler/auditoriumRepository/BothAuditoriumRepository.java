@@ -1,5 +1,6 @@
 package ua.kiev.univ.schedule.scheduler.auditoriumRepository;
 
+import ua.kiev.univ.schedule.model.date.Date;
 import ua.kiev.univ.schedule.model.placement.Auditorium;
 
 import java.util.List;
@@ -10,8 +11,8 @@ public class BothAuditoriumRepository extends AuditoriumRepository {
     private final int[][] firstAmount;
     private final int[][] secondAmount;
 
-    public BothAuditoriumRepository(int[][] bothAmount, int[][] firstAmount, int[][] secondAmount, List<Auditorium>[] lists, ListIterator<Auditorium>[][] iterators) {
-        super(bothAmount, lists, iterators);
+    public BothAuditoriumRepository(int[][] bothAmount, int[][] firstAmount, int[][] secondAmount, List<Auditorium>[] lists, ListIterator<Auditorium>[][] iterators, List<Date> dates, List<BuildingEarmark> types) {
+        super(bothAmount, lists, iterators, dates, types);
         this.firstAmount = firstAmount;
         this.secondAmount = secondAmount;
     }

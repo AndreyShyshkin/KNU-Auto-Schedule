@@ -8,9 +8,11 @@ import {
 	deleteTime,
 	fetchDays,
 	fetchTimes,
+	fetchBuildings,
 	Time,
 	updateDay,
 	updateTime,
+	Building,
 } from '@/lib/api/scheduleApi'
 import {
 	Add as AddIcon,
@@ -30,6 +32,10 @@ import {
 	Paper,
 	TextField,
 	Typography,
+	FormControl,
+	InputLabel,
+	Select,
+	MenuItem,
 } from '@mui/material'
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -38,37 +44,28 @@ import { useState } from 'react'
 export default function DateView() {
 	const queryClient = useQueryClient()
 	const [selectedDayId, setSelectedDayId] = useState<number | null>(null)
+	const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(null)
 	const [selectedTimeId, setSelectedTimeId] = useState<number | null>(null)
 
-	// --- Days ---
+	const { data: buildings = [], isLoading: isLoadingBuildings } = useQuery({
+		queryKey: ['buildings'],
+		queryFn: fetchBuildings,
+	})
+
 	const { data: days = [], isLoading: isLoadingDays } = useQuery({
 		queryKey: ['days'],
 		queryFn: fetchDays,
 	})
 
-	const createDayMutation = useMutation({
-		mutationFn: createDay,
-		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['days'] }),
+	const { data: times = [], isLoading: isLoadingTimes } = useQuery({
+		queryKey: ['times'],
+		queryFn: fetchTimes,
 	})
 
 	const updateDayMutation = useMutation({
 		mutationFn: (data: { id: number; day: Partial<Day> }) =>
 			updateDay(data.id, data.day),
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['days'] }),
-	})
-
-	const deleteDayMutation = useMutation({
-		mutationFn: deleteDay,
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ['days'] })
-			setSelectedDayId(null)
-		},
-	})
-
-	// --- Times ---
-	const { data: times = [], isLoading: isLoadingTimes } = useQuery({
-		queryKey: ['times'],
-		queryFn: fetchTimes,
 	})
 
 	const createTimeMutation = useMutation({
@@ -90,53 +87,12 @@ export default function DateView() {
 		},
 	})
 
-	// --- UI State ---
-	const [openDayDialog, setOpenDayDialog] = useState(false)
-	const [dayDialogMode, setDayDialogMode] = useState<'create' | 'edit'>(
-		'create'
-	)
-	const [dayFormData, setDayFormData] = useState<Partial<Day>>({})
-
 	const [openTimeDialog, setOpenTimeDialog] = useState(false)
-	const [timeDialogMode, setTimeDialogMode] = useState<'create' | 'edit'>(
-		'create'
-	)
+	const [timeDialogMode, setTimeDialogMode] = useState<'create' | 'edit'>('create')
 	const [timeFormData, setTimeFormData] = useState<Partial<Time>>({})
 
-	// Handlers Day
-	const handleAddDay = () => {
-		setDayFormData({})
-		setDayDialogMode('create')
-		setOpenDayDialog(true)
-	}
-
-	const handleEditDay = () => {
-		const day = days.find(d => d.id === selectedDayId)
-		if (day) {
-			setDayFormData(day)
-			setDayDialogMode('edit')
-			setOpenDayDialog(true)
-		}
-	}
-
-	const handleDeleteDay = () => {
-		if (selectedDayId && confirm('Delete this day?')) {
-			deleteDayMutation.mutate(selectedDayId)
-		}
-	}
-
-	const handleSubmitDay = () => {
-		if (dayDialogMode === 'create') {
-			createDayMutation.mutate(dayFormData)
-		} else if (selectedDayId) {
-			updateDayMutation.mutate({ id: selectedDayId, day: dayFormData })
-		}
-		setOpenDayDialog(false)
-	}
-
-	// Handlers Time
 	const handleAddTime = () => {
-		setTimeFormData({})
+		setTimeFormData({ buildingId: selectedBuildingId || undefined })
 		setTimeDialogMode('create')
 		setOpenTimeDialog(true)
 	}
@@ -151,7 +107,7 @@ export default function DateView() {
 	}
 
 	const handleDeleteTime = () => {
-		if (selectedTimeId && confirm('Delete this time?')) {
+		if (selectedTimeId && confirm('Видалити цей час?')) {
 			deleteTimeMutation.mutate(selectedTimeId)
 		}
 	}
@@ -165,7 +121,6 @@ export default function DateView() {
 		setOpenTimeDialog(false)
 	}
 
-	// Binding Logic
 	const handleToggleTimeForDay = (timeId: number) => {
 		if (!selectedDayId) return
 		const day = days.find(d => d.id === selectedDayId)
@@ -192,20 +147,23 @@ export default function DateView() {
 		})
 	}
 
-	const dayColumns: GridColDef[] = [
-		{ field: 'name', headerName: 'Day Name', flex: 1 },
-	]
+	const filteredTimes = selectedBuildingId 
+		? times.filter(t => t.buildingId === selectedBuildingId)
+		: []
 
+	const dayColumns: GridColDef[] = [{ field: 'name', headerName: 'День', flex: 1 }]
+	const buildingColumns: GridColDef[] = [{ field: 'name', headerName: 'Корпус', flex: 1 }]
 	const timeColumns: GridColDef[] = [
 		{
 			field: 'belong',
-			headerName: 'Belong',
-			width: 70,
+			headerName: 'Є',
+			width: 60,
 			renderCell: (params: GridRenderCellParams) => {
 				const day = days.find(d => d.id === selectedDayId)
 				const isChecked = day?.times?.some(t => t.id === params.row.id) || false
 				return (
 					<Checkbox
+						size="small"
 						checked={isChecked}
 						disabled={!selectedDayId}
 						onChange={() => handleToggleTimeForDay(params.row.id as number)}
@@ -213,47 +171,15 @@ export default function DateView() {
 				)
 			},
 		},
-		{ field: 'start', headerName: 'Start Time', flex: 1 },
-		{ field: 'end', headerName: 'End Time', flex: 1 },
+		{ field: 'start', headerName: 'Початок', flex: 1 },
+		{ field: 'end', headerName: 'Кінець', flex: 1 },
 	]
 
 	return (
 		<Grid container spacing={2} sx={{ height: '100%' }}>
-			{/* Left Pane: Days */}
-			{/* Left Pane: Days */}
-			<Grid
-				size={6}
-				sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}
-			>
-				<Box
-					sx={{
-						display: 'flex',
-						justifyContent: 'space-between',
-						alignItems: 'center',
-						mb: 1,
-					}}
-				>
-					<Typography variant='subtitle1'>Days</Typography>
-					<Box>
-						<IconButton size='small' onClick={handleAddDay}>
-							<AddIcon />
-						</IconButton>
-						<IconButton
-							size='small'
-							disabled={!selectedDayId}
-							onClick={handleEditDay}
-						>
-							<EditIcon />
-						</IconButton>
-						<IconButton
-							size='small'
-							disabled={!selectedDayId}
-							onClick={handleDeleteDay}
-						>
-							<DeleteIcon />
-						</IconButton>
-					</Box>
-				</Box>
+			{/* 1. Days */}
+			<Grid size={4} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+				<Typography variant='subtitle2' gutterBottom sx={{ fontWeight: 'bold' }}>1. Оберіть День</Typography>
 				<Paper sx={{ flexGrow: 1 }}>
 					<DataGrid
 						rows={days}
@@ -262,129 +188,84 @@ export default function DateView() {
 						onRowClick={params => setSelectedDayId(params.row.id as number)}
 						density='compact'
 						hideFooter
-						getRowClassName={params =>
-							params.row.id === selectedDayId ? 'Mui-selected' : ''
-						}
-						sx={{
-							'& .Mui-selected': {
-								bgcolor: 'primary.light',
-								'&:hover': { bgcolor: 'primary.light' },
-							},
-						}}
+						getRowClassName={params => params.row.id === selectedDayId ? 'Mui-selected' : ''}
+						sx={{ '& .Mui-selected': { bgcolor: 'primary.light' } }}
 					/>
 				</Paper>
 			</Grid>
 
-			{/* Right Pane: Times */}
-			{/* Left Pane: Days */}
-			<Grid
-				size={6}
-				sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}
-			>
-				<Box
-					sx={{
-						display: 'flex',
-						justifyContent: 'space-between',
-						alignItems: 'center',
-						mb: 1,
-					}}
-				>
-					<Typography variant='subtitle1'>
-						{selectedDayId ? 'Times (Select to Bind)' : 'Times'}
-					</Typography>
+			{/* 2. Buildings */}
+			<Grid size={4} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+				<Typography variant='subtitle2' gutterBottom sx={{ fontWeight: 'bold' }}>2. Оберіть Корпус</Typography>
+				<Paper sx={{ flexGrow: 1 }}>
+					<DataGrid
+						rows={buildings}
+						columns={buildingColumns}
+						loading={isLoadingBuildings}
+						onRowClick={params => setSelectedBuildingId(params.row.id as number)}
+						density='compact'
+						hideFooter
+						getRowClassName={params => params.row.id === selectedBuildingId ? 'Mui-selected' : ''}
+						sx={{ '& .Mui-selected': { bgcolor: 'secondary.light' } }}
+					/>
+				</Paper>
+			</Grid>
+
+			{/* 3. Times */}
+			<Grid size={4} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+					<Typography variant='subtitle2' sx={{ fontWeight: 'bold' }}>3. Час (Прив'язка)</Typography>
 					<Box>
-						<IconButton size='small' onClick={handleAddTime}>
-							<AddIcon />
-						</IconButton>
-						<IconButton
-							size='small'
-							disabled={!selectedTimeId}
-							onClick={handleEditTime}
-						>
-							<EditIcon />
-						</IconButton>
-						<IconButton
-							size='small'
-							disabled={!selectedTimeId}
-							onClick={handleDeleteTime}
-						>
-							<DeleteIcon />
-						</IconButton>
+						<IconButton size='small' disabled={!selectedBuildingId} onClick={handleAddTime}><AddIcon fontSize="small"/></IconButton>
+						<IconButton size='small' disabled={!selectedTimeId} onClick={handleEditTime}><EditIcon fontSize="small"/></IconButton>
+						<IconButton size='small' disabled={!selectedTimeId} onClick={handleDeleteTime}><DeleteIcon fontSize="small"/></IconButton>
 					</Box>
 				</Box>
 				<Paper sx={{ flexGrow: 1 }}>
 					<DataGrid
-						rows={times}
+						rows={filteredTimes}
 						columns={timeColumns}
 						loading={isLoadingTimes}
 						onRowClick={params => setSelectedTimeId(params.row.id as number)}
 						density='compact'
 						hideFooter
-						getRowClassName={params =>
-							params.row.id === selectedTimeId ? 'Mui-selected' : ''
-						}
-						sx={{
-							'& .Mui-selected': {
-								bgcolor: 'primary.light',
-								'&:hover': { bgcolor: 'primary.light' },
-							},
-						}}
+						getRowClassName={params => params.row.id === selectedTimeId ? 'Mui-selected' : ''}
 					/>
 				</Paper>
 			</Grid>
 
-			{/* Day Dialog */}
-			<Dialog open={openDayDialog} onClose={() => setOpenDayDialog(false)}>
-				<DialogTitle>
-					{dayDialogMode === 'create' ? 'Add Day' : 'Edit Day'}
-				</DialogTitle>
-				<DialogContent>
-					<TextField
-						autoFocus
-						margin='dense'
-						label='Name'
-						fullWidth
-						value={dayFormData.name || ''}
-						onChange={e =>
-							setDayFormData({ ...dayFormData, name: e.target.value })
-						}
-					/>
-				</DialogContent>
-				<DialogActions>
-					<Button onClick={() => setOpenDayDialog(false)}>Cancel</Button>
-					<Button onClick={handleSubmitDay}>Save</Button>
-				</DialogActions>
-			</Dialog>
-
 			{/* Time Dialog */}
 			<Dialog open={openTimeDialog} onClose={() => setOpenTimeDialog(false)}>
-				<DialogTitle>
-					{timeDialogMode === 'create' ? 'Add Time' : 'Edit Time'}
-				</DialogTitle>
+				<DialogTitle>{timeDialogMode === 'create' ? 'Додати час' : 'Редагувати час'}</DialogTitle>
 				<DialogContent>
+					<FormControl fullWidth margin="dense">
+						<InputLabel>Корпус</InputLabel>
+						<Select
+							value={timeFormData.buildingId || ''}
+							label="Корпус"
+							onChange={e => setTimeFormData({ ...timeFormData, buildingId: e.target.value as number })}
+						>
+							{buildings.map(b => <MenuItem key={b.id} value={b.id}>{b.name}</MenuItem>)}
+						</Select>
+					</FormControl>
 					<TextField
-						autoFocus
 						margin='dense'
-						label='Start Time'
+						label='Початок'
 						fullWidth
 						value={timeFormData.start || ''}
-						onChange={e =>
-							setTimeFormData({ ...timeFormData, start: e.target.value })
-						}
+						onChange={e => setTimeFormData({ ...timeFormData, start: e.target.value })}
 					/>
 					<TextField
 						margin='dense'
-						label='End Time'
+						label='Кінець'
 						fullWidth
 						value={timeFormData.end || ''}
-						onChange={e =>
-							setTimeFormData({ ...timeFormData, end: e.target.value })
-						}
+						onChange={e => setTimeFormData({ ...timeFormData, end: e.target.value })}
 					/>
 				</DialogContent>
 				<DialogActions>
-					<Button onClick={() => setOpenTimeDialog(false)}>Cancel</Button>
-					<Button onClick={handleSubmitTime}>Save</Button>
+					<Button onClick={() => setOpenTimeDialog(false)}>Скасувати</Button>
+					<Button onClick={handleSubmitTime}>Зберегти</Button>
 				</DialogActions>
 			</Dialog>
 		</Grid>

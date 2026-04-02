@@ -4,6 +4,7 @@ import {
 	createSubject,
 	deleteSubject,
 	fetchSubjects,
+	fetchFaculties,
 	Subject,
 	updateSubject,
 } from '@/lib/api/scheduleApi'
@@ -24,6 +25,10 @@ import {
 	Paper,
 	TextField,
 	Typography,
+	FormControl,
+	InputLabel,
+	Select,
+	MenuItem,
 } from '@mui/material'
 import { DataGrid, GridColDef } from '@mui/x-data-grid'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -34,6 +39,11 @@ export default function SubjectView() {
 	const [selectedSubjectId, setSelectedSubjectId] = useState<number | null>(
 		null
 	)
+
+	const { data: faculties = [] } = useQuery({
+		queryKey: ['faculties'],
+		queryFn: fetchFaculties,
+	})
 
 	const { data: subjects = [], isLoading } = useQuery({
 		queryKey: ['subjects'],
@@ -95,7 +105,8 @@ export default function SubjectView() {
 	}
 
 	const columns: GridColDef[] = [
-		{ field: 'name', headerName: 'Subject Name', flex: 1 },
+		{ field: 'name', headerName: 'Назва предмета', flex: 1 },
+		{ field: 'facultyName', headerName: 'Факультет', width: 200 },
 	]
 
 	return (
@@ -112,7 +123,7 @@ export default function SubjectView() {
 						mb: 1,
 					}}
 				>
-					<Typography variant='subtitle1'>Subjects</Typography>
+					<Typography variant='subtitle1'>Предмети</Typography>
 					<Box>
 						<IconButton size='small' onClick={handleAdd}>
 							<AddIcon />
@@ -156,21 +167,39 @@ export default function SubjectView() {
 
 			<Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
 				<DialogTitle>
-					{dialogMode === 'create' ? 'Add Subject' : 'Edit Subject'}
+					{dialogMode === 'create' ? 'Додати предмет' : 'Редагувати предмет'}
 				</DialogTitle>
 				<DialogContent>
+					<FormControl fullWidth margin="dense">
+						<InputLabel>Факультет</InputLabel>
+						<Select
+							value={formData.facultyId || ''}
+							label="Факультет"
+							onChange={e =>
+								setFormData({
+									...formData,
+									facultyId: e.target.value as number,
+								})
+							}
+						>
+							{faculties.map(f => (
+								<MenuItem key={f.id} value={f.id}>
+									{f.name}
+								</MenuItem>
+							))}
+						</Select>
+					</FormControl>
 					<TextField
-						autoFocus
 						margin='dense'
-						label='Name'
+						label='Назва'
 						fullWidth
 						value={formData.name || ''}
 						onChange={e => setFormData({ ...formData, name: e.target.value })}
 					/>
 				</DialogContent>
 				<DialogActions>
-					<Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-					<Button onClick={handleSubmit}>Save</Button>
+					<Button onClick={() => setOpenDialog(false)}>Скасувати</Button>
+					<Button onClick={handleSubmit}>Зберегти</Button>
 				</DialogActions>
 			</Dialog>
 		</Grid>

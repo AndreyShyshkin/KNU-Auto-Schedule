@@ -5,6 +5,8 @@ import org.springframework.web.bind.annotation.*;
 import ua.kiev.univ.schedule.dto.TimeDto;
 import ua.kiev.univ.schedule.mapper.DtoMapper;
 import ua.kiev.univ.schedule.model.date.Time;
+import ua.kiev.univ.schedule.model.placement.Building;
+import ua.kiev.univ.schedule.repository.BuildingRepository;
 import ua.kiev.univ.schedule.repository.TimeRepository;
 
 import java.util.List;
@@ -15,9 +17,11 @@ import java.util.stream.Collectors;
 public class TimeController {
 
     private final TimeRepository timeRepository;
+    private final BuildingRepository buildingRepository;
 
-    public TimeController(TimeRepository timeRepository) {
+    public TimeController(TimeRepository timeRepository, BuildingRepository buildingRepository) {
         this.timeRepository = timeRepository;
+        this.buildingRepository = buildingRepository;
     }
 
     @GetMapping
@@ -29,7 +33,8 @@ public class TimeController {
 
     @PostMapping
     public TimeDto create(@RequestBody TimeDto dto) {
-        Time time = DtoMapper.toEntity(dto);
+        Building building = dto.getBuildingId() != null ? buildingRepository.findById(dto.getBuildingId()).orElse(null) : null;
+        Time time = DtoMapper.toEntity(dto, building);
         return DtoMapper.toDto(timeRepository.save(time));
     }
 
@@ -37,7 +42,8 @@ public class TimeController {
     public ResponseEntity<TimeDto> update(@PathVariable Long id, @RequestBody TimeDto dto) {
         if (!timeRepository.existsById(id)) return ResponseEntity.notFound().build();
         dto.setId(id);
-        Time time = DtoMapper.toEntity(dto);
+        Building building = dto.getBuildingId() != null ? buildingRepository.findById(dto.getBuildingId()).orElse(null) : null;
+        Time time = DtoMapper.toEntity(dto, building);
         return ResponseEntity.ok(DtoMapper.toDto(timeRepository.save(time)));
     }
 

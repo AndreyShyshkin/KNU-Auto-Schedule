@@ -1,5 +1,6 @@
 'use client'
 
+import BuildingView from '@/components/views/BuildingView'
 import ChairView from '@/components/views/ChairView'
 import DateView from '@/components/views/DateView'
 import GroupView from '@/components/views/GroupView'
@@ -21,8 +22,14 @@ import {
 	Toolbar,
 	Typography,
 	Divider,
+	Dialog,
+	DialogTitle,
+	DialogContent,
+	IconButton,
 } from '@mui/material'
 import OpenInNewIcon from '@mui/icons-material/OpenInNew'
+import StorageIcon from '@mui/icons-material/Storage'
+import CloseIcon from '@mui/icons-material/Close'
 import axios from 'axios'
 import { useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
@@ -54,6 +61,7 @@ export default function Home() {
 	const [value, setValue] = useState(0)
 	const [isBuilding, setIsBuilding] = useState(false)
 	const [lastStatus, setLastStatus] = useState<any>(null)
+	const [openDataModal, setOpenDataModal] = useState(false)
 	const queryClient = useQueryClient()
 
 	const handleChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -102,7 +110,7 @@ export default function Home() {
 			}}
 		>
 			<AppBar position='static' color='default' elevation={1}>
-				<Toolbar variant='dense'>
+				<Toolbar variant='dense' sx={{ gap: 1 }}>
 					<Typography
 						variant='h6'
 						color='inherit'
@@ -111,12 +119,23 @@ export default function Home() {
 					>
 						KNU Schedule - Управління
 					</Typography>
+
+					<Button
+						startIcon={<StorageIcon />}
+						variant="outlined"
+						size="small"
+						onClick={() => setOpenDataModal(true)}
+					>
+						Імпорт/Експорт
+					</Button>
+
 					<Button
 						component={Link}
 						href="/results"
 						startIcon={<OpenInNewIcon />}
-						variant="outlined"
+						variant="contained"
 						size="small"
+						color="primary"
 					>
 						Переглянути розклад
 					</Button>
@@ -141,6 +160,7 @@ export default function Home() {
 							variant='scrollable'
 							scrollButtons='auto'
 						>
+							<Tab label='Building' />
 							<Tab label='Date' />
 							<Tab label='Chair' />
 							<Tab label='Speciality' />
@@ -149,7 +169,6 @@ export default function Home() {
 							<Tab label='Placement' />
 							<Tab label='Subject' />
 							<Tab label='Lesson' />
-							<Tab label='Data' />
 						</Tabs>
 					</Box>
 
@@ -157,31 +176,31 @@ export default function Home() {
 						sx={{ flexGrow: 1, overflow: 'auto', bgcolor: 'background.paper' }}
 					>
 						<TabPanel value={value} index={0}>
-							<DateView />
+							<BuildingView />
 						</TabPanel>
 						<TabPanel value={value} index={1}>
-							<ChairView />
+							<DateView />
 						</TabPanel>
 						<TabPanel value={value} index={2}>
-							<SpecialityView />
+							<ChairView />
 						</TabPanel>
 						<TabPanel value={value} index={3}>
-							<TeacherView />
+							<SpecialityView />
 						</TabPanel>
 						<TabPanel value={value} index={4}>
-							<GroupView />
+							<TeacherView />
 						</TabPanel>
 						<TabPanel value={value} index={5}>
-							<PlacementView />
+							<GroupView />
 						</TabPanel>
 						<TabPanel value={value} index={6}>
-							<SubjectView />
+							<PlacementView />
 						</TabPanel>
 						<TabPanel value={value} index={7}>
-							<LessonView />
+							<SubjectView />
 						</TabPanel>
 						<TabPanel value={value} index={8}>
-							<DataExchangeView />
+							<LessonView />
 						</TabPanel>
 					</Box>
 				</Box>
@@ -283,7 +302,24 @@ export default function Home() {
 					</Box>
 				</Box>
 			</Box>
+
+			{/* Data Exchange Modal */}
+			<Dialog 
+				open={openDataModal} 
+				onClose={() => setOpenDataModal(false)}
+				maxWidth="md"
+				fullWidth
+			>
+				<DialogTitle sx={{ m: 0, p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+					Імпорт та Експорт даних
+					<IconButton onClick={() => setOpenDataModal(false)}>
+						<CloseIcon />
+					</IconButton>
+				</DialogTitle>
+				<DialogContent dividers>
+					<DataExchangeView />
+				</DialogContent>
+			</Dialog>
 		</Box>
 	)
 }
-

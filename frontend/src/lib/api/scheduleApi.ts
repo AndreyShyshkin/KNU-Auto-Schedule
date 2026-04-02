@@ -1,5 +1,30 @@
 import axios from 'axios'
 
+export interface Building {
+	id: number
+	name: string
+	description: string
+}
+
+export const fetchBuildings = async (): Promise<Building[]> => {
+	const { data } = await axios.get('/api/buildings')
+	return data
+}
+
+export const createBuilding = async (building: Partial<Building>): Promise<Building> => {
+	const { data } = await axios.post('/api/buildings', building)
+	return data
+}
+
+export const updateBuilding = async (id: number, building: Partial<Building>): Promise<Building> => {
+	const { data } = await axios.put(`/api/buildings/${id}`, building)
+	return data
+}
+
+export const deleteBuilding = async (id: number): Promise<void> => {
+	await axios.delete(`/api/buildings/${id}`)
+}
+
 export interface Faculty {
 	id: number
 	name: string
@@ -87,6 +112,8 @@ export interface Group {
 export interface Subject {
 	id: number
 	name: string
+	facultyId?: number
+	facultyName?: string
 }
 
 export const fetchSpecialities = async (): Promise<Speciality[]> => {
@@ -133,7 +160,7 @@ export const deleteSpeciality = async (id: number): Promise<void> => {
 export const createTeacher = async (
 	teacher: Partial<Teacher>
 ): Promise<Teacher> => {
-	const { data } = await axios.post('/api/teachers', teacher)
+	const { data = null } = await axios.post('/api/teachers', teacher)
 	return data
 }
 
@@ -231,6 +258,8 @@ export interface Earmark {
 	id: number
 	name: string
 	size: number
+	buildingId?: number
+	buildingName?: string
 }
 
 export interface Auditorium {
@@ -238,12 +267,16 @@ export interface Auditorium {
 	name: string
 	earmarkId: number
 	earmarkName: string
+	buildingId?: number
+	buildingName?: string
 }
 
 export interface Time {
 	id: number
 	start: string
 	end: string
+	buildingId?: number
+	buildingName?: string
 }
 
 // --- Day ---
@@ -314,6 +347,10 @@ export interface Lesson {
 	subjectName: string
 	earmarkId: number
 	earmarkName: string
+	buildingId?: number
+	buildingName?: string
+	auditoriumId?: number
+	auditoriumName?: string
 	count: number
 	teacherIds: number[]
 	teacherNames: string[]

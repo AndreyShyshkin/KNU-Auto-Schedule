@@ -2,8 +2,10 @@ package ua.kiev.univ.schedule.model.date;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import ua.kiev.univ.schedule.model.core.EnablableEntity;
+import ua.kiev.univ.schedule.model.placement.Building;
 import ua.kiev.univ.schedule.util.StringUtils;
 
 import java.io.DataInputStream;
@@ -20,11 +22,15 @@ public class Time extends EnablableEntity {
     @Column(name = "end_time")
     private String end = "";
 
+    @ManyToOne
+    private Building building;
+
     @Override
     public void read(DataInputStream is) throws IOException {
         super.read(is);
         start = is.readUTF();
         end = is.readUTF();
+        building = readEntity(Building.class, is);
     }
 
     @Override
@@ -32,12 +38,12 @@ public class Time extends EnablableEntity {
         super.write(os);
         os.writeUTF(start);
         os.writeUTF(end);
+        writeEntity(building, Building.class, os);
     }
 
     @Override
     public boolean isActive() {
-        // StringUtils буде підсвічуватися червоним, поки ми не створимо папку util
-        return super.isActive() && !StringUtils.isBlank(start) && !StringUtils.isBlank(end);
+        return super.isActive() && !StringUtils.isBlank(start) && !StringUtils.isBlank(end) && (building == null || building.isActive());
     }
 
     @Override
@@ -59,5 +65,13 @@ public class Time extends EnablableEntity {
 
     public void setEnd(String end) {
         this.end = end;
+    }
+
+    public Building getBuilding() {
+        return building;
+    }
+
+    public void setBuilding(Building building) {
+        this.building = building;
     }
 }

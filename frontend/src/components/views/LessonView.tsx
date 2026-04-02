@@ -8,6 +8,8 @@ import {
 	fetchLessons,
 	fetchSubjects,
 	fetchTeachers,
+	fetchBuildings,
+	fetchAuditoriums,
 	Lesson,
 	updateLesson,
 } from '@/lib/api/scheduleApi'
@@ -35,6 +37,7 @@ import {
 	SelectChangeEvent,
 	TextField,
 	Typography,
+	Divider,
 } from '@mui/material'
 import { DataGrid, GridColDef } from '@mui/x-data-grid'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -64,6 +67,14 @@ export default function LessonView() {
 	const { data: groups = [] } = useQuery({
 		queryKey: ['groups'],
 		queryFn: fetchGroups,
+	})
+	const { data: buildings = [] } = useQuery({
+		queryKey: ['buildings'],
+		queryFn: fetchBuildings,
+	})
+	const { data: auditoriums = [] } = useQuery({
+		queryKey: ['auditoriums'],
+		queryFn: fetchAuditoriums,
 	})
 
 	// Mutations
@@ -127,22 +138,33 @@ export default function LessonView() {
 		setOpenDialog(false)
 	}
 
+	// Logic for filtered selection in dialog
+	const filteredEarmarks = formData.buildingId 
+		? earmarks.filter(e => e.buildingId === formData.buildingId)
+		: []
+
+	const filteredAuditoriums = (formData.buildingId && formData.earmarkId)
+		? auditoriums.filter(a => a.buildingId === formData.buildingId && a.earmarkId === formData.earmarkId)
+		: []
+
 	const columns: GridColDef[] = [
-		{ field: 'subjectName', headerName: 'Subject', flex: 1 },
-		{ field: 'earmarkName', headerName: 'Earmark', width: 120 },
+		{ field: 'subjectName', headerName: 'Предмет', flex: 1 },
+		{ field: 'buildingName', headerName: 'Корпус', width: 120 },
+		{ field: 'auditoriumName', headerName: 'Аудиторія', width: 120 },
+		{ field: 'earmarkName', headerName: 'Тип', width: 100 },
 		{
 			field: 'teacherNames',
-			headerName: 'Teachers',
+			headerName: 'Викладачі',
 			flex: 1,
 			valueGetter: (value: string[]) => (value ? value.join(', ') : ''),
 		},
 		{
 			field: 'groupNames',
-			headerName: 'Groups',
+			headerName: 'Групи',
 			flex: 1,
 			valueGetter: (value: string[]) => (value ? value.join(', ') : ''),
 		},
-		{ field: 'count', headerName: 'Count', width: 70 },
+		{ field: 'count', headerName: 'К-ть', width: 60 },
 	]
 
 	return (
@@ -159,7 +181,7 @@ export default function LessonView() {
 						mb: 1,
 					}}
 				>
-					<Typography variant='subtitle1'>Lessons</Typography>
+					<Typography variant='subtitle1'>Заняття (Уроки)</Typography>
 					<Box>
 						<IconButton size='small' onClick={handleAdd}>
 							<AddIcon />
@@ -208,16 +230,16 @@ export default function LessonView() {
 				fullWidth
 			>
 				<DialogTitle>
-					{dialogMode === 'create' ? 'Add Lesson' : 'Edit Lesson'}
+					{dialogMode === 'create' ? 'Додати заняття' : 'Редагувати заняття'}
 				</DialogTitle>
 				<DialogContent>
 					<Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
 						{/* Subject */}
 						<FormControl fullWidth size='small'>
-							<InputLabel>Subject</InputLabel>
+							<InputLabel>Предмет</InputLabel>
 							<Select
 								value={formData.subjectId || ''}
-								label='Subject'
+								label='Предмет'
 								onChange={e =>
 									setFormData({
 										...formData,
@@ -233,30 +255,78 @@ export default function LessonView() {
 							</Select>
 						</FormControl>
 
-						{/* Earmark */}
+						{/* Building */}
 						<FormControl fullWidth size='small'>
-							<InputLabel>Earmark</InputLabel>
+							<InputLabel>1. Корпус</InputLabel>
 							<Select
-								value={formData.earmarkId || ''}
-								label='Earmark'
+								value={formData.buildingId || ''}
+								label='1. Корпус'
 								onChange={e =>
 									setFormData({
 										...formData,
-										earmarkId: Number(e.target.value),
+										buildingId: Number(e.target.value),
+										earmarkId: undefined, // Reset subsequent steps
+										auditoriumId: undefined 
 									})
 								}
 							>
-								{earmarks.map(e => (
-									<MenuItem key={e.id} value={e.id}>
-										{e.name} ({e.size})
+								{buildings.map(b => (
+									<MenuItem key={b.id} value={b.id}>
+										{b.name}
 									</MenuItem>
 								))}
 							</Select>
 						</FormControl>
 
+						{/* Earmark */}
+						<FormControl fullWidth size='small' disabled={!formData.buildingId}>
+							<InputLabel>2. Тип аудиторії (Earmark)</InputLabel>
+							<Select
+								value={formData.earmarkId || ''}
+								label='2. Тип аудиторії (Earmark)'
+								onChange={e =>
+									setFormData({
+										...formData,
+										earmarkId: Number(e.target.value),
+										auditoriumId: undefined // Reset subsequent step
+									})
+								}
+							>
+								{filteredEarmarks.map(e => (
+									<MenuItem key={e.id} value={e.id}>
+										{e.name}
+									</MenuItem>
+								))}
+							</Select>
+						</FormControl>
+
+						{/* Specific Auditorium */}
+						<FormControl fullWidth size='small' disabled={!formData.earmarkId}>
+							<InputLabel>3. Конкретна аудиторія (Cabinet)</InputLabel>
+							<Select
+								value={formData.auditoriumId || ''}
+								label="3. Конкретна аудиторія (Cabinet)"
+								onChange={e =>
+									setFormData({
+										...formData,
+										auditoriumId: e.target.value ? Number(e.target.value) : undefined,
+									})
+								}
+							>
+								<MenuItem value=""><em>Автоматичний вибір</em></MenuItem>
+								{filteredAuditoriums.map(a => (
+									<MenuItem key={a.id} value={a.id}>
+										{a.name}
+									</MenuItem>
+								))}
+							</Select>
+						</FormControl>
+
+						<Divider sx={{ my: 1 }} />
+
 						{/* Teachers (Multi-select) */}
 						<FormControl fullWidth size='small'>
-							<InputLabel>Teachers</InputLabel>
+							<InputLabel>Викладачі</InputLabel>
 							<Select
 								multiple
 								value={(formData.teacherIds || []) as any}
@@ -270,7 +340,7 @@ export default function LessonView() {
 												: value,
 									})
 								}}
-								input={<OutlinedInput label='Teachers' />}
+								input={<OutlinedInput label='Викладачі' />}
 								renderValue={(selected: any[]) => (
 									<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
 										{selected.map(value => {
@@ -292,7 +362,7 @@ export default function LessonView() {
 
 						{/* Groups (Multi-select) */}
 						<FormControl fullWidth size='small'>
-							<InputLabel>Groups</InputLabel>
+							<InputLabel>Групи</InputLabel>
 							<Select
 								multiple
 								value={(formData.groupIds || []) as any}
@@ -306,7 +376,7 @@ export default function LessonView() {
 												: value,
 									})
 								}}
-								input={<OutlinedInput label='Groups' />}
+								input={<OutlinedInput label='Групи' />}
 								renderValue={(selected: any[]) => (
 									<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
 										{selected.map(value => {
@@ -329,7 +399,7 @@ export default function LessonView() {
 						{/* Count */}
 						<TextField
 							margin='dense'
-							label='Count'
+							label='К-ть годин (пар на 2 тижні)'
 							type='number'
 							fullWidth
 							size='small'
@@ -341,8 +411,8 @@ export default function LessonView() {
 					</Box>
 				</DialogContent>
 				<DialogActions>
-					<Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-					<Button onClick={handleSubmit}>Save</Button>
+					<Button onClick={() => setOpenDialog(false)}>Скасувати</Button>
+					<Button onClick={handleSubmit}>Зберегти</Button>
 				</DialogActions>
 			</Dialog>
 		</Grid>

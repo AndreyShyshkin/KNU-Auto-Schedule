@@ -5,6 +5,8 @@ public class AuditoriumDto {
     private String name;
     private Long earmarkId;
     private String earmarkName;
+    private Long buildingId;
+    private String buildingName;
 
     public AuditoriumDto() {}
 
@@ -16,4 +18,8 @@ public class AuditoriumDto {
     public void setEarmarkId(Long earmarkId) { this.earmarkId = earmarkId; }
     public String getEarmarkName() { return earmarkName; }
     public void setEarmarkName(String earmarkName) { this.earmarkName = earmarkName; }
+    public Long getBuildingId() { return buildingId; }
+    public void setBuildingId(Long buildingId) { this.buildingId = buildingId; }
+    public String getBuildingName() { return buildingName; }
+    public void setBuildingName(String buildingName) { this.buildingName = buildingName; }
 }

@@ -11,6 +11,7 @@ import ua.kiev.univ.schedule.model.lesson.Lesson;
 import ua.kiev.univ.schedule.model.member.Group;
 import ua.kiev.univ.schedule.model.member.Teacher;
 import ua.kiev.univ.schedule.model.placement.Auditorium;
+import ua.kiev.univ.schedule.model.placement.Building;
 import ua.kiev.univ.schedule.model.placement.Earmark;
 import ua.kiev.univ.schedule.model.subject.Subject;
 import ua.kiev.univ.schedule.util.HtmlUtils;
@@ -24,6 +25,7 @@ public class DataService {
     private static final Map<Class<? extends Entity>, EntityList<?>> entitiesMap = new LinkedHashMap<>();
 
     static {
+        addList(Building.class);
         addList(Time.class);
         addList(Day.class);
         addList(Faculty.class);

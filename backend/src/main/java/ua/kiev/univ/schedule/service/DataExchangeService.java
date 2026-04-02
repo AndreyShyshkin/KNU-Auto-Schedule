@@ -24,6 +24,7 @@ public class DataExchangeService {
     private final DataInitializationService dataInitializationService;
 
     public DataExchangeService(ObjectMapper objectMapper,
+                               BuildingRepository buildingRepository,
                                TimeRepository timeRepository,
                                DayRepository dayRepository,
                                FacultyRepository facultyRepository,
@@ -41,6 +42,7 @@ public class DataExchangeService {
         this.dataInitializationService = dataInitializationService;
         
         this.repositories = new LinkedHashMap<>();
+        repositories.put("buildings", buildingRepository);
         repositories.put("times", timeRepository);
         repositories.put("days", dayRepository);
         repositories.put("faculties", facultyRepository);
@@ -130,6 +132,7 @@ public class DataExchangeService {
 
     private Class<?> getEntityClass(String tableName) {
         return switch (tableName) {
+            case "buildings" -> ua.kiev.univ.schedule.model.placement.Building.class;
             case "times" -> ua.kiev.univ.schedule.model.date.Time.class;
             case "days" -> ua.kiev.univ.schedule.model.date.Day.class;
             case "faculties" -> ua.kiev.univ.schedule.model.department.Faculty.class;

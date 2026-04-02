@@ -8,20 +8,25 @@ import ua.kiev.univ.schedule.model.lesson.Lesson;
 import ua.kiev.univ.schedule.model.member.Group;
 import ua.kiev.univ.schedule.model.member.Teacher;
 import ua.kiev.univ.schedule.model.placement.Auditorium;
+import ua.kiev.univ.schedule.model.placement.Building;
 import ua.kiev.univ.schedule.model.placement.Earmark;
 import ua.kiev.univ.schedule.model.subject.Subject;
 import ua.kiev.univ.schedule.scheduler.ColorMap;
 import ua.kiev.univ.schedule.scheduler.Progress;
 import ua.kiev.univ.schedule.scheduler.auditoriumRepository.AuditoriumRepository;
 import ua.kiev.univ.schedule.scheduler.auditoriumRepository.AuditoriumRepositoryFactory;
+import ua.kiev.univ.schedule.scheduler.auditoriumRepository.BuildingEarmark;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class Point {
 
     private final Subject subject;
+    private final Auditorium fixedAuditorium;
+    private final Building building;
     public List<Group> groups;
     private final List<Teacher> teachers;
     public int[] colors;
@@ -35,25 +40,41 @@ public class Point {
     public int both;
     public int part;
 
-    public static Point getPoint(Lesson lesson, List<Date> dates, List<Earmark> earmarks, RestrictionMap restrictionMap) {
+    public static Point getPoint(Lesson lesson, List<Date> dates, List<BuildingEarmark> types, RestrictionMap restrictionMap) {
         if (lesson.getCount() % 2 == 0) {
-            return new Point(lesson, dates, earmarks, restrictionMap);
+            return new Point(lesson, dates, types, restrictionMap);
         } else {
-            return new HalvedPoint(lesson, dates, earmarks, restrictionMap);
+            return new HalvedPoint(lesson, dates, types, restrictionMap);
         }
     }
 
-    protected Point(Lesson lesson, List<Date> dates, List<Earmark> earmarks, RestrictionMap restrictionMap) {
+    protected Point(Lesson lesson, List<Date> dates, List<BuildingEarmark> types, RestrictionMap restrictionMap) {
         int count = dates.size();
         this.subject = lesson.getSubject();
+        this.fixedAuditorium = lesson.getAuditorium();
+        // Пріоритет: будівля з уроку -> будівля з обраної аудиторії -> null
+        this.building = lesson.getBuilding() != null ? lesson.getBuilding() : (fixedAuditorium != null ? fixedAuditorium.getBuilding() : null);
+        
         this.groups = new LinkedList<>(lesson.getGroups());
         this.teachers = new LinkedList<>(lesson.getTeachers());
-        this.earmark = earmarks.indexOf(lesson.getEarmark());
+        this.earmark = types.indexOf(new BuildingEarmark(this.building, lesson.getEarmark()));
         this.size = this.teachers.size();
         this.restriction = new int[count];
 
         restrictionMap.addRestrictions(lesson.getGroups(), this);
         restrictionMap.addRestrictions(lesson.getTeachers(), this);
+
+        // Додаємо жорстке обмеження: заняття не може бути в слоті, який належить іншому корпусу
+        for (int i = 0; i < count; i++) {
+            Building slotBuilding = dates.get(i).getTime().getBuilding();
+            if (this.building != null && slotBuilding != null) {
+                if (!Objects.equals(slotBuilding.getId(), this.building.getId())) {
+                    this.restriction[i] += 10000;
+                }
+            } else if (!Objects.equals(this.building, slotBuilding)) {
+                this.restriction[i] += 10000;
+            }
+        }
 
         int pairCount = lesson.getCount() / 2;
         colors = new int[pairCount];
@@ -107,7 +128,12 @@ public class Point {
 
         for (int color : colors) {
             Date date = dates.get(colorMap.getDate(color));
-            List<Auditorium> auditoriums = repository.getAuditoriums(color, earmark, size);
+            List<Auditorium> auditoriums;
+            if (fixedAuditorium != null) {
+                auditoriums = List.of(fixedAuditorium);
+            } else {
+                auditoriums = repository.getAuditoriums(color, earmark, size);
+            }
             auditoriumMap.put(date, auditoriums);
         }
     }

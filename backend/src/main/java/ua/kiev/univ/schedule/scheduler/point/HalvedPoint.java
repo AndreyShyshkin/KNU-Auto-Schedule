@@ -5,11 +5,11 @@ import ua.kiev.univ.schedule.model.appointment.Part;
 import ua.kiev.univ.schedule.model.date.Date;
 import ua.kiev.univ.schedule.model.lesson.Lesson;
 import ua.kiev.univ.schedule.model.placement.Auditorium;
-import ua.kiev.univ.schedule.model.placement.Earmark;
 import ua.kiev.univ.schedule.scheduler.ColorMap;
 import ua.kiev.univ.schedule.scheduler.Progress;
 import ua.kiev.univ.schedule.scheduler.auditoriumRepository.AuditoriumRepository;
 import ua.kiev.univ.schedule.scheduler.auditoriumRepository.AuditoriumRepositoryFactory;
+import ua.kiev.univ.schedule.scheduler.auditoriumRepository.BuildingEarmark;
 
 import java.util.List;
 
@@ -19,8 +19,8 @@ public class HalvedPoint extends Point {
     public int max;
     public Part part;
 
-    protected HalvedPoint(Lesson lesson, List<Date> dates, List<Earmark> earmarks, RestrictionMap restrictionMap) {
-        super(lesson, dates, earmarks, restrictionMap);
+    protected HalvedPoint(Lesson lesson, List<Date> dates, List<BuildingEarmark> types, RestrictionMap restrictionMap) {
+        super(lesson, dates, types, restrictionMap);
         Progress.DONE.value++;
     }
 

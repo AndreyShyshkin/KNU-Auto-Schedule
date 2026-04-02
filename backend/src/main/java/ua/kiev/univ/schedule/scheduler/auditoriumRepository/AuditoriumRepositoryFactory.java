@@ -1,8 +1,8 @@
 package ua.kiev.univ.schedule.scheduler.auditoriumRepository;
 
 import ua.kiev.univ.schedule.model.appointment.Part;
+import ua.kiev.univ.schedule.model.date.Date;
 import ua.kiev.univ.schedule.model.placement.Auditorium;
-import ua.kiev.univ.schedule.model.placement.Earmark;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -15,7 +15,7 @@ public class AuditoriumRepositoryFactory {
     private final Map<Part, AuditoriumRepository> map = new HashMap<>();
 
     @SuppressWarnings("unchecked")
-    public AuditoriumRepositoryFactory(int count, List<Earmark> types, List<Auditorium> auditoriums) {
+    public AuditoriumRepositoryFactory(int count, List<BuildingEarmark> types, List<Auditorium> auditoriums, List<Date> dates) {
         int size = types.size();
 
         // Масиви лічильників: [ТипАудиторії][ЧасовийСлот]
@@ -29,9 +29,10 @@ public class AuditoriumRepositoryFactory {
             lists[i] = new LinkedList<>();
         }
 
-        // Розподіл аудиторій по списках відповідно до їх типу (Earmark)
+        // Розподіл аудиторій по списках відповідно до їх типу (Earmark + Building)
         for (Auditorium auditorium : auditoriums) {
-            int i = types.indexOf(auditorium.getEarmark());
+            BuildingEarmark be = new BuildingEarmark(auditorium.getBuilding(), auditorium.getEarmark());
+            int i = types.indexOf(be);
             if (i >= 0) {
                 lists[i].add(auditorium);
             }
@@ -53,9 +54,9 @@ public class AuditoriumRepositoryFactory {
             }
         }
 
-        map.put(Part.BOTH, new BothAuditoriumRepository(bothAmount, firstAmount, secondAmount, lists, bothIterators));
-        map.put(Part.FIRST, new PartAuditoriumRepository(firstAmount, bothAmount, lists, firstIterators));
-        map.put(Part.SECOND, new PartAuditoriumRepository(secondAmount, bothAmount, lists, secondIterators));
+        map.put(Part.BOTH, new BothAuditoriumRepository(bothAmount, firstAmount, secondAmount, lists, bothIterators, dates, types));
+        map.put(Part.FIRST, new PartAuditoriumRepository(firstAmount, bothAmount, lists, firstIterators, dates, types));
+        map.put(Part.SECOND, new PartAuditoriumRepository(secondAmount, bothAmount, lists, secondIterators, dates, types));
     }
 
     public AuditoriumRepository getAuditoriumRepository(Part part) {

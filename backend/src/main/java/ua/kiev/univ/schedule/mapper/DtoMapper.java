@@ -9,6 +9,7 @@ import ua.kiev.univ.schedule.model.member.Teacher;
 import ua.kiev.univ.schedule.model.subject.Subject;
 
 import ua.kiev.univ.schedule.model.placement.Auditorium;
+import ua.kiev.univ.schedule.model.placement.Building;
 import ua.kiev.univ.schedule.model.placement.Earmark;
 
 import ua.kiev.univ.schedule.model.date.Day;
@@ -20,11 +21,12 @@ import ua.kiev.univ.schedule.model.lesson.Lesson;
 
 public class DtoMapper {
 
-    public static Time toEntity(TimeDto dto) {
+    public static Time toEntity(TimeDto dto, Building building) {
         Time time = new Time();
         time.setId(dto.getId());
         time.setStart(dto.getStart());
         time.setEnd(dto.getEnd());
+        time.setBuilding(building);
         return time;
     }
 
@@ -36,6 +38,19 @@ public class DtoMapper {
             day.setTimes(times);
         }
         return day;
+    }
+
+    public static Lesson toEntity(LessonDto dto, Subject subject, Earmark earmark, Building building, Auditorium auditorium, List<Teacher> teachers, List<Group> groups) {
+        Lesson lesson = new Lesson();
+        lesson.setId(dto.getId());
+        lesson.setSubject(subject);
+        lesson.setEarmark(earmark);
+        lesson.setBuilding(building);
+        lesson.setAuditorium(auditorium);
+        lesson.setTeachers(teachers);
+        lesson.setGroups(groups);
+        lesson.setCount(dto.getCount());
+        return lesson;
     }
 
     public static LessonDto toDto(Lesson lesson) {
@@ -51,6 +66,18 @@ public class DtoMapper {
             dto.setEarmarkId(lesson.getEarmark().getId());
             dto.setEarmarkName(lesson.getEarmark().getName());
         }
+        if (lesson.getBuilding() != null) {
+            dto.setBuildingId(lesson.getBuilding().getId());
+            dto.setBuildingName(lesson.getBuilding().getName());
+        }
+        if (lesson.getAuditorium() != null) {
+            dto.setAuditoriumId(lesson.getAuditorium().getId());
+            dto.setAuditoriumName(lesson.getAuditorium().getName());
+            if (dto.getBuildingId() == null && lesson.getAuditorium().getBuilding() != null) {
+                dto.setBuildingId(lesson.getAuditorium().getBuilding().getId());
+                dto.setBuildingName(lesson.getAuditorium().getBuilding().getName());
+            }
+        }
         dto.setTeacherIds(lesson.getTeachers().stream().map(Teacher::getId).collect(Collectors.toList()));
         dto.setTeacherNames(lesson.getTeachers().stream().map(Teacher::getName).collect(Collectors.toList()));
         dto.setGroupIds(lesson.getGroups().stream().map(Group::getId).collect(Collectors.toList()));
@@ -64,6 +91,10 @@ public class DtoMapper {
         dto.setId(time.getId());
         dto.setStart(time.getStart());
         dto.setEnd(time.getEnd());
+        if (time.getBuilding() != null) {
+            dto.setBuildingId(time.getBuilding().getId());
+            dto.setBuildingName(time.getBuilding().getName());
+        }
         return dto;
     }
 
@@ -86,6 +117,10 @@ public class DtoMapper {
         dto.setId(earmark.getId());
         dto.setName(earmark.getName());
         dto.setSize(earmark.getSize());
+        if (earmark.getBuilding() != null) {
+            dto.setBuildingId(earmark.getBuilding().getId());
+            dto.setBuildingName(earmark.getBuilding().getName());
+        }
         return dto;
     }
 
@@ -97,6 +132,10 @@ public class DtoMapper {
         if (auditorium.getEarmark() != null) {
             dto.setEarmarkId(auditorium.getEarmark().getId());
             dto.setEarmarkName(auditorium.getEarmark().getName());
+        }
+        if (auditorium.getBuilding() != null) {
+            dto.setBuildingId(auditorium.getBuilding().getId());
+            dto.setBuildingName(auditorium.getBuilding().getName());
         }
         return dto;
     }
@@ -127,10 +166,11 @@ public class DtoMapper {
         return speciality;
     }
 
-    public static Subject toEntity(SubjectDto dto) {
+    public static Subject toEntity(SubjectDto dto, Faculty faculty) {
         Subject subject = new Subject();
         subject.setId(dto.getId());
         subject.setName(dto.getName());
+        subject.setFaculty(faculty);
         return subject;
     }
 
@@ -148,26 +188,27 @@ public class DtoMapper {
         group.setName(dto.getName());
         group.setDepartment(department);
         group.setSize(dto.getSize());
-        // Year mapping (1-based index to 0-based enum ordinal)
         if (dto.getYear() > 0 && dto.getYear() <= ua.kiev.univ.schedule.model.member.Year.values().length) {
             group.setYear(ua.kiev.univ.schedule.model.member.Year.values()[dto.getYear() - 1]);
         }
         return group;
     }
 
-    public static Earmark toEntity(EarmarkDto dto) {
+    public static Earmark toEntity(EarmarkDto dto, Building building) {
         Earmark earmark = new Earmark();
         earmark.setId(dto.getId());
         earmark.setName(dto.getName());
         earmark.setSize(dto.getSize());
+        earmark.setBuilding(building);
         return earmark;
     }
 
-    public static Auditorium toEntity(AuditoriumDto dto, Earmark earmark) {
+    public static Auditorium toEntity(AuditoriumDto dto, Earmark earmark, Building building) {
         Auditorium auditorium = new Auditorium();
         auditorium.setId(dto.getId());
         auditorium.setName(dto.getName());
         auditorium.setEarmark(earmark);
+        auditorium.setBuilding(building);
         return auditorium;
     }
 
@@ -194,6 +235,10 @@ public class DtoMapper {
         SubjectDto dto = new SubjectDto();
         dto.setId(subject.getId());
         dto.setName(subject.getName());
+        if (subject.getFaculty() != null) {
+            dto.setFacultyId(subject.getFaculty().getId());
+            dto.setFacultyName(subject.getFaculty().getName());
+        }
         return dto;
     }
 

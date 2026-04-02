@@ -18,6 +18,7 @@ import ua.kiev.univ.schedule.model.member.Teacher;
 import ua.kiev.univ.schedule.model.placement.Auditorium;
 import ua.kiev.univ.schedule.model.placement.Earmark;
 import ua.kiev.univ.schedule.model.subject.Subject;
+import ua.kiev.univ.schedule.model.placement.Building;
 import ua.kiev.univ.schedule.repository.*;
 
 import java.util.ArrayList;
@@ -28,6 +29,7 @@ import java.util.stream.Collectors;
 @Service
 public class DataInitializationService {
 
+    private final BuildingRepository buildingRepository;
     private final TimeRepository timeRepository;
     private final DayRepository dayRepository;
     private final FacultyRepository facultyRepository;
@@ -42,13 +44,14 @@ public class DataInitializationService {
     private final AppointmentRepository appointmentRepository;
     private final ScheduleVersionRepository scheduleVersionRepository;
 
-    public DataInitializationService(TimeRepository timeRepository, DayRepository dayRepository,
+    public DataInitializationService(BuildingRepository buildingRepository, TimeRepository timeRepository, DayRepository dayRepository,
                                      FacultyRepository facultyRepository, EarmarkRepository earmarkRepository,
                                      SubjectRepository subjectRepository, ChairRepository chairRepository,
                                      SpecialityRepository specialityRepository, AuditoriumRepository auditoriumRepository,
                                      TeacherRepository teacherRepository, GroupRepository groupRepository,
                                      LessonRepository lessonRepository, AppointmentRepository appointmentRepository,
                                      ScheduleVersionRepository scheduleVersionRepository) {
+        this.buildingRepository = buildingRepository;
         this.timeRepository = timeRepository;
         this.dayRepository = dayRepository;
         this.facultyRepository = facultyRepository;
@@ -69,6 +72,7 @@ public class DataInitializationService {
         DataService.setPersistenceService(this);
         System.out.println("Initializing DataService from Spring Repositories...");
         
+        load(Building.class, buildingRepository.findAll());
         load(Time.class, timeRepository.findAll());
         
         List<Day> days = dayRepository.findAll();
@@ -110,6 +114,7 @@ public class DataInitializationService {
     
     @Transactional
     public void saveAll() {
+        buildingRepository.saveAll(DataService.getEntities(Building.class));
         timeRepository.saveAll(DataService.getEntities(Time.class));
         dayRepository.saveAll(DataService.getEntities(Day.class));
         facultyRepository.saveAll(DataService.getEntities(Faculty.class));
