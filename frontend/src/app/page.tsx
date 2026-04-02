@@ -9,6 +9,7 @@ import ScheduleView from '@/components/views/ScheduleView'
 import SpecialityView from '@/components/views/SpecialityView'
 import SubjectView from '@/components/views/SubjectView'
 import TeacherView from '@/components/views/TeacherView'
+import DataExchangeView from '@/components/views/DataExchangeView'
 import { getBuildStatus, startBuild } from '@/lib/api/scheduleApi'
 import {
 	AppBar,
@@ -130,6 +131,7 @@ export default function Home() {
 							<Tab label='Placement' />
 							<Tab label='Subject' />
 							<Tab label='Lesson' />
+							<Tab label='Data' />
 						</Tabs>
 					</Box>
 
@@ -159,6 +161,9 @@ export default function Home() {
 						</TabPanel>
 						<TabPanel value={value} index={7}>
 							<LessonView />
+						</TabPanel>
+						<TabPanel value={value} index={8}>
+							<DataExchangeView />
 						</TabPanel>
 					</Box>
 				</Box>

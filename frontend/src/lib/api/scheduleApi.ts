@@ -381,3 +381,37 @@ export const fetchGroupSchedule = async (
 	const { data } = await axios.get(`/api/schedule/group/${groupId}`)
 	return data
 }
+
+// --- Data Exchange ---
+export const fetchAvailableTables = async (): Promise<string[]> => {
+	const { data } = await axios.get('/api/data/export/available')
+	return data
+}
+
+export const exportData = async (tables: string[]): Promise<void> => {
+	const response = await axios.post('/api/data/export', tables, {
+		responseType: 'blob',
+	})
+	const url = window.URL.createObjectURL(new Blob([response.data]))
+	const link = document.createElement('a')
+	link.href = url
+	link.setAttribute('download', 'schedule_data.zip')
+	document.body.appendChild(link)
+	link.click()
+	link.remove()
+}
+
+export const importData = async (
+	file: File,
+	tables: string[]
+): Promise<Record<string, string>> => {
+	const formData = new FormData()
+	formData.append('file', file)
+	tables.forEach((table) => formData.append('tables', table))
+	const { data } = await axios.post('/api/data/import', formData, {
+		headers: {
+			'Content-Type': 'multipart/form-data',
+		},
+	})
+	return data
+}
