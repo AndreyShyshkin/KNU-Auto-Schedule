@@ -7,6 +7,7 @@ import {
 	deleteScheduleVersion,
 	ScheduleVersion,
 	BuildStatus,
+	handleError,
 } from '@/lib/api/scheduleApi'
 import {
 	Box,
@@ -55,6 +56,7 @@ export default function BuildView() {
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['scheduleVersions'] })
 		},
+		onError: (error) => alert(handleError(error)),
 	})
 
 	const handleDeleteVersion = (id: number) => {

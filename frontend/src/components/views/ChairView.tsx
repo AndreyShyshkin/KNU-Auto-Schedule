@@ -9,6 +9,7 @@ import {
 	Faculty,
 	fetchChairs,
 	fetchFaculties,
+	handleError,
 	updateChair,
 	updateFaculty,
 } from '@/lib/api/scheduleApi'
@@ -50,12 +51,14 @@ export default function ChairView() {
 	const createFacultyMutation = useMutation({
 		mutationFn: createFaculty,
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['faculties'] }),
+		onError: (error) => alert(handleError(error)),
 	})
 
 	const updateFacultyMutation = useMutation({
 		mutationFn: (data: { id: number; faculty: Partial<Faculty> }) =>
 			updateFaculty(data.id, data.faculty),
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['faculties'] }),
+		onError: (error) => alert(handleError(error)),
 	})
 
 	const deleteFacultyMutation = useMutation({
@@ -64,6 +67,7 @@ export default function ChairView() {
 			queryClient.invalidateQueries({ queryKey: ['faculties'] })
 			setSelectedFacultyId(null)
 		},
+		onError: (error) => alert(handleError(error)),
 	})
 
 	// --- Chairs ---
@@ -75,12 +79,14 @@ export default function ChairView() {
 	const createChairMutation = useMutation({
 		mutationFn: createChair,
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['chairs'] }),
+		onError: (error) => alert(handleError(error)),
 	})
 
 	const updateChairMutation = useMutation({
 		mutationFn: (data: { id: number; chair: Partial<Chair> }) =>
 			updateChair(data.id, data.chair),
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['chairs'] }),
+		onError: (error) => alert(handleError(error)),
 	})
 
 	const deleteChairMutation = useMutation({
@@ -89,6 +95,7 @@ export default function ChairView() {
 			queryClient.invalidateQueries({ queryKey: ['chairs'] })
 			setSelectedChairId(null)
 		},
+		onError: (error) => alert(handleError(error)),
 	})
 
 	// --- UI State ---

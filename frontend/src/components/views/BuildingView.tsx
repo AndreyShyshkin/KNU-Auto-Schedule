@@ -6,6 +6,7 @@ import {
 	deleteBuilding,
 	fetchBuildings,
 	updateBuilding,
+	handleError,
 } from '@/lib/api/scheduleApi'
 import {
 	Add as AddIcon,
@@ -45,6 +46,7 @@ export default function BuildingView() {
 			queryClient.invalidateQueries({ queryKey: ['buildings'] })
 			setOpenDialog(false)
 		},
+		onError: (error) => alert(handleError(error)),
 	})
 
 	const updateMutation = useMutation({
@@ -54,6 +56,7 @@ export default function BuildingView() {
 			queryClient.invalidateQueries({ queryKey: ['buildings'] })
 			setOpenDialog(false)
 		},
+		onError: (error) => alert(handleError(error)),
 	})
 
 	const deleteMutation = useMutation({
@@ -62,6 +65,7 @@ export default function BuildingView() {
 			queryClient.invalidateQueries({ queryKey: ['buildings'] })
 			setSelectedId(null)
 		},
+		onError: (error) => alert(handleError(error)),
 	})
 
 	const handleAdd = () => {

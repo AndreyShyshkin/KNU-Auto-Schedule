@@ -543,3 +543,10 @@ export const importData = async (
 	})
 	return data
 }
+
+export const handleError = (error: any): string => {
+	if (error.response?.data?.message) {
+		return error.response.data.message
+	}
+	return error.message || 'Виникла невідома помилка'
+}

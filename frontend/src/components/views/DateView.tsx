@@ -9,6 +9,7 @@ import {
 	fetchDays,
 	fetchTimes,
 	fetchBuildings,
+	handleError,
 	Time,
 	updateDay,
 	updateTime,
@@ -62,21 +63,41 @@ export default function DateView() {
 		queryFn: fetchTimes,
 	})
 
+	// --- Day Mutations ---
+	const createDayMutation = useMutation({
+		mutationFn: createDay,
+		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['days'] }),
+		onError: (error) => alert(handleError(error)),
+	})
+
 	const updateDayMutation = useMutation({
 		mutationFn: (data: { id: number; day: Partial<Day> }) =>
 			updateDay(data.id, data.day),
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['days'] }),
+		onError: (error) => alert(handleError(error)),
 	})
 
+	const deleteDayMutation = useMutation({
+		mutationFn: deleteDay,
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['days'] })
+			setSelectedDayId(null)
+		},
+		onError: (error) => alert(handleError(error)),
+	})
+
+	// --- Time Mutations ---
 	const createTimeMutation = useMutation({
 		mutationFn: createTime,
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['times'] }),
+		onError: (error) => alert(handleError(error)),
 	})
 
 	const updateTimeMutation = useMutation({
 		mutationFn: (data: { id: number; time: Partial<Time> }) =>
 			updateTime(data.id, data.time),
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['times'] }),
+		onError: (error) => alert(handleError(error)),
 	})
 
 	const deleteTimeMutation = useMutation({
@@ -85,12 +106,50 @@ export default function DateView() {
 			queryClient.invalidateQueries({ queryKey: ['times'] })
 			setSelectedTimeId(null)
 		},
+		onError: (error) => alert(handleError(error)),
 	})
+
+	// --- UI State for Dialogs ---
+	const [openDayDialog, setOpenDayDialog] = useState(false)
+	const [dayDialogMode, setDayDialogMode] = useState<'create' | 'edit'>('create')
+	const [dayFormData, setDayFormData] = useState<Partial<Day>>({})
 
 	const [openTimeDialog, setOpenTimeDialog] = useState(false)
 	const [timeDialogMode, setTimeDialogMode] = useState<'create' | 'edit'>('create')
 	const [timeFormData, setTimeFormData] = useState<Partial<Time>>({})
 
+	// --- Handlers Day ---
+	const handleAddDay = () => {
+		setDayFormData({})
+		setDayDialogMode('create')
+		setOpenDayDialog(true)
+	}
+
+	const handleEditDay = () => {
+		const day = days.find(d => d.id === selectedDayId)
+		if (day) {
+			setDayFormData(day)
+			setDayDialogMode('edit')
+			setOpenDayDialog(true)
+		}
+	}
+
+	const handleDeleteDay = () => {
+		if (selectedDayId && confirm('Видалити цей день?')) {
+			deleteDayMutation.mutate(selectedDayId)
+		}
+	}
+
+	const handleSubmitDay = () => {
+		if (dayDialogMode === 'create') {
+			createDayMutation.mutate(dayFormData)
+		} else if (selectedDayId) {
+			updateDayMutation.mutate({ id: selectedDayId, day: dayFormData })
+		}
+		setOpenDayDialog(false)
+	}
+
+	// --- Handlers Time ---
 	const handleAddTime = () => {
 		setTimeFormData({ buildingId: selectedBuildingId || undefined })
 		setTimeDialogMode('create')
@@ -179,7 +238,14 @@ export default function DateView() {
 		<Grid container spacing={2} sx={{ height: '100%' }}>
 			{/* 1. Days */}
 			<Grid size={4} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-				<Typography variant='subtitle2' gutterBottom sx={{ fontWeight: 'bold' }}>1. Оберіть День</Typography>
+				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+					<Typography variant='subtitle2' sx={{ fontWeight: 'bold' }}>1. Дні</Typography>
+					<Box>
+						<IconButton size='small' onClick={handleAddDay}><AddIcon fontSize="small"/></IconButton>
+						<IconButton size='small' disabled={!selectedDayId} onClick={handleEditDay}><EditIcon fontSize="small"/></IconButton>
+						<IconButton size='small' disabled={!selectedDayId} onClick={handleDeleteDay}><DeleteIcon fontSize="small"/></IconButton>
+					</Box>
+				</Box>
 				<Paper sx={{ flexGrow: 1 }}>
 					<DataGrid
 						rows={days}
@@ -233,6 +299,25 @@ export default function DateView() {
 					/>
 				</Paper>
 			</Grid>
+
+			{/* Day Dialog */}
+			<Dialog open={openDayDialog} onClose={() => setOpenDayDialog(false)}>
+				<DialogTitle>{dayDialogMode === 'create' ? 'Додати день' : 'Редагувати день'}</DialogTitle>
+				<DialogContent>
+					<TextField
+						autoFocus
+						margin='dense'
+						label='Назва дня'
+						fullWidth
+						value={dayFormData.name || ''}
+						onChange={e => setDayFormData({ ...dayFormData, name: e.target.value })}
+					/>
+				</DialogContent>
+				<DialogActions>
+					<Button onClick={() => setOpenDayDialog(false)}>Скасувати</Button>
+					<Button onClick={handleSubmitDay}>Зберегти</Button>
+				</DialogActions>
+			</Dialog>
 
 			{/* Time Dialog */}
 			<Dialog open={openTimeDialog} onClose={() => setOpenTimeDialog(false)}>

@@ -5,6 +5,7 @@ import {
 	deleteSubject,
 	fetchSubjects,
 	fetchFaculties,
+	handleError,
 	Subject,
 	updateSubject,
 } from '@/lib/api/scheduleApi'
@@ -53,12 +54,14 @@ export default function SubjectView() {
 	const createSubjectMutation = useMutation({
 		mutationFn: createSubject,
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['subjects'] }),
+		onError: (error) => alert(handleError(error)),
 	})
 
 	const updateSubjectMutation = useMutation({
 		mutationFn: (data: { id: number; subject: Partial<Subject> }) =>
 			updateSubject(data.id, data.subject),
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['subjects'] }),
+		onError: (error) => alert(handleError(error)),
 	})
 
 	const deleteSubjectMutation = useMutation({
@@ -67,6 +70,7 @@ export default function SubjectView() {
 			queryClient.invalidateQueries({ queryKey: ['subjects'] })
 			setSelectedSubjectId(null)
 		},
+		onError: (error) => alert(handleError(error)),
 	})
 
 	// UI State

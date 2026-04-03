@@ -11,6 +11,7 @@ import {
 	fetchBuildings,
 	fetchAuditoriums,
 	fetchLessonTypes,
+	handleError,
 	Lesson,
 	updateLesson,
 } from '@/lib/api/scheduleApi'
@@ -89,11 +90,13 @@ export default function LessonView() {
 	const createLessonMutation = useMutation({
 		mutationFn: createLesson,
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['lessons'] }),
+		onError: (error) => alert(handleError(error)),
 	})
 	const updateLessonMutation = useMutation({
 		mutationFn: (data: { id: number; lesson: Partial<Lesson> }) =>
 			updateLesson(data.id, data.lesson),
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['lessons'] }),
+		onError: (error) => alert(handleError(error)),
 	})
 	const deleteLessonMutation = useMutation({
 		mutationFn: deleteLesson,
@@ -101,6 +104,7 @@ export default function LessonView() {
 			queryClient.invalidateQueries({ queryKey: ['lessons'] })
 			setSelectedLessonId(null)
 		},
+		onError: (error) => alert(handleError(error)),
 	})
 
 	// UI State

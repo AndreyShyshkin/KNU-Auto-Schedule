@@ -5,6 +5,7 @@ import {
 	createLessonType,
 	deleteLessonType,
 	fetchLessonTypes,
+	handleError,
 	updateLessonType,
 } from '@/lib/api/scheduleApi'
 import {
@@ -45,6 +46,7 @@ export default function LessonTypeView() {
 			queryClient.invalidateQueries({ queryKey: ['lessonTypes'] })
 			setOpenDialog(false)
 		},
+		onError: (error) => alert(handleError(error)),
 	})
 
 	const updateMutation = useMutation({
@@ -54,6 +56,7 @@ export default function LessonTypeView() {
 			queryClient.invalidateQueries({ queryKey: ['lessonTypes'] })
 			setOpenDialog(false)
 		},
+		onError: (error) => alert(handleError(error)),
 	})
 
 	const deleteMutation = useMutation({
@@ -62,6 +65,7 @@ export default function LessonTypeView() {
 			queryClient.invalidateQueries({ queryKey: ['lessonTypes'] })
 			setSelectedId(null)
 		},
+		onError: (error) => alert(handleError(error)),
 	})
 
 	const handleAdd = () => {

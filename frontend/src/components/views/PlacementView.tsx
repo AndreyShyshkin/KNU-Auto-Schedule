@@ -10,6 +10,7 @@ import {
 	fetchAuditoriums,
 	fetchEarmarks,
 	fetchBuildings,
+	handleError,
 	updateAuditorium,
 	updateEarmark,
 	Building,
@@ -64,11 +65,13 @@ export default function PlacementView() {
 	const createEarmarkMutation = useMutation({
 		mutationFn: createEarmark,
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['earmarks'] }),
+		onError: (error) => alert(handleError(error)),
 	})
 	const updateEarmarkMutation = useMutation({
 		mutationFn: (data: { id: number; earmark: Partial<Earmark> }) =>
 			updateEarmark(data.id, data.earmark),
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['earmarks'] }),
+		onError: (error) => alert(handleError(error)),
 	})
 	const deleteEarmarkMutation = useMutation({
 		mutationFn: deleteEarmark,
@@ -76,17 +79,20 @@ export default function PlacementView() {
 			queryClient.invalidateQueries({ queryKey: ['earmarks'] })
 			setSelectedEarmarkId(null)
 		},
+		onError: (error) => alert(handleError(error)),
 	})
 
 	// --- Auditorium Mutations ---
 	const createAuditoriumMutation = useMutation({
 		mutationFn: createAuditorium,
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['auditoriums'] }),
+		onError: (error) => alert(handleError(error)),
 	})
 	const updateAuditoriumMutation = useMutation({
 		mutationFn: (data: { id: number; auditorium: Partial<Auditorium> }) =>
 			updateAuditorium(data.id, data.auditorium),
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['auditoriums'] }),
+		onError: (error) => alert(handleError(error)),
 	})
 	const deleteAuditoriumMutation = useMutation({
 		mutationFn: deleteAuditorium,
@@ -94,6 +100,7 @@ export default function PlacementView() {
 			queryClient.invalidateQueries({ queryKey: ['auditoriums'] })
 			setSelectedAuditoriumId(null)
 		},
+		onError: (error) => alert(handleError(error)),
 	})
 
 	// --- UI Dialog States ---

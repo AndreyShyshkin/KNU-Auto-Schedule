@@ -5,6 +5,7 @@ import {
 	deleteSpeciality,
 	fetchFaculties,
 	fetchSpecialities,
+	handleError,
 	Speciality,
 	updateSpeciality,
 } from '@/lib/api/scheduleApi'
@@ -52,6 +53,7 @@ export default function SpecialityView() {
 		mutationFn: createSpeciality,
 		onSuccess: () =>
 			queryClient.invalidateQueries({ queryKey: ['specialities'] }),
+		onError: (error) => alert(handleError(error)),
 	})
 
 	const updateSpecMutation = useMutation({
@@ -59,6 +61,7 @@ export default function SpecialityView() {
 			updateSpeciality(data.id, data.spec),
 		onSuccess: () =>
 			queryClient.invalidateQueries({ queryKey: ['specialities'] }),
+		onError: (error) => alert(handleError(error)),
 	})
 
 	const deleteSpecMutation = useMutation({
@@ -67,6 +70,7 @@ export default function SpecialityView() {
 			queryClient.invalidateQueries({ queryKey: ['specialities'] })
 			setSelectedSpecId(null)
 		},
+		onError: (error) => alert(handleError(error)),
 	})
 
 	// UI State

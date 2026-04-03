@@ -6,6 +6,7 @@ import {
 	fetchGroups,
 	fetchSpecialities,
 	Group,
+	handleError,
 	updateGroup,
 } from '@/lib/api/scheduleApi'
 import {
@@ -48,12 +49,14 @@ export default function GroupView() {
 	const createGroupMutation = useMutation({
 		mutationFn: createGroup,
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['groups'] }),
+		onError: (error) => alert(handleError(error)),
 	})
 
 	const updateGroupMutation = useMutation({
 		mutationFn: (data: { id: number; group: Partial<Group> }) =>
 			updateGroup(data.id, data.group),
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['groups'] }),
+		onError: (error) => alert(handleError(error)),
 	})
 
 	const deleteGroupMutation = useMutation({
@@ -62,6 +65,7 @@ export default function GroupView() {
 			queryClient.invalidateQueries({ queryKey: ['groups'] })
 			setSelectedGroupId(null)
 		},
+		onError: (error) => alert(handleError(error)),
 	})
 
 	// UI State

@@ -7,6 +7,7 @@ import {
 	fetchTeachers,
 	Teacher,
 	updateTeacher,
+	handleError,
 } from '@/lib/api/scheduleApi'
 import {
 	Add as AddIcon,
@@ -50,12 +51,14 @@ export default function TeacherView() {
 	const createTeacherMutation = useMutation({
 		mutationFn: createTeacher,
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['teachers'] }),
+		onError: (error) => alert(handleError(error)),
 	})
 
 	const updateTeacherMutation = useMutation({
 		mutationFn: (data: { id: number; teacher: Partial<Teacher> }) =>
 			updateTeacher(data.id, data.teacher),
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['teachers'] }),
+		onError: (error) => alert(handleError(error)),
 	})
 
 	const deleteTeacherMutation = useMutation({
@@ -64,6 +67,7 @@ export default function TeacherView() {
 			queryClient.invalidateQueries({ queryKey: ['teachers'] })
 			setSelectedTeacherId(null)
 		},
+		onError: (error) => alert(handleError(error)),
 	})
 
 	// UI State
