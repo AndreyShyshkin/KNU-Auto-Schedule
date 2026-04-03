@@ -35,7 +35,7 @@ public class ScheduleExportService {
 
             // Header
             org.apache.poi.ss.usermodel.Row headerRow = sheet.createRow(2);
-            String[] columns = {"Day", "Start", "End", "Subject", "Type", "Auditorium", "Teachers/Groups"};
+            String[] columns = {"Day", "Start", "End", "Subject", "Type", "Building", "Auditorium", "Teachers/Groups"};
             for (int i = 0; i < columns.length; i++) {
                 org.apache.poi.ss.usermodel.Cell cell = headerRow.createCell(i);
                 cell.setCellValue(columns[i]);
@@ -51,8 +51,9 @@ public class ScheduleExportService {
                 row.createCell(2).setCellValue(entry.getTimeEnd());
                 row.createCell(3).setCellValue(entry.getSubjectName());
                 row.createCell(4).setCellValue(entry.getType());
-                row.createCell(5).setCellValue(entry.getAuditoriumName());
-                row.createCell(6).setCellValue(entry.getAdditionalInfo());
+                row.createCell(5).setCellValue(entry.getBuildingName());
+                row.createCell(6).setCellValue(entry.getAuditoriumName());
+                row.createCell(7).setCellValue(entry.getAdditionalInfo());
             }
 
             for (int i = 0; i < columns.length; i++) {
@@ -76,11 +77,11 @@ public class ScheduleExportService {
             titlePara.setSpacingAfter(20);
             document.add(titlePara);
 
-            PdfPTable table = new PdfPTable(7);
+            PdfPTable table = new PdfPTable(8);
             table.setWidthPercentage(100);
-            table.setWidths(new float[]{3, 2, 2, 5, 3, 3, 5});
+            table.setWidths(new float[]{3, 2, 2, 5, 3, 3, 3, 5});
 
-            String[] columns = {"Day", "Start", "End", "Subject", "Type", "Auditorium", "Info"};
+            String[] columns = {"Day", "Start", "End", "Subject", "Type", "Building", "Room", "Info"};
             for (String col : columns) {
                 PdfPCell cell = new PdfPCell(new Phrase(col, FontFactory.getFont(FontFactory.HELVETICA_BOLD)));
                 cell.setBackgroundColor(java.awt.Color.LIGHT_GRAY);
@@ -94,6 +95,7 @@ public class ScheduleExportService {
                 table.addCell(new Phrase(entry.getTimeEnd() != null ? entry.getTimeEnd() : ""));
                 table.addCell(new Phrase(entry.getSubjectName() != null ? entry.getSubjectName() : ""));
                 table.addCell(new Phrase(entry.getType() != null ? entry.getType() : ""));
+                table.addCell(new Phrase(entry.getBuildingName() != null ? entry.getBuildingName() : ""));
                 table.addCell(new Phrase(entry.getAuditoriumName() != null ? entry.getAuditoriumName() : ""));
                 table.addCell(new Phrase(entry.getAdditionalInfo() != null ? entry.getAdditionalInfo() : ""));
             }

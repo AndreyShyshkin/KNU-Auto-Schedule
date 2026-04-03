@@ -82,6 +82,7 @@ export default function ScheduleView() {
 		{ field: 'timeEnd', headerName: 'End', width: 90 },
 		{ field: 'subjectName', headerName: 'Subject', flex: 1 },
 		{ field: 'type', headerName: 'Type', width: 130 },
+		{ field: 'buildingName', headerName: 'Building', width: 120 },
 		{ field: 'earmarkName', headerName: 'Room Type', width: 100 },
 		{ field: 'auditoriumName', headerName: 'Auditorium', width: 100 },
 		{

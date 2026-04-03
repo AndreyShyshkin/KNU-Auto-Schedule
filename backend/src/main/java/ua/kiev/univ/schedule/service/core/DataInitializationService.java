@@ -209,13 +209,14 @@ public class DataInitializationService implements PersistenceService {
                 String dayName = date.getDay().getName();
                 String start = date.getTime().getStart();
                 String end = date.getTime().getEnd();
+                String bName = date.getTime().getBuilding() != null ? date.getTime().getBuilding().getName() : "";
                 
                 if (app.isOnline()) {
-                    AppointmentEntry entry = new AppointmentEntry(app, dayName, start, end, "Онлайн: " + (app.getOnlineLink() != null ? app.getOnlineLink() : ""));
+                    AppointmentEntry entry = new AppointmentEntry(app, dayName, start, end, "Online", "Метод: " + (app.getOnlineLink() != null ? app.getOnlineLink() : ""));
                     app.getEntries().add(entry);
                 } else {
                     for (Auditorium aud : mapEntry.getValue()) {
-                        AppointmentEntry entry = new AppointmentEntry(app, dayName, start, end, aud.getName());
+                        AppointmentEntry entry = new AppointmentEntry(app, dayName, start, end, bName, aud.getName());
                         app.getEntries().add(entry);
                     }
                 }

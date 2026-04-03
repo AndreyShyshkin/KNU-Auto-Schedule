@@ -36,7 +36,6 @@ public class ScheduleQueryService {
         String searchId = teacherId.toString();
 
         for (Appointment app : appointments) {
-            // Check if searchId is in the teacherIds string (comma separated)
             String ids = app.getTeacherIds();
             if (ids == null) continue;
             boolean found = false;
@@ -52,6 +51,7 @@ public class ScheduleQueryService {
                         entry.getTimeEnd(),
                         app.getSubjectName(),
                         app.getLessonTypeNames(), 
+                        entry.getBuildingName(),
                         entry.getAuditoriumName(),
                         app.getGroupNames()
                 ));
@@ -88,6 +88,7 @@ public class ScheduleQueryService {
                         entry.getTimeEnd(),
                         app.getSubjectName(),
                         app.getLessonTypeNames(),
+                        entry.getBuildingName(),
                         entry.getAuditoriumName(),
                         app.getTeacherNames()
                 ));
@@ -114,6 +115,7 @@ public class ScheduleQueryService {
                         entry.getTimeEnd(),
                         app.getSubjectName(),
                         app.getLessonTypeNames(),
+                        entry.getBuildingName(),
                         entry.getAuditoriumName(),
                         app.getTeacherNames() + " | " + app.getGroupNames()
                 ));
@@ -123,9 +125,6 @@ public class ScheduleQueryService {
     }
 
     private List<ScheduleEntryDto> sortSchedule(List<ScheduleEntryDto> list) {
-        // Simple sort by Day name then Time start. 
-        // Note: Day name sorting is alphabetical here, ideally should be by ID or Order.
-        // But for prototype it's fine.
         return list;
     }
 }

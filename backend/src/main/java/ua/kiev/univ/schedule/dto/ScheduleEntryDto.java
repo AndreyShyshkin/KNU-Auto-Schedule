@@ -5,18 +5,20 @@ public class ScheduleEntryDto {
     private String timeStart;
     private String timeEnd;
     private String subjectName;
-    private String type; // Lecture/Practice (from Earmark)
+    private String type; // Lesson types (Lecture, Practice etc)
+    private String buildingName;
     private String auditoriumName;
-    private String additionalInfo; // Group name (for teacher schedule) or Teacher name (for group schedule)
+    private String additionalInfo; // Group name or Teacher name
 
     public ScheduleEntryDto() {}
 
-    public ScheduleEntryDto(String dayName, String timeStart, String timeEnd, String subjectName, String type, String auditoriumName, String additionalInfo) {
+    public ScheduleEntryDto(String dayName, String timeStart, String timeEnd, String subjectName, String type, String buildingName, String auditoriumName, String additionalInfo) {
         this.dayName = dayName;
         this.timeStart = timeStart;
         this.timeEnd = timeEnd;
         this.subjectName = subjectName;
         this.type = type;
+        this.buildingName = buildingName;
         this.auditoriumName = auditoriumName;
         this.additionalInfo = additionalInfo;
     }
@@ -31,6 +33,8 @@ public class ScheduleEntryDto {
     public void setSubjectName(String subjectName) { this.subjectName = subjectName; }
     public String getType() { return type; }
     public void setType(String type) { this.type = type; }
+    public String getBuildingName() { return buildingName; }
+    public void setBuildingName(String buildingName) { this.buildingName = buildingName; }
     public String getAuditoriumName() { return auditoriumName; }
     public void setAuditoriumName(String auditoriumName) { this.auditoriumName = auditoriumName; }
     public String getAdditionalInfo() { return additionalInfo; }

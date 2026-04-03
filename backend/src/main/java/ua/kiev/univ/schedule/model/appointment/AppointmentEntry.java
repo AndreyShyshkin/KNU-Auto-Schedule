@@ -16,15 +16,17 @@ public class AppointmentEntry {
     private String dayName;
     private String timeStart;
     private String timeEnd;
+    private String buildingName;
     private String auditoriumName;
 
     public AppointmentEntry() {}
 
-    public AppointmentEntry(Appointment appointment, String dayName, String timeStart, String timeEnd, String auditoriumName) {
+    public AppointmentEntry(Appointment appointment, String dayName, String timeStart, String timeEnd, String buildingName, String auditoriumName) {
         this.appointment = appointment;
         this.dayName = dayName;
         this.timeStart = timeStart;
         this.timeEnd = timeEnd;
+        this.buildingName = buildingName;
         this.auditoriumName = auditoriumName;
     }
 
@@ -38,6 +40,8 @@ public class AppointmentEntry {
     public void setTimeStart(String timeStart) { this.timeStart = timeStart; }
     public String getTimeEnd() { return timeEnd; }
     public void setTimeEnd(String timeEnd) { this.timeEnd = timeEnd; }
+    public String getBuildingName() { return buildingName; }
+    public void setBuildingName(String buildingName) { this.buildingName = buildingName; }
     public String getAuditoriumName() { return auditoriumName; }
     public void setAuditoriumName(String auditoriumName) { this.auditoriumName = auditoriumName; }
 }
