@@ -453,6 +453,11 @@ export const fetchScheduleVersions = async (): Promise<ScheduleVersion[]> => {
 	return data
 }
 
+export const deleteScheduleVersion = async (versionId?: number): Promise<void> => {
+	const url = versionId ? `/api/schedule/clear?versionId=${versionId}` : '/api/schedule/clear'
+	await axios.delete(url)
+}
+
 export const fetchTeacherSchedule = async (
 	teacherId: number,
 	versionId?: number
