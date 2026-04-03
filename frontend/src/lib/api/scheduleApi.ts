@@ -6,6 +6,30 @@ export interface Building {
 	description: string
 }
 
+export interface LessonType {
+	id: number
+	name: string
+}
+
+export const fetchLessonTypes = async (): Promise<LessonType[]> => {
+	const { data } = await axios.get('/api/lesson-types')
+	return data
+}
+
+export const createLessonType = async (type: Partial<LessonType>): Promise<LessonType> => {
+	const { data } = await axios.post('/api/lesson-types', type)
+	return data
+}
+
+export const updateLessonType = async (id: number, type: Partial<LessonType>): Promise<LessonType> => {
+	const { data } = await axios.put(`/api/lesson-types/${id}`, type)
+	return data
+}
+
+export const deleteLessonType = async (id: number): Promise<void> => {
+	await axios.delete(`/api/lesson-types/${id}`)
+}
+
 export const fetchBuildings = async (): Promise<Building[]> => {
 	const { data } = await axios.get('/api/buildings')
 	return data
@@ -351,6 +375,10 @@ export interface Lesson {
 	buildingName?: string
 	auditoriumId?: number
 	auditoriumName?: string
+	online: boolean
+	onlineLink: string
+	lessonTypeIds: number[]
+	lessonTypeNames: string[]
 	count: number
 	teacherIds: number[]
 	teacherNames: string[]
@@ -407,6 +435,7 @@ export interface ScheduleEntry {
 	timeStart: string
 	timeEnd: string
 	subjectName: string
+	type: string
 	earmarkName: string
 	auditoriumName: string
 	additionalInfo: string

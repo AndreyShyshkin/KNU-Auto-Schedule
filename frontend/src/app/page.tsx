@@ -1,6 +1,7 @@
 'use client'
 
 import BuildingView from '@/components/views/BuildingView'
+import LessonTypeView from '@/components/views/LessonTypeView'
 import ChairView from '@/components/views/ChairView'
 import DateView from '@/components/views/DateView'
 import GroupView from '@/components/views/GroupView'
@@ -161,6 +162,7 @@ export default function Home() {
 							scrollButtons='auto'
 						>
 							<Tab label='Building' />
+							<Tab label='Lesson Type' />
 							<Tab label='Date' />
 							<Tab label='Chair' />
 							<Tab label='Speciality' />
@@ -179,27 +181,30 @@ export default function Home() {
 							<BuildingView />
 						</TabPanel>
 						<TabPanel value={value} index={1}>
-							<DateView />
+							<LessonTypeView />
 						</TabPanel>
 						<TabPanel value={value} index={2}>
-							<ChairView />
+							<DateView />
 						</TabPanel>
 						<TabPanel value={value} index={3}>
-							<SpecialityView />
+							<ChairView />
 						</TabPanel>
 						<TabPanel value={value} index={4}>
-							<TeacherView />
+							<SpecialityView />
 						</TabPanel>
 						<TabPanel value={value} index={5}>
-							<GroupView />
+							<TeacherView />
 						</TabPanel>
 						<TabPanel value={value} index={6}>
-							<PlacementView />
+							<GroupView />
 						</TabPanel>
 						<TabPanel value={value} index={7}>
-							<SubjectView />
+							<PlacementView />
 						</TabPanel>
 						<TabPanel value={value} index={8}>
+							<SubjectView />
+						</TabPanel>
+						<TabPanel value={value} index={9}>
 							<LessonView />
 						</TabPanel>
 					</Box>

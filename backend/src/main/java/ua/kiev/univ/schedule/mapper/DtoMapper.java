@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import ua.kiev.univ.schedule.model.lesson.Lesson;
+import ua.kiev.univ.schedule.model.lesson.LessonType;
 
 public class DtoMapper {
 
@@ -40,7 +41,7 @@ public class DtoMapper {
         return day;
     }
 
-    public static Lesson toEntity(LessonDto dto, Subject subject, Earmark earmark, Building building, Auditorium auditorium, List<Teacher> teachers, List<Group> groups) {
+    public static Lesson toEntity(LessonDto dto, Subject subject, Earmark earmark, Building building, Auditorium auditorium, List<Teacher> teachers, List<Group> groups, List<LessonType> lessonTypes) {
         Lesson lesson = new Lesson();
         lesson.setId(dto.getId());
         lesson.setSubject(subject);
@@ -49,7 +50,10 @@ public class DtoMapper {
         lesson.setAuditorium(auditorium);
         lesson.setTeachers(teachers);
         lesson.setGroups(groups);
+        lesson.setLessonTypes(lessonTypes);
         lesson.setCount(dto.getCount());
+        lesson.setOnline(dto.isOnline());
+        lesson.setOnlineLink(dto.getOnlineLink());
         return lesson;
     }
 
@@ -58,6 +62,8 @@ public class DtoMapper {
         LessonDto dto = new LessonDto();
         dto.setId(lesson.getId());
         dto.setCount(lesson.getCount());
+        dto.setOnline(lesson.isOnline());
+        dto.setOnlineLink(lesson.getOnlineLink());
         if (lesson.getSubject() != null) {
             dto.setSubjectId(lesson.getSubject().getId());
             dto.setSubjectName(lesson.getSubject().getName());
@@ -82,6 +88,8 @@ public class DtoMapper {
         dto.setTeacherNames(lesson.getTeachers().stream().map(Teacher::getName).collect(Collectors.toList()));
         dto.setGroupIds(lesson.getGroups().stream().map(Group::getId).collect(Collectors.toList()));
         dto.setGroupNames(lesson.getGroups().stream().map(Group::getName).collect(Collectors.toList()));
+        dto.setLessonTypeIds(lesson.getLessonTypes().stream().map(LessonType::getId).collect(Collectors.toList()));
+        dto.setLessonTypeNames(lesson.getLessonTypes().stream().map(LessonType::getName).collect(Collectors.toList()));
         return dto;
     }
 
@@ -188,6 +196,7 @@ public class DtoMapper {
         group.setName(dto.getName());
         group.setDepartment(department);
         group.setSize(dto.getSize());
+        // Year mapping (1-based index to 0-based enum ordinal)
         if (dto.getYear() > 0 && dto.getYear() <= ua.kiev.univ.schedule.model.member.Year.values().length) {
             group.setYear(ua.kiev.univ.schedule.model.member.Year.values()[dto.getYear() - 1]);
         }
@@ -281,5 +290,10 @@ public class DtoMapper {
             dto.setFacultyName(speciality.getFaculty().getName());
         }
         return dto;
+    }
+
+    public static LessonTypeDto toDto(LessonType type) {
+        if (type == null) return null;
+        return new LessonTypeDto(type.getId(), type.getName());
     }
 }

@@ -12,10 +12,14 @@ public class LessonDto {
     private String auditoriumName;
     private Long buildingId;
     private String buildingName;
+    private boolean online;
+    private String onlineLink;
     private List<Long> teacherIds;
     private List<String> teacherNames;
     private List<Long> groupIds;
     private List<String> groupNames;
+    private List<Long> lessonTypeIds;
+    private List<String> lessonTypeNames;
     private Integer count;
 
     public LessonDto() {}
@@ -38,6 +42,10 @@ public class LessonDto {
     public void setBuildingId(Long buildingId) { this.buildingId = buildingId; }
     public String getBuildingName() { return buildingName; }
     public void setBuildingName(String buildingName) { this.buildingName = buildingName; }
+    public boolean isOnline() { return online; }
+    public void setOnline(boolean online) { this.online = online; }
+    public String getOnlineLink() { return onlineLink; }
+    public void setOnlineLink(String onlineLink) { this.onlineLink = onlineLink; }
     public List<Long> getTeacherIds() { return teacherIds; }
     public void setTeacherIds(List<Long> teacherIds) { this.teacherIds = teacherIds; }
     public List<String> getTeacherNames() { return teacherNames; }
@@ -46,6 +54,10 @@ public class LessonDto {
     public void setGroupIds(List<Long> groupIds) { this.groupIds = groupIds; }
     public List<String> getGroupNames() { return groupNames; }
     public void setGroupNames(List<String> groupNames) { this.groupNames = groupNames; }
+    public List<Long> getLessonTypeIds() { return lessonTypeIds; }
+    public void setLessonTypeIds(List<Long> lessonTypeIds) { this.lessonTypeIds = lessonTypeIds; }
+    public List<String> getLessonTypeNames() { return lessonTypeNames; }
+    public void setLessonTypeNames(List<String> lessonTypeNames) { this.lessonTypeNames = lessonTypeNames; }
     public Integer getCount() { return count; }
     public void setCount(Integer count) { this.count = count; }
 }

@@ -8,6 +8,7 @@ import ua.kiev.univ.schedule.model.department.Chair;
 import ua.kiev.univ.schedule.model.department.Faculty;
 import ua.kiev.univ.schedule.model.department.Speciality;
 import ua.kiev.univ.schedule.model.lesson.Lesson;
+import ua.kiev.univ.schedule.model.lesson.LessonType;
 import ua.kiev.univ.schedule.model.member.Group;
 import ua.kiev.univ.schedule.model.member.Teacher;
 import ua.kiev.univ.schedule.model.placement.Auditorium;
@@ -17,25 +18,28 @@ import ua.kiev.univ.schedule.model.subject.Subject;
 import ua.kiev.univ.schedule.util.HtmlUtils;
 
 import java.io.*;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.Map;
 
 public class DataService {
 
-    private static final Map<Class<? extends Entity>, EntityList<?>> entitiesMap = new LinkedHashMap<>();
+    private static PersistenceService persistenceService;
+
+    private static final Map<Class<? extends Entity>, EntityList<? extends Entity>> entitiesMap = new HashMap<>();
 
     static {
         addList(Building.class);
+        addList(LessonType.class);
         addList(Time.class);
         addList(Day.class);
         addList(Faculty.class);
+        addList(Earmark.class);
+        addList(Subject.class);
         addList(Chair.class);
         addList(Speciality.class);
+        addList(Auditorium.class);
         addList(Teacher.class);
         addList(Group.class);
-        addList(Earmark.class);
-        addList(Auditorium.class);
-        addList(Subject.class);
         addList(Lesson.class);
         addList(Appointment.class);
     }
@@ -49,27 +53,29 @@ public class DataService {
         return (EntityList<E>) entitiesMap.get(entityClass);
     }
 
+    public static void setPersistenceService(PersistenceService service) {
+        persistenceService = service;
+    }
+
     public static void clear() {
-        for (EntityList<?> list : entitiesMap.values()) {
+        for (EntityList<? extends Entity> list : entitiesMap.values()) {
             list.clear();
         }
     }
 
-    private static DataInitializationService persistenceService;
-
-    public static void setPersistenceService(DataInitializationService service) {
-        persistenceService = service;
-    }
-
     public static void read(File file) throws IOException {
-        System.out.println("Reloading data (ignoring file argument)...");
-        if (persistenceService != null) {
-            persistenceService.initializeData();
+        try (DataInputStream is = new DataInputStream(new FileInputStream(file))) {
+            for (EntityList<? extends Entity> list : entitiesMap.values()) {
+                list.clear();
+                int size = is.readInt();
+                while (size-- > 0) {
+                    list.add().read(is);
+                }
+            }
         }
     }
 
     public static void write(File file) throws IOException {
-        System.out.println("Saving to Database via Spring Data...");
         if (persistenceService != null) {
             persistenceService.saveAll();
         }

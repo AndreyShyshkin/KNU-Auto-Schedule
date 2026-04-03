@@ -12,6 +12,7 @@ import ua.kiev.univ.schedule.model.placement.Auditorium;
 import ua.kiev.univ.schedule.model.placement.Building;
 import ua.kiev.univ.schedule.model.placement.Earmark;
 import ua.kiev.univ.schedule.model.subject.Subject;
+import ua.kiev.univ.schedule.model.lesson.LessonType;
 import ua.kiev.univ.schedule.repository.*;
 import ua.kiev.univ.schedule.service.core.DataInitializationService;
 
@@ -29,9 +30,10 @@ public class LessonController {
     private final AuditoriumRepository auditoriumRepository;
     private final TeacherRepository teacherRepository;
     private final GroupRepository groupRepository;
+    private final LessonTypeRepository lessonTypeRepository;
     private final DataInitializationService dataInitializationService;
 
-    public LessonController(LessonRepository lessonRepository, SubjectRepository subjectRepository, EarmarkRepository earmarkRepository, BuildingRepository buildingRepository, AuditoriumRepository auditoriumRepository, TeacherRepository teacherRepository, GroupRepository groupRepository, DataInitializationService dataInitializationService) {
+    public LessonController(LessonRepository lessonRepository, SubjectRepository subjectRepository, EarmarkRepository earmarkRepository, BuildingRepository buildingRepository, AuditoriumRepository auditoriumRepository, TeacherRepository teacherRepository, GroupRepository groupRepository, LessonTypeRepository lessonTypeRepository, DataInitializationService dataInitializationService) {
         this.lessonRepository = lessonRepository;
         this.subjectRepository = subjectRepository;
         this.earmarkRepository = earmarkRepository;
@@ -39,6 +41,7 @@ public class LessonController {
         this.auditoriumRepository = auditoriumRepository;
         this.teacherRepository = teacherRepository;
         this.groupRepository = groupRepository;
+        this.lessonTypeRepository = lessonTypeRepository;
         this.dataInitializationService = dataInitializationService;
     }
 
@@ -57,8 +60,9 @@ public class LessonController {
         Auditorium auditorium = dto.getAuditoriumId() != null ? auditoriumRepository.findById(dto.getAuditoriumId()).orElse(null) : null;
         List<Teacher> teachers = dto.getTeacherIds() != null ? teacherRepository.findAllById(dto.getTeacherIds()) : List.of();
         List<Group> groups = dto.getGroupIds() != null ? groupRepository.findAllById(dto.getGroupIds()) : List.of();
+        List<LessonType> lessonTypes = dto.getLessonTypeIds() != null ? lessonTypeRepository.findAllById(dto.getLessonTypeIds()) : List.of();
 
-        Lesson lesson = DtoMapper.toEntity(dto, subject, earmark, building, auditorium, teachers, groups);
+        Lesson lesson = DtoMapper.toEntity(dto, subject, earmark, building, auditorium, teachers, groups, lessonTypes);
         Lesson saved = lessonRepository.save(lesson);
         dataInitializationService.initializeData();
         return DtoMapper.toDto(saved);
@@ -73,6 +77,7 @@ public class LessonController {
             Auditorium auditorium = dto.getAuditoriumId() != null ? auditoriumRepository.findById(dto.getAuditoriumId()).orElse(null) : null;
             List<Teacher> teachers = dto.getTeacherIds() != null ? teacherRepository.findAllById(dto.getTeacherIds()) : List.of();
             List<Group> groups = dto.getGroupIds() != null ? groupRepository.findAllById(dto.getGroupIds()) : List.of();
+            List<LessonType> lessonTypes = dto.getLessonTypeIds() != null ? lessonTypeRepository.findAllById(dto.getLessonTypeIds()) : List.of();
 
             existing.setSubject(subject);
             existing.setEarmark(earmark);
@@ -80,7 +85,10 @@ public class LessonController {
             existing.setAuditorium(auditorium);
             existing.setTeachers(teachers);
             existing.setGroups(groups);
+            existing.setLessonTypes(lessonTypes);
             existing.setCount(dto.getCount());
+            existing.setOnline(dto.isOnline());
+            existing.setOnlineLink(dto.getOnlineLink());
 
             Lesson saved = lessonRepository.save(existing);
             dataInitializationService.initializeData();

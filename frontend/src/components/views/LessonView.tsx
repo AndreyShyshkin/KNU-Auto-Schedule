@@ -10,6 +10,7 @@ import {
 	fetchTeachers,
 	fetchBuildings,
 	fetchAuditoriums,
+	fetchLessonTypes,
 	Lesson,
 	updateLesson,
 } from '@/lib/api/scheduleApi'
@@ -38,6 +39,9 @@ import {
 	TextField,
 	Typography,
 	Divider,
+	RadioGroup,
+	FormControlLabel,
+	Radio,
 } from '@mui/material'
 import { DataGrid, GridColDef } from '@mui/x-data-grid'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -76,6 +80,10 @@ export default function LessonView() {
 		queryKey: ['auditoriums'],
 		queryFn: fetchAuditoriums,
 	})
+	const { data: lessonTypes = [] } = useQuery({
+		queryKey: ['lessonTypes'],
+		queryFn: fetchLessonTypes,
+	})
 
 	// Mutations
 	const createLessonMutation = useMutation({
@@ -102,10 +110,13 @@ export default function LessonView() {
 		count: 2,
 		teacherIds: [],
 		groupIds: [],
+		lessonTypeIds: [],
+		online: false,
+		onlineLink: '',
 	})
 
 	const handleAdd = () => {
-		setFormData({ count: 2, teacherIds: [], groupIds: [] })
+		setFormData({ count: 2, teacherIds: [], groupIds: [], lessonTypeIds: [], online: false, onlineLink: '' })
 		setDialogMode('create')
 		setOpenDialog(true)
 	}
@@ -117,6 +128,9 @@ export default function LessonView() {
 				...lesson,
 				teacherIds: lesson.teacherIds || [],
 				groupIds: lesson.groupIds || [],
+				lessonTypeIds: lesson.lessonTypeIds || [],
+				online: lesson.online || false,
+				onlineLink: lesson.onlineLink || '',
 			})
 			setDialogMode('edit')
 			setOpenDialog(true)
@@ -149,9 +163,19 @@ export default function LessonView() {
 
 	const columns: GridColDef[] = [
 		{ field: 'subjectName', headerName: 'Предмет', flex: 1 },
-		{ field: 'buildingName', headerName: 'Корпус', width: 120 },
-		{ field: 'auditoriumName', headerName: 'Аудиторія', width: 120 },
-		{ field: 'earmarkName', headerName: 'Тип', width: 100 },
+		{ 
+			field: 'lessonTypeNames', 
+			headerName: 'Тип заняття', 
+			width: 150,
+			valueGetter: (value: string[]) => (value ? value.join(', ') : ''),
+		},
+		{ 
+			field: 'location', 
+			headerName: 'Місце проведення', 
+			flex: 1,
+			valueGetter: (value, row) => row.online ? `Онлайн: ${row.onlineLink}` : `${row.buildingName || ''} - ${row.auditoriumName || 'Авто'}`
+		},
+		{ field: 'earmarkName', headerName: 'Тип аудиторії', width: 120 },
 		{
 			field: 'teacherNames',
 			headerName: 'Викладачі',
@@ -255,72 +279,132 @@ export default function LessonView() {
 							</Select>
 						</FormControl>
 
-						{/* Building */}
+						{/* Lesson Types (Multi-select) */}
 						<FormControl fullWidth size='small'>
-							<InputLabel>1. Корпус</InputLabel>
+							<InputLabel>Тип заняття (Лекція, Практика...)</InputLabel>
 							<Select
-								value={formData.buildingId || ''}
-								label='1. Корпус'
-								onChange={e =>
+								multiple
+								value={(formData.lessonTypeIds || []) as any}
+								onChange={(e: SelectChangeEvent<number[]>) => {
+									const value = e.target.value
 									setFormData({
 										...formData,
-										buildingId: Number(e.target.value),
-										earmarkId: undefined, // Reset subsequent steps
-										auditoriumId: undefined 
+										lessonTypeIds:
+											typeof value === 'string'
+												? value.split(',').map(Number)
+												: value,
 									})
-								}
+								}}
+								input={<OutlinedInput label='Тип заняття (Лекція, Практика...)' />}
+								renderValue={(selected: any[]) => (
+									<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+										{selected.map(value => {
+											const type = lessonTypes.find(t => t.id === value)
+											return (
+												<Chip key={value} label={type?.name} size='small' />
+											)
+										})}
+									</Box>
+								)}
 							>
-								{buildings.map(b => (
-									<MenuItem key={b.id} value={b.id}>
-										{b.name}
+								{lessonTypes.map(t => (
+									<MenuItem key={t.id} value={t.id}>
+										{t.name}
 									</MenuItem>
 								))}
 							</Select>
 						</FormControl>
 
-						{/* Earmark */}
-						<FormControl fullWidth size='small' disabled={!formData.buildingId}>
-							<InputLabel>2. Тип аудиторії (Earmark)</InputLabel>
-							<Select
-								value={formData.earmarkId || ''}
-								label='2. Тип аудиторії (Earmark)'
-								onChange={e =>
-									setFormData({
-										...formData,
-										earmarkId: Number(e.target.value),
-										auditoriumId: undefined // Reset subsequent step
-									})
-								}
-							>
-								{filteredEarmarks.map(e => (
-									<MenuItem key={e.id} value={e.id}>
-										{e.name}
-									</MenuItem>
-								))}
-							</Select>
-						</FormControl>
+						<Divider>Формат проведення</Divider>
+						
+						<RadioGroup
+							row
+							value={formData.online ? 'online' : 'offline'}
+							onChange={(e) => setFormData({ ...formData, online: e.target.value === 'online' })}
+						>
+							<FormControlLabel value="offline" control={<Radio />} label="Очно" />
+							<FormControlLabel value="online" control={<Radio />} label="Онлайн" />
+						</RadioGroup>
 
-						{/* Specific Auditorium */}
-						<FormControl fullWidth size='small' disabled={!formData.earmarkId}>
-							<InputLabel>3. Конкретна аудиторія (Cabinet)</InputLabel>
-							<Select
-								value={formData.auditoriumId || ''}
-								label="3. Конкретна аудиторія (Cabinet)"
-								onChange={e =>
-									setFormData({
-										...formData,
-										auditoriumId: e.target.value ? Number(e.target.value) : undefined,
-									})
-								}
-							>
-								<MenuItem value=""><em>Автоматичний вибір</em></MenuItem>
-								{filteredAuditoriums.map(a => (
-									<MenuItem key={a.id} value={a.id}>
-										{a.name}
-									</MenuItem>
-								))}
-							</Select>
-						</FormControl>
+						{!formData.online ? (
+							<>
+								{/* Building */}
+								<FormControl fullWidth size='small'>
+									<InputLabel>1. Корпус</InputLabel>
+									<Select
+										value={formData.buildingId || ''}
+										label='1. Корпус'
+										onChange={e =>
+											setFormData({
+												...formData,
+												buildingId: Number(e.target.value),
+												earmarkId: undefined,
+												auditoriumId: undefined 
+											})
+										}
+									>
+										{buildings.map(b => (
+											<MenuItem key={b.id} value={b.id}>
+												{b.name}
+											</MenuItem>
+										))}
+									</Select>
+								</FormControl>
+
+								{/* Earmark */}
+								<FormControl fullWidth size='small' disabled={!formData.buildingId}>
+									<InputLabel>2. Тип аудиторії (Earmark)</InputLabel>
+									<Select
+										value={formData.earmarkId || ''}
+										label='2. Тип аудиторії (Earmark)'
+										onChange={e =>
+											setFormData({
+												...formData,
+												earmarkId: Number(e.target.value),
+												auditoriumId: undefined
+											})
+										}
+									>
+										{filteredEarmarks.map(e => (
+											<MenuItem key={e.id} value={e.id}>
+												{e.name}
+											</MenuItem>
+										))}
+									</Select>
+								</FormControl>
+
+								{/* Specific Auditorium */}
+								<FormControl fullWidth size='small' disabled={!formData.earmarkId}>
+									<InputLabel>3. Конкретна аудиторія (Cabinet)</InputLabel>
+									<Select
+										value={formData.auditoriumId || ''}
+										label="3. Конкретна аудиторія (Cabinet)"
+										onChange={e =>
+											setFormData({
+												...formData,
+												auditoriumId: e.target.value ? Number(e.target.value) : undefined,
+											})
+										}
+									>
+										<MenuItem value=""><em>Автоматичний вибір</em></MenuItem>
+										{filteredAuditoriums.map(a => (
+											<MenuItem key={a.id} value={a.id}>
+												{a.name}
+											</MenuItem>
+										))}
+									</Select>
+								</FormControl>
+							</>
+						) : (
+							<TextField
+								label="Посилання або метод підключення"
+								fullWidth
+								size="small"
+								placeholder="Zoom, Google Meet, Link..."
+								value={formData.onlineLink || ''}
+								onChange={(e) => setFormData({ ...formData, onlineLink: e.target.value })}
+							/>
+						)}
 
 						<Divider sx={{ my: 1 }} />
 

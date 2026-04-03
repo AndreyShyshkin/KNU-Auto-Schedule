@@ -51,7 +51,7 @@ public class ScheduleQueryService {
                         entry.getTimeStart(),
                         entry.getTimeEnd(),
                         app.getSubjectName(),
-                        "", 
+                        app.getLessonTypeNames(), 
                         entry.getAuditoriumName(),
                         app.getGroupNames()
                 ));
@@ -87,7 +87,7 @@ public class ScheduleQueryService {
                         entry.getTimeStart(),
                         entry.getTimeEnd(),
                         app.getSubjectName(),
-                        "",
+                        app.getLessonTypeNames(),
                         entry.getAuditoriumName(),
                         app.getTeacherNames()
                 ));
@@ -113,7 +113,7 @@ public class ScheduleQueryService {
                         entry.getTimeStart(),
                         entry.getTimeEnd(),
                         app.getSubjectName(),
-                        "",
+                        app.getLessonTypeNames(),
                         entry.getAuditoriumName(),
                         app.getTeacherNames() + " | " + app.getGroupNames()
                 ));

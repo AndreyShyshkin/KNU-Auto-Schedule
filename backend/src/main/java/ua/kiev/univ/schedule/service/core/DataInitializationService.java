@@ -13,6 +13,7 @@ import ua.kiev.univ.schedule.model.department.Chair;
 import ua.kiev.univ.schedule.model.department.Faculty;
 import ua.kiev.univ.schedule.model.department.Speciality;
 import ua.kiev.univ.schedule.model.lesson.Lesson;
+import ua.kiev.univ.schedule.model.lesson.LessonType;
 import ua.kiev.univ.schedule.model.member.Group;
 import ua.kiev.univ.schedule.model.member.Teacher;
 import ua.kiev.univ.schedule.model.placement.Auditorium;
@@ -27,9 +28,10 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
-public class DataInitializationService {
+public class DataInitializationService implements PersistenceService {
 
     private final BuildingRepository buildingRepository;
+    private final LessonTypeRepository lessonTypeRepository;
     private final TimeRepository timeRepository;
     private final DayRepository dayRepository;
     private final FacultyRepository facultyRepository;
@@ -44,7 +46,7 @@ public class DataInitializationService {
     private final AppointmentRepository appointmentRepository;
     private final ScheduleVersionRepository scheduleVersionRepository;
 
-    public DataInitializationService(BuildingRepository buildingRepository, TimeRepository timeRepository, DayRepository dayRepository,
+    public DataInitializationService(BuildingRepository buildingRepository, LessonTypeRepository lessonTypeRepository, TimeRepository timeRepository, DayRepository dayRepository,
                                      FacultyRepository facultyRepository, EarmarkRepository earmarkRepository,
                                      SubjectRepository subjectRepository, ChairRepository chairRepository,
                                      SpecialityRepository specialityRepository, AuditoriumRepository auditoriumRepository,
@@ -52,6 +54,7 @@ public class DataInitializationService {
                                      LessonRepository lessonRepository, AppointmentRepository appointmentRepository,
                                      ScheduleVersionRepository scheduleVersionRepository) {
         this.buildingRepository = buildingRepository;
+        this.lessonTypeRepository = lessonTypeRepository;
         this.timeRepository = timeRepository;
         this.dayRepository = dayRepository;
         this.facultyRepository = facultyRepository;
@@ -73,6 +76,7 @@ public class DataInitializationService {
         System.out.println("Initializing DataService from Spring Repositories...");
         
         load(Building.class, buildingRepository.findAll());
+        load(LessonType.class, lessonTypeRepository.findAll());
         load(Time.class, timeRepository.findAll());
         
         List<Day> days = dayRepository.findAll();
@@ -94,6 +98,7 @@ public class DataInitializationService {
         for (Lesson l : lessons) {
             l.getTeachers().size();
             l.getGroups().size();
+            l.getLessonTypes().size();
         }
         load(Lesson.class, lessons);
         
@@ -115,6 +120,7 @@ public class DataInitializationService {
     @Transactional
     public void saveAll() {
         buildingRepository.saveAll(DataService.getEntities(Building.class));
+        lessonTypeRepository.saveAll(DataService.getEntities(LessonType.class));
         timeRepository.saveAll(DataService.getEntities(Time.class));
         dayRepository.saveAll(DataService.getEntities(Day.class));
         facultyRepository.saveAll(DataService.getEntities(Faculty.class));
@@ -125,7 +131,9 @@ public class DataInitializationService {
         auditoriumRepository.saveAll(DataService.getEntities(Auditorium.class));
         teacherRepository.saveAll(DataService.getEntities(Teacher.class));
         groupRepository.saveAll(DataService.getEntities(Group.class));
-        lessonRepository.saveAll(DataService.getEntities(Lesson.class));
+        
+        List<Lesson> lessons = DataService.getEntities(Lesson.class);
+        lessonRepository.saveAll(lessons);
         
         List<Appointment> appointments = DataService.getEntities(Appointment.class);
         if (!appointments.isEmpty()) {
@@ -164,6 +172,23 @@ public class DataInitializationService {
             app.setTeacherIds(app.getTeachers().stream().map(t -> t.getId().toString()).collect(Collectors.joining(",")));
             app.setGroupIds(app.getGroups().stream().map(g -> g.getId().toString()).collect(Collectors.joining(",")));
 
+            // Переносимо флаг онлайн з уроку в розклад
+            for (Lesson lesson : lessons) {
+                if (lesson.getSubject() != null && lesson.getSubject().equals(app.getSubject()) && 
+                    lesson.getTeachers().equals(app.getTeachers()) && 
+                    lesson.getGroups().equals(app.getGroups())) {
+                    app.setOnline(lesson.isOnline());
+                    app.setOnlineLink(lesson.getOnlineLink());
+                    
+                    // Переносимо типи уроку
+                    String typeNames = lesson.getLessonTypes().stream()
+                        .map(LessonType::getName)
+                        .collect(Collectors.joining(", "));
+                    app.setLessonTypeNames(typeNames);
+                    break;
+                }
+            }
+
             if (app instanceof HalvedAppointment) {
                 HalvedAppointment happ = (HalvedAppointment) app;
                 if (happ.getDate() != null) {
@@ -185,9 +210,14 @@ public class DataInitializationService {
                 String start = date.getTime().getStart();
                 String end = date.getTime().getEnd();
                 
-                for (Auditorium aud : mapEntry.getValue()) {
-                    AppointmentEntry entry = new AppointmentEntry(app, dayName, start, end, aud.getName());
+                if (app.isOnline()) {
+                    AppointmentEntry entry = new AppointmentEntry(app, dayName, start, end, "Онлайн: " + (app.getOnlineLink() != null ? app.getOnlineLink() : ""));
                     app.getEntries().add(entry);
+                } else {
+                    for (Auditorium aud : mapEntry.getValue()) {
+                        AppointmentEntry entry = new AppointmentEntry(app, dayName, start, end, aud.getName());
+                        app.getEntries().add(entry);
+                    }
                 }
             }
         }

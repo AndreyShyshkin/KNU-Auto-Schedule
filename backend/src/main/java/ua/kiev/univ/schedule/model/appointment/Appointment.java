@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 @jakarta.persistence.Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
@@ -49,6 +48,10 @@ public class Appointment extends ua.kiev.univ.schedule.model.core.Entity {
     @Column(length = 1000)
     private String groupIds;
 
+    private boolean online;
+    private String onlineLink;
+    private String lessonTypeNames;
+
     @ManyToOne
     @JoinColumn(name = "version_id")
     private ScheduleVersion version;
@@ -80,16 +83,22 @@ public class Appointment extends ua.kiev.univ.schedule.model.core.Entity {
     public String getGroupIds() { return groupIds; }
     public void setGroupIds(String groupIds) { this.groupIds = groupIds; }
     
+    public boolean isOnline() { return online; }
+    public void setOnline(boolean online) { this.online = online; }
+    public String getOnlineLink() { return onlineLink; }
+    public void setOnlineLink(String onlineLink) { this.onlineLink = onlineLink; }
+
+    public String getLessonTypeNames() { return lessonTypeNames; }
+    public void setLessonTypeNames(String lessonTypeNames) { this.lessonTypeNames = lessonTypeNames; }
+
     public ScheduleVersion getVersion() { return version; }
     public void setVersion(ScheduleVersion version) { this.version = version; }
 
     @Override
     public void read(DataInputStream is) throws IOException {
-        // Оставляем пустую реализацию или копируем старую, если нужно
     }
 
     @Override
     public void write(DataOutputStream os) throws IOException {
-        // Оставляем пустую реализацию
     }
 }
