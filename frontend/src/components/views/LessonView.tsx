@@ -324,7 +324,16 @@ export default function LessonView() {
 						<RadioGroup
 							row
 							value={formData.online ? 'online' : 'offline'}
-							onChange={(e) => setFormData({ ...formData, online: e.target.value === 'online' })}
+							onChange={(e) => {
+								const isOnline = e.target.value === 'online'
+								setFormData({ 
+									...formData, 
+									online: isOnline,
+									buildingId: isOnline ? undefined : formData.buildingId,
+									earmarkId: isOnline ? undefined : formData.earmarkId,
+									auditoriumId: isOnline ? undefined : formData.auditoriumId
+								})
+							}}
 						>
 							<FormControlLabel value="offline" control={<Radio />} label="Очно" />
 							<FormControlLabel value="online" control={<Radio />} label="Онлайн" />

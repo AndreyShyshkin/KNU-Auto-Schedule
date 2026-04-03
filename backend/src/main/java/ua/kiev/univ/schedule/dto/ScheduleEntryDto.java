@@ -5,19 +5,21 @@ public class ScheduleEntryDto {
     private String timeStart;
     private String timeEnd;
     private String subjectName;
-    private String type; // Lesson types (Lecture, Practice etc)
+    private String lessonTypeName;
+    private String earmarkName;
     private String buildingName;
     private String auditoriumName;
-    private String additionalInfo; // Group name or Teacher name
+    private String additionalInfo;
 
     public ScheduleEntryDto() {}
 
-    public ScheduleEntryDto(String dayName, String timeStart, String timeEnd, String subjectName, String type, String buildingName, String auditoriumName, String additionalInfo) {
+    public ScheduleEntryDto(String dayName, String timeStart, String timeEnd, String subjectName, String lessonTypeName, String earmarkName, String buildingName, String auditoriumName, String additionalInfo) {
         this.dayName = dayName;
         this.timeStart = timeStart;
         this.timeEnd = timeEnd;
         this.subjectName = subjectName;
-        this.type = type;
+        this.lessonTypeName = lessonTypeName;
+        this.earmarkName = earmarkName;
         this.buildingName = buildingName;
         this.auditoriumName = auditoriumName;
         this.additionalInfo = additionalInfo;
@@ -31,8 +33,10 @@ public class ScheduleEntryDto {
     public void setTimeEnd(String timeEnd) { this.timeEnd = timeEnd; }
     public String getSubjectName() { return subjectName; }
     public void setSubjectName(String subjectName) { this.subjectName = subjectName; }
-    public String getType() { return type; }
-    public void setType(String type) { this.type = type; }
+    public String getLessonTypeName() { return lessonTypeName; }
+    public void setLessonTypeName(String lessonTypeName) { this.lessonTypeName = lessonTypeName; }
+    public String getEarmarkName() { return earmarkName; }
+    public void setEarmarkName(String earmarkName) { this.earmarkName = earmarkName; }
     public String getBuildingName() { return buildingName; }
     public void setBuildingName(String buildingName) { this.buildingName = buildingName; }
     public String getAuditoriumName() { return auditoriumName; }

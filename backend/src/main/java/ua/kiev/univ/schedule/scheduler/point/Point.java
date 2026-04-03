@@ -21,12 +21,17 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class Point {
 
     private final Subject subject;
     private final Auditorium fixedAuditorium;
     private final Building building;
+    public final boolean online;
+    private final String onlineLink;
+    private final String earmarkName;
+    private final String lessonTypeNames;
     public List<Group> groups;
     private final List<Teacher> teachers;
     public int[] colors;
@@ -52,27 +57,43 @@ public class Point {
         int count = dates.size();
         this.subject = lesson.getSubject();
         this.fixedAuditorium = lesson.getAuditorium();
+        this.online = lesson.isOnline();
+        this.onlineLink = lesson.getOnlineLink();
+        this.earmarkName = lesson.getEarmark() != null ? lesson.getEarmark().getName() : "";
+        this.lessonTypeNames = lesson.getLessonTypes() != null ? 
+            lesson.getLessonTypes().stream().map(t -> t.getName()).collect(Collectors.joining(", ")) : "";
+
         // Пріоритет: будівля з уроку -> будівля з обраної аудиторії -> null
         this.building = lesson.getBuilding() != null ? lesson.getBuilding() : (fixedAuditorium != null ? fixedAuditorium.getBuilding() : null);
         
         this.groups = new LinkedList<>(lesson.getGroups());
         this.teachers = new LinkedList<>(lesson.getTeachers());
-        this.earmark = types.indexOf(new BuildingEarmark(this.building, lesson.getEarmark()));
-        this.size = this.teachers.size();
+        
+        // Якщо онлайн, тип аудиторії не потрібен
+        if (this.online) {
+            this.earmark = -1;
+            this.size = 0;
+        } else {
+            this.earmark = types.indexOf(new BuildingEarmark(this.building, lesson.getEarmark()));
+            this.size = this.teachers.size();
+        }
+        
         this.restriction = new int[count];
 
         restrictionMap.addRestrictions(lesson.getGroups(), this);
         restrictionMap.addRestrictions(lesson.getTeachers(), this);
 
-        // Додаємо жорстке обмеження: заняття не може бути в слоті, який належить іншому корпусу
-        for (int i = 0; i < count; i++) {
-            Building slotBuilding = dates.get(i).getTime().getBuilding();
-            if (this.building != null && slotBuilding != null) {
-                if (!Objects.equals(slotBuilding.getId(), this.building.getId())) {
+        // Додаємо жорстке обмеження по корпусу, якщо НЕ онлайн
+        if (!this.online) {
+            for (int i = 0; i < count; i++) {
+                Building slotBuilding = dates.get(i).getTime().getBuilding();
+                if (this.building != null && slotBuilding != null) {
+                    if (!Objects.equals(slotBuilding.getId(), this.building.getId())) {
+                        this.restriction[i] += 10000;
+                    }
+                } else if (!Objects.equals(this.building, slotBuilding)) {
                     this.restriction[i] += 10000;
                 }
-            } else if (!Objects.equals(this.building, slotBuilding)) {
-                this.restriction[i] += 10000;
             }
         }
 
@@ -122,6 +143,10 @@ public class Point {
         appointment.setSubject(subject);
         appointment.setGroups(groups);
         appointment.setTeachers(teachers);
+        appointment.setOnline(online);
+        appointment.setOnlineLink(onlineLink);
+        appointment.setEarmarkName(earmarkName);
+        appointment.setLessonTypeNames(lessonTypeNames);
 
         Map<Date, List<Auditorium>> auditoriumMap = appointment.getAuditoriumMap();
         AuditoriumRepository repository = repositoryFactory.getAuditoriumRepository(Part.BOTH);
@@ -129,7 +154,9 @@ public class Point {
         for (int color : colors) {
             Date date = dates.get(colorMap.getDate(color));
             List<Auditorium> auditoriums;
-            if (fixedAuditorium != null) {
+            if (online) {
+                auditoriums = List.of(); // Немає аудиторії для онлайн
+            } else if (fixedAuditorium != null) {
                 auditoriums = List.of(fixedAuditorium);
             } else {
                 auditoriums = repository.getAuditoriums(color, earmark, size);

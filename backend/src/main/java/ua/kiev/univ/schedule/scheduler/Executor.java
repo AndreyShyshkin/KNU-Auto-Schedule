@@ -55,6 +55,9 @@ public class Executor {
         
         List<Lesson> lessons = EntityFilter.getActiveEntities(Lesson.class);
         for (Lesson lesson : lessons) {
+            if (lesson.isOnline()) {
+                continue;
+            }
             BuildingEarmark be = new BuildingEarmark(lesson.getBuilding(), lesson.getEarmark());
             if (!types.contains(be)) {
                 types.add(be);
@@ -257,7 +260,9 @@ public class Executor {
     public Progress step() {
         repository = repositoryFactory.getAuditoriumRepository(part);
         if (clear) {
-            repository.put(color, point.earmark, point.size);
+            if (!point.online) {
+                repository.put(color, point.earmark, point.size);
+            }
             colorMap.removeRestriction(color, point.restriction);
             removeAdjacent(point);
             for (Point verge : point.verges) {
@@ -280,7 +285,7 @@ public class Executor {
                 }
             }
             addAdjacent(point);
-            if (!repository.get(color, point.earmark, point.size)) {
+            if (!point.online && !repository.get(color, point.earmark, point.size)) {
                 continue;
             }
             /*

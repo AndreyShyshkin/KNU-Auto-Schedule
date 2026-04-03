@@ -51,6 +51,7 @@ public class ScheduleQueryService {
                         entry.getTimeEnd(),
                         app.getSubjectName(),
                         app.getLessonTypeNames(), 
+                        app.getEarmarkName(),
                         entry.getBuildingName(),
                         entry.getAuditoriumName(),
                         app.getGroupNames()
@@ -88,6 +89,7 @@ public class ScheduleQueryService {
                         entry.getTimeEnd(),
                         app.getSubjectName(),
                         app.getLessonTypeNames(),
+                        app.getEarmarkName(),
                         entry.getBuildingName(),
                         entry.getAuditoriumName(),
                         app.getTeacherNames()
@@ -115,6 +117,7 @@ public class ScheduleQueryService {
                         entry.getTimeEnd(),
                         app.getSubjectName(),
                         app.getLessonTypeNames(),
+                        app.getEarmarkName(),
                         entry.getBuildingName(),
                         entry.getAuditoriumName(),
                         app.getTeacherNames() + " | " + app.getGroupNames()

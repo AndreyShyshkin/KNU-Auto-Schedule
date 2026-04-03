@@ -435,8 +435,9 @@ export interface ScheduleEntry {
 	timeStart: string
 	timeEnd: string
 	subjectName: string
-	type: string
+	lessonTypeName: string
 	earmarkName: string
+	buildingName: string
 	auditoriumName: string
 	additionalInfo: string
 }

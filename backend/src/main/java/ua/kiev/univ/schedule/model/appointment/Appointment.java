@@ -41,6 +41,7 @@ public class Appointment extends ua.kiev.univ.schedule.model.core.Entity {
     private String subjectName;
     private String teacherNames;
     private String groupNames;
+    private String earmarkName;
     
     // Списки ID для фильтрации (храним как строки "1,2,3")
     @Column(length = 1000)
@@ -78,6 +79,9 @@ public class Appointment extends ua.kiev.univ.schedule.model.core.Entity {
     public void setTeacherNames(String teacherNames) { this.teacherNames = teacherNames; }
     public String getGroupNames() { return groupNames; }
     public void setGroupNames(String groupNames) { this.groupNames = groupNames; }
+    public String getEarmarkName() { return earmarkName; }
+    public void setEarmarkName(String earmarkName) { this.earmarkName = earmarkName; }
+    
     public String getTeacherIds() { return teacherIds; }
     public void setTeacherIds(String teacherIds) { this.teacherIds = teacherIds; }
     public String getGroupIds() { return groupIds; }

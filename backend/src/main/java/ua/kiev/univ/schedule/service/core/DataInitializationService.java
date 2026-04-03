@@ -169,25 +169,12 @@ public class DataInitializationService implements PersistenceService {
             app.setTeacherNames(app.getTeachers().stream().map(Teacher::getName).collect(Collectors.joining(", ")));
             app.setGroupNames(app.getGroups().stream().map(Group::getName).collect(Collectors.joining(", ")));
             
+            // earmarkName is set in Point.initAppointment, but if we refresh from memory it might be null if not careful
+            // However, the current flow is: build -> setAppointments (Point.initAppointment sets fields) -> saveAll.
+            // So fields should be there.
+            
             app.setTeacherIds(app.getTeachers().stream().map(t -> t.getId().toString()).collect(Collectors.joining(",")));
             app.setGroupIds(app.getGroups().stream().map(g -> g.getId().toString()).collect(Collectors.joining(",")));
-
-            // Переносимо флаг онлайн з уроку в розклад
-            for (Lesson lesson : lessons) {
-                if (lesson.getSubject() != null && lesson.getSubject().equals(app.getSubject()) && 
-                    lesson.getTeachers().equals(app.getTeachers()) && 
-                    lesson.getGroups().equals(app.getGroups())) {
-                    app.setOnline(lesson.isOnline());
-                    app.setOnlineLink(lesson.getOnlineLink());
-                    
-                    // Переносимо типи уроку
-                    String typeNames = lesson.getLessonTypes().stream()
-                        .map(LessonType::getName)
-                        .collect(Collectors.joining(", "));
-                    app.setLessonTypeNames(typeNames);
-                    break;
-                }
-            }
 
             if (app instanceof HalvedAppointment) {
                 HalvedAppointment happ = (HalvedAppointment) app;

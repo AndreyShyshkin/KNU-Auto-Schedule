@@ -81,10 +81,34 @@ export default function ScheduleView() {
 		{ field: 'timeStart', headerName: 'Start', width: 90 },
 		{ field: 'timeEnd', headerName: 'End', width: 90 },
 		{ field: 'subjectName', headerName: 'Subject', flex: 1 },
-		{ field: 'type', headerName: 'Type', width: 130 },
+		{ field: 'lessonTypeName', headerName: 'Lesson Type', width: 130 },
 		{ field: 'buildingName', headerName: 'Building', width: 120 },
 		{ field: 'earmarkName', headerName: 'Room Type', width: 100 },
-		{ field: 'auditoriumName', headerName: 'Auditorium', width: 100 },
+		{ 
+			field: 'auditoriumName', 
+			headerName: 'Auditorium', 
+			width: 150,
+			renderCell: (params) => {
+				const value = params.value as string
+				if (value?.includes('http')) {
+					// Витягуємо саме посилання, якщо є префікс "Метод: "
+					const linkMatch = value.match(/https?:\/\/[^\s]+/);
+					if (linkMatch) {
+						return (
+							<a 
+								href={linkMatch[0]} 
+								target="_blank" 
+								rel="noopener noreferrer"
+								style={{ color: '#1976d2', textDecoration: 'underline' }}
+							>
+								{value}
+							</a>
+						)
+					}
+				}
+				return value
+			}
+		},
 		{
 			field: 'additionalInfo',
 			headerName: mode === 'teacher' ? 'Groups' : mode === 'group' ? 'Teachers' : 'Teachers | Groups',
