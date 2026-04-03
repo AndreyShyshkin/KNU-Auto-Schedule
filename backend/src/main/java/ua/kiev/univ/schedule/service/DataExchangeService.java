@@ -25,6 +25,7 @@ public class DataExchangeService {
 
     public DataExchangeService(ObjectMapper objectMapper,
                                BuildingRepository buildingRepository,
+                               LessonTypeRepository lessonTypeRepository,
                                TimeRepository timeRepository,
                                DayRepository dayRepository,
                                FacultyRepository facultyRepository,
@@ -36,24 +37,28 @@ public class DataExchangeService {
                                AuditoriumRepository auditoriumRepository,
                                SubjectRepository subjectRepository,
                                LessonRepository lessonRepository,
+                               ScheduleVersionRepository scheduleVersionRepository,
                                AppointmentRepository appointmentRepository,
                                DataInitializationService dataInitializationService) {
         this.objectMapper = objectMapper;
         this.dataInitializationService = dataInitializationService;
         
         this.repositories = new LinkedHashMap<>();
+        // Пріоритетний порядок для імпорту (спочатку ті, на кого посилаються інші)
         repositories.put("buildings", buildingRepository);
-        repositories.put("times", timeRepository);
-        repositories.put("days", dayRepository);
         repositories.put("faculties", facultyRepository);
+        repositories.put("lesson_types", lessonTypeRepository);
+        repositories.put("earmarks", earmarkRepository);
+        repositories.put("days", dayRepository);
+        repositories.put("times", timeRepository);
+        repositories.put("subjects", subjectRepository);
         repositories.put("chairs", chairRepository);
         repositories.put("specialities", specialityRepository);
         repositories.put("teachers", teacherRepository);
         repositories.put("groups", groupRepository);
-        repositories.put("earmarks", earmarkRepository);
         repositories.put("auditoriums", auditoriumRepository);
-        repositories.put("subjects", subjectRepository);
         repositories.put("lessons", lessonRepository);
+        repositories.put("schedule_versions", scheduleVersionRepository);
         repositories.put("appointments", appointmentRepository);
     }
 
@@ -80,6 +85,9 @@ public class DataExchangeService {
     @Transactional
     public Map<String, String> importFromZip(InputStream inputStream, List<String> tablesToImport) throws IOException {
         Map<String, String> result = new LinkedHashMap<>();
+        Map<String, byte[]> entryDataMap = new HashMap<>();
+
+        // 1. Спочатку зчитуємо всі обрані файли з ZIP в пам'ять
         try (ZipInputStream zis = new ZipInputStream(inputStream)) {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
@@ -87,40 +95,48 @@ public class DataExchangeService {
                 String tableName = fileName.contains(".") ? fileName.substring(0, fileName.lastIndexOf('.')) : fileName;
 
                 if (tablesToImport.contains(tableName)) {
-                    Object repo = repositories.get(tableName);
-                    if (repo instanceof org.springframework.data.jpa.repository.JpaRepository) {
-                        try {
-                            Class<?> entityClass = getEntityClass(tableName);
-                            // Read entry to bytes to avoid ZipInputStream EOF issues with Jackson
-                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                            byte[] buffer = new byte[4096];
-                            int len;
-                            while ((len = zis.read(buffer)) > 0) {
-                                baos.write(buffer, 0, len);
-                            }
-                            byte[] jsonBytes = baos.toByteArray();
-                            
-                            if (jsonBytes.length > 0) {
-                                List<?> data = objectMapper.readValue(jsonBytes, objectMapper.getTypeFactory().constructCollectionType(List.class, entityClass));
-                                org.springframework.data.jpa.repository.JpaRepository jpaRepo = (org.springframework.data.jpa.repository.JpaRepository) repo;
-                                jpaRepo.saveAll(data);
-                                result.put(tableName, "Successfully imported " + data.size() + " items");
-                                log.info("Imported table {}: {} items", tableName, data.size());
-                            } else {
-                                result.put(tableName, "Empty file");
-                            }
-                        } catch (Exception e) {
-                            log.error("Error importing table " + tableName, e);
-                            result.put(tableName, "Error: " + e.getMessage());
-                        }
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    byte[] buffer = new byte[4096];
+                    int len;
+                    while ((len = zis.read(buffer)) > 0) {
+                        baos.write(buffer, 0, len);
                     }
+                    entryDataMap.put(tableName, baos.toByteArray());
                 }
                 zis.closeEntry();
             }
         }
 
+        // 2. Імпортуємо дані у строгому порядку черговості (згідно з repositories map)
+        for (String tableName : repositories.keySet()) {
+            if (entryDataMap.containsKey(tableName)) {
+                byte[] jsonBytes = entryDataMap.get(tableName);
+                Object repo = repositories.get(tableName);
+                
+                if (repo instanceof org.springframework.data.jpa.repository.JpaRepository) {
+                    try {
+                        Class<?> entityClass = getEntityClass(tableName);
+                        if (jsonBytes.length > 0) {
+                            List<?> data = objectMapper.readValue(jsonBytes, objectMapper.getTypeFactory().constructCollectionType(List.class, entityClass));
+                            org.springframework.data.jpa.repository.JpaRepository jpaRepo = (org.springframework.data.jpa.repository.JpaRepository) repo;
+                            
+                            // Зберігаємо (update or insert)
+                            jpaRepo.saveAll(data);
+                            result.put(tableName, "Successfully imported " + data.size() + " items");
+                            log.info("Imported table {}: {} items", tableName, data.size());
+                        } else {
+                            result.put(tableName, "Empty file");
+                        }
+                    } catch (Exception e) {
+                        log.error("Error importing table " + tableName, e);
+                        result.put(tableName, "Error: " + e.getMessage());
+                    }
+                }
+            }
+        }
+
         try {
-            // Refresh DataService after import to sync in-memory cache
+            // Оновлюємо внутрішні списки DataService
             dataInitializationService.initializeData();
         } catch (Exception e) {
             log.error("Error refreshing DataService after import", e);
@@ -133,6 +149,7 @@ public class DataExchangeService {
     private Class<?> getEntityClass(String tableName) {
         return switch (tableName) {
             case "buildings" -> ua.kiev.univ.schedule.model.placement.Building.class;
+            case "lesson_types" -> ua.kiev.univ.schedule.model.lesson.LessonType.class;
             case "times" -> ua.kiev.univ.schedule.model.date.Time.class;
             case "days" -> ua.kiev.univ.schedule.model.date.Day.class;
             case "faculties" -> ua.kiev.univ.schedule.model.department.Faculty.class;
@@ -144,6 +161,7 @@ public class DataExchangeService {
             case "auditoriums" -> ua.kiev.univ.schedule.model.placement.Auditorium.class;
             case "subjects" -> ua.kiev.univ.schedule.model.subject.Subject.class;
             case "lessons" -> ua.kiev.univ.schedule.model.lesson.Lesson.class;
+            case "schedule_versions" -> ua.kiev.univ.schedule.model.appointment.ScheduleVersion.class;
             case "appointments" -> ua.kiev.univ.schedule.model.appointment.Appointment.class;
             default -> throw new IllegalArgumentException("Unknown table: " + tableName);
         };
