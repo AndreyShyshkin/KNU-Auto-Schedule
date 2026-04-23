@@ -12,6 +12,7 @@ import SubjectView from '@/components/views/SubjectView'
 import TeacherView from '@/components/views/TeacherView'
 import DataExchangeView from '@/components/views/DataExchangeView'
 import BuildView from '@/components/views/BuildView'
+import AdminUserView from '@/components/views/AdminUserView'
 import Link from 'next/link'
 import {
 	AppBar,
@@ -29,7 +30,10 @@ import {
 import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 import StorageIcon from '@mui/icons-material/Storage'
 import CloseIcon from '@mui/icons-material/Close'
+import LogoutIcon from '@mui/icons-material/Logout'
 import { useState } from 'react'
+import { useAuth } from '@/app/providers'
+import { useRouter } from 'next/navigation'
 
 interface TabPanelProps {
 	children?: React.ReactNode
@@ -57,6 +61,13 @@ function TabPanel(props: TabPanelProps) {
 export default function Home() {
 	const [value, setValue] = useState(0)
 	const [openDataModal, setOpenDataModal] = useState(false)
+	const { logout } = useAuth()
+	const router = useRouter()
+
+	const handleLogout = () => {
+		logout()
+		router.push('/login')
+	}
 
 	const handleChange = (event: React.SyntheticEvent, newValue: number) => {
 		setValue(newValue)
@@ -101,6 +112,16 @@ export default function Home() {
 					>
 						Переглянути розклад
 					</Button>
+
+					<Button
+						startIcon={<LogoutIcon />}
+						variant="outlined"
+						size="small"
+						color="error"
+						onClick={handleLogout}
+					>
+						Вийти
+					</Button>
 				</Toolbar>
 			</AppBar>
 
@@ -131,6 +152,7 @@ export default function Home() {
 							<Tab label='Placement' />
 							<Tab label='Subject' />
 							<Tab label='Lesson' />
+							<Tab label='Адміни' />
 						</Tabs>
 					</Box>
 
@@ -169,6 +191,9 @@ export default function Home() {
 						</TabPanel>
 						<TabPanel value={value} index={10}>
 							<LessonView />
+						</TabPanel>
+						<TabPanel value={value} index={11}>
+							<AdminUserView />
 						</TabPanel>
 					</Box>
 				</Box>

@@ -545,6 +545,28 @@ export const importData = async (
 	return data
 }
 
+// --- Admin Users ---
+export interface User {
+	id?: number
+	username: string
+	password?: string
+	role: string
+}
+
+export const fetchAdminUsers = async (): Promise<User[]> => {
+	const { data } = await axios.get('/api/admin/users')
+	return data
+}
+
+export const createAdminUser = async (user: User): Promise<User> => {
+	const { data } = await axios.post('/api/admin/users', user)
+	return data
+}
+
+export const deleteAdminUser = async (id: number): Promise<void> => {
+	await axios.delete(`/api/admin/users/${id}`)
+}
+
 export const handleError = (error: any): string => {
 	if (error.response?.data?.message) {
 		return error.response.data.message
