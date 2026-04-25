@@ -1,6 +1,7 @@
 package ua.kiev.univ.schedule.model.appointment;
 
 import jakarta.persistence.*;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "appointment_entry")
@@ -14,6 +15,7 @@ public class AppointmentEntry {
     @com.fasterxml.jackson.annotation.JsonIgnore
     private Appointment appointment;
 
+    private LocalDate actualDate;
     private String dayName;
     private String timeStart;
     private String timeEnd;
@@ -42,8 +44,13 @@ public class AppointmentEntry {
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+    @com.fasterxml.jackson.annotation.JsonIgnore
     public Appointment getAppointment() { return appointment; }
     public void setAppointment(Appointment appointment) { this.appointment = appointment; }
+    
+    public LocalDate getActualDate() { return actualDate; }
+    public void setActualDate(LocalDate actualDate) { this.actualDate = actualDate; }
+    
     public String getDayName() { return dayName; }
     public void setDayName(String dayName) { this.dayName = dayName; }
     public String getTimeStart() { return timeStart; }

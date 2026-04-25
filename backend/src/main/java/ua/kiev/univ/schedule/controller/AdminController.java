@@ -1,6 +1,5 @@
 package ua.kiev.univ.schedule.controller;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -13,12 +12,16 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/users")
-@RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+
+    public AdminController(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     @GetMapping
     public List<User> getAllAdmins() {

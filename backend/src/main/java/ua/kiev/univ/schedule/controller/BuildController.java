@@ -17,8 +17,11 @@ public class BuildController {
     }
 
     @PostMapping("/start")
-    public String startBuild() {
-        return buildService.buildSchedule();
+    public String startBuild(@org.springframework.web.bind.annotation.RequestParam(required = false) String startDate,
+                             @org.springframework.web.bind.annotation.RequestParam(required = false) String endDate) {
+        java.time.LocalDate start = (startDate != null && !startDate.isEmpty()) ? java.time.LocalDate.parse(startDate) : null;
+        java.time.LocalDate end = (endDate != null && !endDate.isEmpty()) ? java.time.LocalDate.parse(endDate) : null;
+        return buildService.buildSchedule(start, end);
     }
 
     @GetMapping("/status")

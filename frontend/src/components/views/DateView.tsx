@@ -42,6 +42,16 @@ import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
+const DAY_OPTIONS = [
+	{ value: 1, label: 'Понеділок' },
+	{ value: 2, label: 'Вівторок' },
+	{ value: 3, label: 'Середа' },
+	{ value: 4, label: 'Четвер' },
+	{ value: 5, label: 'П’ятниця' },
+	{ value: 6, label: 'Субота' },
+	{ value: 7, label: 'Неділя' },
+]
+
 export default function DateView() {
 	const queryClient = useQueryClient()
 	const [selectedDayId, setSelectedDayId] = useState<number | null>(null)
@@ -120,7 +130,7 @@ export default function DateView() {
 
 	// --- Handlers Day ---
 	const handleAddDay = () => {
-		setDayFormData({})
+		setDayFormData({ dayOfWeek: 1, name: 'Понеділок' })
 		setDayDialogMode('create')
 		setOpenDayDialog(true)
 	}
@@ -151,7 +161,7 @@ export default function DateView() {
 
 	// --- Handlers Time ---
 	const handleAddTime = () => {
-		setTimeFormData({ buildingId: selectedBuildingId || undefined })
+		setTimeFormData({ buildingId: selectedBuildingId || undefined, start: '09:00', end: '10:35' })
 		setTimeDialogMode('create')
 		setOpenTimeDialog(true)
 	}
@@ -210,7 +220,15 @@ export default function DateView() {
 		? times.filter(t => t.buildingId === selectedBuildingId)
 		: []
 
-	const dayColumns: GridColDef[] = [{ field: 'name', headerName: 'День', flex: 1 }]
+	const dayColumns: GridColDef[] = [
+		{ field: 'name', headerName: 'Назва', flex: 1 },
+		{ 
+			field: 'dayOfWeek', 
+			headerName: 'Прив’язка', 
+			width: 120,
+			valueGetter: (params) => DAY_OPTIONS.find(opt => opt.value === params)?.label || params
+		}
+	]
 	const buildingColumns: GridColDef[] = [{ field: 'name', headerName: 'Корпус', flex: 1 }]
 	const timeColumns: GridColDef[] = [
 		{
@@ -237,9 +255,9 @@ export default function DateView() {
 	return (
 		<Grid container spacing={2} sx={{ height: '100%' }}>
 			{/* 1. Days */}
-			<Grid size={4} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+			<Grid size={5} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
 				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
-					<Typography variant='subtitle2' sx={{ fontWeight: 'bold' }}>1. Дні</Typography>
+					<Typography variant='subtitle2' sx={{ fontWeight: 'bold' }}>1. Дні (з календарем)</Typography>
 					<Box>
 						<IconButton size='small' onClick={handleAddDay}><AddIcon fontSize="small"/></IconButton>
 						<IconButton size='small' disabled={!selectedDayId} onClick={handleEditDay}><EditIcon fontSize="small"/></IconButton>
@@ -261,8 +279,8 @@ export default function DateView() {
 			</Grid>
 
 			{/* 2. Buildings */}
-			<Grid size={4} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-				<Typography variant='subtitle2' gutterBottom sx={{ fontWeight: 'bold' }}>2. Оберіть Корпус</Typography>
+			<Grid size={3} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+				<Typography variant='subtitle2' gutterBottom sx={{ fontWeight: 'bold' }}>2. Корпус</Typography>
 				<Paper sx={{ flexGrow: 1 }}>
 					<DataGrid
 						rows={buildings}
@@ -307,11 +325,23 @@ export default function DateView() {
 					<TextField
 						autoFocus
 						margin='dense'
-						label='Назва дня'
+						label='Довільна назва (напр. Пн)'
 						fullWidth
 						value={dayFormData.name || ''}
 						onChange={e => setDayFormData({ ...dayFormData, name: e.target.value })}
 					/>
+					<FormControl fullWidth margin="dense">
+						<InputLabel>Прив’язка до календаря</InputLabel>
+						<Select
+							value={dayFormData.dayOfWeek || 1}
+							label="Прив’язка до календаря"
+							onChange={e => setDayFormData({ ...dayFormData, dayOfWeek: e.target.value as number })}
+						>
+							{DAY_OPTIONS.map(opt => (
+								<MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+							))}
+						</Select>
+					</FormControl>
 				</DialogContent>
 				<DialogActions>
 					<Button onClick={() => setOpenDayDialog(false)}>Скасувати</Button>
@@ -336,15 +366,21 @@ export default function DateView() {
 					<TextField
 						margin='dense'
 						label='Початок'
+						type='time'
 						fullWidth
-						value={timeFormData.start || ''}
+						InputLabelProps={{ shrink: true }}
+						inputProps={{ step: 300, lang: 'uk-UA' }}
+						value={timeFormData.start || '09:00'}
 						onChange={e => setTimeFormData({ ...timeFormData, start: e.target.value })}
 					/>
 					<TextField
 						margin='dense'
 						label='Кінець'
+						type='time'
 						fullWidth
-						value={timeFormData.end || ''}
+						InputLabelProps={{ shrink: true }}
+						inputProps={{ step: 300, lang: 'uk-UA' }}
+						value={timeFormData.end || '10:35'}
 						onChange={e => setTimeFormData({ ...timeFormData, end: e.target.value })}
 					/>
 				</DialogContent>

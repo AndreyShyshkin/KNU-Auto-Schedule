@@ -1,10 +1,6 @@
 package ua.kiev.univ.schedule.model.user;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -12,10 +8,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.List;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @Entity
 @Table(name = "_user")
 public class User implements UserDetails {
@@ -35,9 +27,42 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private Role role;
 
+    public User() {}
+
+    public User(Long id, String username, String password, Role role) {
+        this.id = id;
+        this.username = username;
+        this.password = password;
+        this.role = role;
+    }
+
+    public static UserBuilder builder() {
+        return new UserBuilder();
+    }
+
+    public static class UserBuilder {
+        private Long id;
+        private String username;
+        private String password;
+        private Role role;
+
+        public UserBuilder id(Long id) { this.id = id; return this; }
+        public UserBuilder username(String username) { this.username = username; return this; }
+        public UserBuilder password(String password) { this.password = password; return this; }
+        public UserBuilder role(Role role) { this.role = role; return this; }
+        public User build() { return new User(id, username, password, role); }
+    }
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public void setUsername(String username) { this.username = username; }
+    public void setPassword(String password) { this.password = password; }
+    public Role getRole() { return role; }
+    public void setRole(Role role) { this.role = role; }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
+        return List.of(new SimpleGrantedAuthority("ROLE_" + (role != null ? role.name() : "USER")));
     }
 
     @Override

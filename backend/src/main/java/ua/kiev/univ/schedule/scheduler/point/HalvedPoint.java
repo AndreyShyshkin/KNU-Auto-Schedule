@@ -21,23 +21,14 @@ public class HalvedPoint extends Point {
 
     protected HalvedPoint(Lesson lesson, List<Date> dates, List<BuildingEarmark> types, RestrictionMap restrictionMap) {
         super(lesson, dates, types, restrictionMap);
-        Progress.DONE.value++;
+        // В календарному режимі ми поки що не підтримуємо поділ на чисельник/знаменник,
+        // бо кожна дата вже унікальна. Тому HalvedPoint просто працює як звичайна точка.
     }
 
     @Override
     public HalvedAppointment getAppointment(List<Date> dates, ColorMap colorMap, AuditoriumRepositoryFactory repositoryFactory) {
         HalvedAppointment appointment = new HalvedAppointment();
-        // Спочатку ініціалізуємо базову частину (повні пари, якщо вони є в цьому уроці)
         initAppointment(appointment, dates, colorMap, repositoryFactory);
-
-        // Потім додаємо специфіку половинки
-        appointment.setDate(dates.get(colorMap.getDate(color)));
-        appointment.setPart(part);
-
-        AuditoriumRepository repository = repositoryFactory.getAuditoriumRepository(part);
-        List<Auditorium> auditoriums = repository.getAuditoriums(color, earmark, size);
-        appointment.setAuditoriums(auditoriums);
-
         return appointment;
     }
 }

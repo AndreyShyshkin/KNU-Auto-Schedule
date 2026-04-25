@@ -21,6 +21,7 @@ import {
 	Typography,
 	IconButton,
 	Alert,
+	TextField,
 } from '@mui/material'
 import {
 	Delete as DeleteIcon,
@@ -35,6 +36,9 @@ export default function BuildView() {
 	const queryClient = useQueryClient()
 	const [isBuilding, setIsBuilding] = useState(false)
 	const [lastStatus, setLastStatus] = useState<BuildStatus | null>(null)
+	
+	const [startDate, setStartDate] = useState('')
+	const [endDate, setEndDate] = useState('')
 
 	const { data: versions = [], isLoading: isLoadingVersions } = useQuery({
 		queryKey: ['scheduleVersions'],
@@ -43,11 +47,11 @@ export default function BuildView() {
 
 	const handleBuild = async () => {
 		try {
-			await startBuild()
+			await startBuild(startDate || undefined, endDate || undefined)
 			setIsBuilding(true)
 			setLastStatus(null)
 		} catch (error) {
-			console.error('Failed to start build', error)
+			alert(handleError(error))
 		}
 	}
 
@@ -90,9 +94,32 @@ export default function BuildView() {
 			<Paper sx={{ p: 3, flex: '1 1 40%', display: 'flex', flexDirection: 'column', gap: 2 }} elevation={2}>
 				<Typography variant='h6' color='primary'>Алгоритм побудови</Typography>
 				<Typography variant='body2' color='text.secondary'>
-					Натисніть кнопку нижче, щоб запустити процес автоматичної генерації розкладу. 
-					Система врахує всі введені дані: корпуси, аудиторії, типи занять та обмеження.
+					Вкажіть період семестру та натисніть кнопку нижче, щоб запустити генерацію. 
+					Система розподілить загальну кількість годин кожного заняття по календарних датах.
 				</Typography>
+
+				<Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
+					<TextField
+						label='Дата початку'
+						type='date'
+						fullWidth
+						size='small'
+						InputLabelProps={{ shrink: true }}
+						value={startDate}
+						onChange={(e) => setStartDate(e.target.value)}
+						disabled={isBuilding}
+					/>
+					<TextField
+						label='Дата закінчення'
+						type='date'
+						fullWidth
+						size='small'
+						InputLabelProps={{ shrink: true }}
+						value={endDate}
+						onChange={(e) => setEndDate(e.target.value)}
+						disabled={isBuilding}
+					/>
+				</Box>
 
 				<Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 2 }}>
 					{isBuilding ? (
@@ -108,6 +135,7 @@ export default function BuildView() {
 							startIcon={<PlayIcon />}
 							onClick={handleBuild}
 							sx={{ px: 4, py: 2, borderRadius: 10 }}
+							disabled={!startDate || !endDate}
 						>
 							Почати генерацію
 						</Button>
@@ -166,7 +194,18 @@ export default function BuildView() {
 						>
 							<ListItemText
 								primary={v.name}
-								secondary={v.current ? "Поточна активна версія" : `Створено: ${new Date(v.createdAt).toLocaleString()}`}
+								secondary={
+									<Box>
+										<Typography variant="caption" display="block">
+											{v.current ? "Поточна активна версія" : `Створено: ${new Date(v.createdAt).toLocaleString()}`}
+										</Typography>
+										{v.startDate && v.endDate && (
+											<Typography variant="caption" color="primary">
+												Період: {v.startDate} — {v.endDate}
+											</Typography>
+										)}
+									</Box>
+								}
 								primaryTypographyProps={{ fontWeight: v.current ? 'bold' : 'normal' }}
 							/>
 						</ListItem>

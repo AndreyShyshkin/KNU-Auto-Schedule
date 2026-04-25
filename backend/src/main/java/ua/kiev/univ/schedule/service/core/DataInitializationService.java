@@ -1,286 +1,178 @@
 package ua.kiev.univ.schedule.service.core;
 
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ua.kiev.univ.schedule.model.appointment.Appointment;
 import ua.kiev.univ.schedule.model.appointment.AppointmentEntry;
-import ua.kiev.univ.schedule.model.appointment.HalvedAppointment;
-import ua.kiev.univ.schedule.model.core.Entity;
-import ua.kiev.univ.schedule.model.date.Date;
+import ua.kiev.univ.schedule.model.appointment.ScheduleVersion;
 import ua.kiev.univ.schedule.model.date.Day;
 import ua.kiev.univ.schedule.model.date.Time;
-import ua.kiev.univ.schedule.model.department.Chair;
-import ua.kiev.univ.schedule.model.department.Faculty;
-import ua.kiev.univ.schedule.model.department.Speciality;
 import ua.kiev.univ.schedule.model.lesson.Lesson;
-import ua.kiev.univ.schedule.model.lesson.LessonType;
 import ua.kiev.univ.schedule.model.member.Group;
 import ua.kiev.univ.schedule.model.member.Teacher;
 import ua.kiev.univ.schedule.model.placement.Auditorium;
+import ua.kiev.univ.schedule.model.placement.Building;
 import ua.kiev.univ.schedule.model.placement.Earmark;
 import ua.kiev.univ.schedule.model.subject.Subject;
-import ua.kiev.univ.schedule.model.placement.Building;
-import ua.kiev.univ.schedule.repository.*;
+import ua.kiev.univ.schedule.repository.AppointmentRepository;
+import ua.kiev.univ.schedule.repository.ScheduleVersionRepository;
+import ua.kiev.univ.schedule.scheduler.Executor;
+import ua.kiev.univ.schedule.scheduler.Progress;
 
-import java.util.ArrayList;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
-public class DataInitializationService implements PersistenceService {
+public class DataInitializationService implements CommandLineRunner {
 
-    private final BuildingRepository buildingRepository;
-    private final LessonTypeRepository lessonTypeRepository;
-    private final TimeRepository timeRepository;
-    private final DayRepository dayRepository;
-    private final FacultyRepository facultyRepository;
-    private final EarmarkRepository earmarkRepository;
-    private final SubjectRepository subjectRepository;
-    private final ChairRepository chairRepository;
-    private final SpecialityRepository specialityRepository;
-    private final AuditoriumRepository auditoriumRepository;
-    private final TeacherRepository teacherRepository;
-    private final GroupRepository groupRepository;
-    private final LessonRepository lessonRepository;
     private final AppointmentRepository appointmentRepository;
     private final ScheduleVersionRepository scheduleVersionRepository;
 
-    public DataInitializationService(BuildingRepository buildingRepository, LessonTypeRepository lessonTypeRepository, TimeRepository timeRepository, DayRepository dayRepository,
-                                     FacultyRepository facultyRepository, EarmarkRepository earmarkRepository,
-                                     SubjectRepository subjectRepository, ChairRepository chairRepository,
-                                     SpecialityRepository specialityRepository, AuditoriumRepository auditoriumRepository,
-                                     TeacherRepository teacherRepository, GroupRepository groupRepository,
-                                     LessonRepository lessonRepository, AppointmentRepository appointmentRepository,
-                                     ScheduleVersionRepository scheduleVersionRepository) {
-        this.buildingRepository = buildingRepository;
-        this.lessonTypeRepository = lessonTypeRepository;
-        this.timeRepository = timeRepository;
-        this.dayRepository = dayRepository;
-        this.facultyRepository = facultyRepository;
-        this.earmarkRepository = earmarkRepository;
-        this.subjectRepository = subjectRepository;
-        this.chairRepository = chairRepository;
-        this.specialityRepository = specialityRepository;
-        this.auditoriumRepository = auditoriumRepository;
-        this.teacherRepository = teacherRepository;
-        this.groupRepository = groupRepository;
-        this.lessonRepository = lessonRepository;
+    public DataInitializationService(AppointmentRepository appointmentRepository, ScheduleVersionRepository scheduleVersionRepository) {
         this.appointmentRepository = appointmentRepository;
         this.scheduleVersionRepository = scheduleVersionRepository;
     }
 
+    @Override
+    public void run(String... args) {
+        initializeData();
+    }
+
     @Transactional
     public void initializeData() {
-        DataService.setPersistenceService(this);
-        System.out.println("Initializing DataService from Spring Repositories...");
-        
-        load(Building.class, buildingRepository.findAll());
-        load(LessonType.class, lessonTypeRepository.findAll());
-        load(Time.class, timeRepository.findAll());
-        
-        List<Day> days = dayRepository.findAll();
-        for (Day day : days) {
-            day.getTimes().size(); 
+        try {
+            ua.kiev.univ.schedule.service.core.DatabaseService.loadAll();
+            int lessons = DataService.getEntities(Lesson.class).size();
+            int auds = DataService.getEntities(Auditorium.class).size();
+            int days = DataService.getEntities(Day.class).size();
+            System.out.println("Data loaded: " + lessons + " lessons, " + auds + " auditoriums, " + days + " days.");
+        } catch (Exception e) {
+            System.err.println("Failed to load data: " + e.getMessage());
+            e.printStackTrace();
         }
-        load(Day.class, days);
-        
-        load(Faculty.class, facultyRepository.findAll());
-        load(Earmark.class, earmarkRepository.findAll());
-        load(Subject.class, subjectRepository.findAll());
-        load(Chair.class, chairRepository.findAll());
-        load(Speciality.class, specialityRepository.findAll());
-        load(Auditorium.class, auditoriumRepository.findAll());
-        load(Teacher.class, teacherRepository.findAll());
-        load(Group.class, groupRepository.findAll());
-        
-        List<Lesson> lessons = lessonRepository.findAll();
-        for (Lesson l : lessons) {
-            l.getTeachers().size();
-            l.getGroups().size();
-            l.getLessonTypes().size();
-        }
-        load(Lesson.class, lessons);
-        
-        List<Appointment> appointments = appointmentRepository.findByVersionIsCurrentTrue();
-        for (Appointment a : appointments) {
-            // Reconstruct transient fields for legacy logic if needed
-        }
-        load(Appointment.class, appointments);
-        
-        System.out.println("DataService initialized.");
     }
 
-    private <E extends Entity> void load(Class<E> clazz, List<E> entities) {
-        EntityList<E> list = DataService.getEntities(clazz);
-        list.clear();
-        list.addAll(entities);
+    private BuildStatus currentStatus = new BuildStatus();
+
+    public static class BuildStatus {
+        private boolean building;
+        private String lastResult;
+        private String lastError;
+        private int steps;
+
+        public boolean isBuilding() { return building; }
+        public void setBuilding(boolean building) { this.building = building; }
+        public String getLastResult() { return lastResult; }
+        public void setLastResult(String lastResult) { this.lastResult = lastResult; }
+        public int getSteps() { return steps; }
+        public void setSteps(int steps) { this.steps = steps; }
+        public String getLastError() { return lastError; }
+        public void setLastError(String lastError) { this.lastError = lastError; }
     }
-    
+
+    public BuildStatus getBuildStatus() {
+        return currentStatus;
+    }
+
     @Transactional
-    public void saveAll() {
-        buildingRepository.saveAll(DataService.getEntities(Building.class));
-        lessonTypeRepository.saveAll(DataService.getEntities(LessonType.class));
-        timeRepository.saveAll(DataService.getEntities(Time.class));
-        dayRepository.saveAll(DataService.getEntities(Day.class));
-        facultyRepository.saveAll(DataService.getEntities(Faculty.class));
-        earmarkRepository.saveAll(DataService.getEntities(Earmark.class));
-        subjectRepository.saveAll(DataService.getEntities(Subject.class));
-        chairRepository.saveAll(DataService.getEntities(Chair.class));
-        specialityRepository.saveAll(DataService.getEntities(Speciality.class));
-        auditoriumRepository.saveAll(DataService.getEntities(Auditorium.class));
-        teacherRepository.saveAll(DataService.getEntities(Teacher.class));
-        groupRepository.saveAll(DataService.getEntities(Group.class));
-        
-        List<Lesson> lessons = DataService.getEntities(Lesson.class);
-        lessonRepository.saveAll(lessons);
-        
-        List<Appointment> appointments = DataService.getEntities(Appointment.class);
-        if (!appointments.isEmpty()) {
-            // Check if we need to create a new version (e.g. if appointments don't have a version set)
-            boolean needsNewVersion = appointments.stream().anyMatch(a -> a.getVersion() == null);
+    public void runBuildProcess(java.time.LocalDate startDate, java.time.LocalDate endDate) {
+        try {
+            System.out.println("Starting schedule generation for period: " + startDate + " to " + endDate);
             
-            if (needsNewVersion) {
-                // Mark current versions as not current
-                List<ua.kiev.univ.schedule.model.appointment.ScheduleVersion> allVersions = scheduleVersionRepository.findAll();
-                for (ua.kiev.univ.schedule.model.appointment.ScheduleVersion v : allVersions) {
-                    if (v.isCurrent()) {
-                        v.setCurrent(false);
-                    }
+            int lessonsCount = DataService.getEntities(Lesson.class).size();
+            int daysCount = DataService.getEntities(Day.class).size();
+            int timesCount = DataService.getEntities(Time.class).size();
+            
+            if (lessonsCount == 0) {
+                currentStatus.setLastResult("FAIL");
+                currentStatus.setLastError("No lessons to schedule");
+                return;
+            }
+            if (daysCount == 0 || timesCount == 0) {
+                currentStatus.setLastResult("FAIL");
+                currentStatus.setLastError("No days or time slots configured");
+                return;
+            }
+
+            Executor executor = new Executor(startDate, endDate);
+            Progress progress = executor.initialize();
+
+            int steps = 0;
+            while (progress == Progress.BUILD) {
+                progress = executor.step();
+                steps++;
+                currentStatus.setSteps(steps);
+                if (steps % 1000 == 0) {
+                    System.out.println("Step " + steps + "...");
                 }
-                scheduleVersionRepository.saveAll(allVersions);
+                if (steps > 1000000) { // Safety break
+                    progress = Progress.FAIL;
+                    break;
+                }
+            }
+
+            currentStatus.setLastResult(progress.toString());
+            if (progress == Progress.DONE) {
+                System.out.println("Schedule found! Steps: " + steps);
                 
-                // Create new version
-                java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
-                String name = "Згенеровано " + java.time.LocalDateTime.now().format(formatter);
-                ua.kiev.univ.schedule.model.appointment.ScheduleVersion newVersion = new ua.kiev.univ.schedule.model.appointment.ScheduleVersion(name, java.time.LocalDateTime.now(), true);
-                newVersion = scheduleVersionRepository.save(newVersion);
+                // Створюємо нову версію розкладу
+                ScheduleVersion version = new ScheduleVersion(
+                    "Розклад від " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM HH:mm")),
+                    LocalDateTime.now(),
+                    true,
+                    startDate,
+                    endDate
+                );
+                
+                // Деактивуємо інші версії
+                scheduleVersionRepository.findAll().forEach(v -> {
+                    v.setCurrent(false);
+                    scheduleVersionRepository.save(v);
+                });
+                
+                ScheduleVersion savedVersion = scheduleVersionRepository.save(version);
+                
+                // Зберігаємо призначення
+                List<Appointment> appointments = DataService.getEntities(Appointment.class);
+                appointments.clear();
+                executor.setAppointments();
                 
                 for (Appointment app : appointments) {
-                    app.setVersion(newVersion);
+                    app.setVersion(savedVersion);
                 }
-            }
-        }
-
-        for (Appointment app : appointments) {
-            if (app.getSubject() != null) {
-                app.setSubjectName(app.getSubject().getName());
-            }
-            app.setTeacherNames(app.getTeachers().stream().map(Teacher::getName).collect(Collectors.joining(", ")));
-            app.setGroupNames(app.getGroups().stream().map(Group::getName).collect(Collectors.joining(", ")));
-            
-            // earmarkName is set in Point.initAppointment, but if we refresh from memory it might be null if not careful
-            // However, the current flow is: build -> setAppointments (Point.initAppointment sets fields) -> saveAll.
-            // So fields should be there.
-            
-            app.setTeacherIds(app.getTeachers().stream().map(t -> t.getId().toString()).collect(Collectors.joining(",")));
-            app.setGroupIds(app.getGroups().stream().map(g -> g.getId().toString()).collect(Collectors.joining(",")));
-
-            if (app instanceof HalvedAppointment) {
-                HalvedAppointment happ = (HalvedAppointment) app;
-                if (happ.getDate() != null) {
-                    happ.setHalvedDayName(happ.getDate().getDay().getName());
-                    happ.setHalvedTimeRange(happ.getDate().getTime().getStart() + " - " + happ.getDate().getTime().getEnd());
-                }
-                if (happ.getAuditoriums() != null) {
-                    happ.setHalvedAuditoriumNames(happ.getAuditoriums().stream().map(Auditorium::getName).collect(Collectors.joining(", ")));
-                }
-                if (happ.getPart() != null) {
-                    happ.setHalvedPartName(happ.getPart().name());
-                }
-            }
-
-            app.getEntries().clear();
-            for (Map.Entry<Date, List<Auditorium>> mapEntry : app.getAuditoriumMap().entrySet()) {
-                Date date = mapEntry.getKey();
-                String dayName = date.getDay().getName();
-                String start = date.getTime().getStart();
-                String end = date.getTime().getEnd();
-                String bName = date.getTime().getBuilding() != null ? date.getTime().getBuilding().getName() : "";
                 
-                if (app.isOnline()) {
-                    AppointmentEntry entry = new AppointmentEntry(app, dayName, start, end, "Online", "Метод: " + (app.getOnlineLink() != null ? app.getOnlineLink() : ""));
-                    entry.setTeacherNames(app.getTeacherNames());
-                    entry.setGroupNames(app.getGroupNames());
-                    app.getEntries().add(entry);
-                } else {
-                    List<Auditorium> auds = mapEntry.getValue();
-                    int audCount = auds.size();
-                    
-                    // Отримуємо всі записи для цього призначення, щоб зрозуміти загальну кількість слотів
-                    int totalTimeSlots = app.getAuditoriumMap().size();
-                    int initialPairCount = 1; // За замовчуванням
-                    
-                    // Намагаємось знайти оригінальний урок, щоб дізнатися початкову кількість пар
-                    List<Lesson> allLessons = DataService.getEntities(Lesson.class);
-                    for (Lesson l : allLessons) {
-                        if (l.getSubject().equals(app.getSubject()) && l.getTeachers().equals(app.getTeachers())) {
-                            initialPairCount = l.getCount() / 2;
-                            break;
-                        }
-                    }
-                    
-                    int multiplier = totalTimeSlots / initialPairCount;
-                    if (multiplier < 1) multiplier = 1;
-
-                    // Знаходимо індекс поточного часового слоту серед усіх
-                    List<Date> sortedDates = app.getAuditoriumMap().keySet().stream()
-                        .sorted((d1, d2) -> {
-                            Long d1DayId = d1.getDay() != null ? d1.getDay().getId() : 0L;
-                            Long d2DayId = d2.getDay() != null ? d2.getDay().getId() : 0L;
-                            int res = Long.compare(d1DayId, d2DayId);
-                            if (res == 0) {
-                                Long d1TimeId = d1.getTime() != null ? d1.getTime().getId() : 0L;
-                                Long d2TimeId = d2.getTime() != null ? d2.getTime().getId() : 0L;
-                                res = Long.compare(d1TimeId, d2TimeId);
-                            }
-                            return res;
-                        }).collect(Collectors.toList());
-                    
-                    int timeSlotIndex = sortedDates.indexOf(date);
-                    int groupPartIndex = timeSlotIndex / initialPairCount;
-
-                    List<Group> appGroups = app.getGroups();
-                    List<Teacher> appTeachers = app.getTeachers();
-
-                    if (audCount <= 1) {
-                        for (Auditorium aud : auds) {
-                            // Розподіляємо вчителів по часу (якщо їх > 1)
-                            String tNames;
-                            if (appTeachers.size() >= multiplier) {
-                                tNames = appTeachers.get(groupPartIndex).getName();
-                            } else {
-                                tNames = app.getTeacherNames();
-                            }
-
-                            // Розподіляємо групи по часу
-                            int startG = (groupPartIndex * appGroups.size()) / multiplier;
-                            int endG = ((groupPartIndex + 1) * appGroups.size()) / multiplier;
-                            List<Group> subGroups = appGroups.subList(startG, Math.min(endG, appGroups.size()));
-                            String gNames = subGroups.stream().map(Group::getName).collect(Collectors.joining(", "));
-                            if (gNames.isEmpty()) gNames = app.getGroupNames();
-
-                            AppointmentEntry entry = new AppointmentEntry(app, dayName, start, end, bName, aud.getName(), tNames, gNames);
-                            app.getEntries().add(entry);
-                        }
-                    } else {
-                        // Розподіляємо вчителів та групи між аудиторіями (одночасні заняття)
-                        for (int i = 0; i < audCount; i++) {
-                            Auditorium aud = auds.get(i);
-                            String tNames = (appTeachers.size() >= audCount) ? appTeachers.get(i).getName() : app.getTeacherNames();
-                            
-                            int startG = (i * appGroups.size()) / audCount;
-                            int endG = ((i + 1) * appGroups.size()) / audCount;
-                            List<Group> subGroups = appGroups.subList(startG, Math.min(endG, appGroups.size()));
-                            String gNames = subGroups.stream().map(Group::getName).collect(Collectors.joining(", "));
-                            
-                            AppointmentEntry entry = new AppointmentEntry(app, dayName, start, end, bName, aud.getName(), tNames, gNames);
-                            app.getEntries().add(entry);
-                        }
+                appointmentRepository.saveAll(appointments);
+                try {
+                    DataService.write(null);
+                } catch (Exception e) {
+                    System.err.println("Failed to write to legacy storage: " + e.getMessage());
+                }
+            } else {
+                System.out.println("Failed to build schedule. Final status: " + progress + ". Steps: " + steps);
+                
+                StringBuilder errorDetail = new StringBuilder();
+                errorDetail.append("Не вдалося знайти рішення для всіх занять. Причини:\n");
+                
+                for (ua.kiev.univ.schedule.scheduler.point.Point p : executor.getPoints()) {
+                    if (p.earmark == -1) {
+                        int totalStudents = p.getGroups().stream().mapToInt(g -> g.getSize() != null ? g.getSize() : 0).sum();
+                        errorDetail.append(String.format("• '%s': Немає аудиторій з місткістю %d ос.\n", p.getSubjectName(), totalStudents));
                     }
                 }
+                
+                if (errorDetail.length() < 100) {
+                    errorDetail.append("• Перевірте обмеження викладачів та груп або кількість доступних аудиторій.");
+                }
+                currentStatus.setLastError(errorDetail.toString());
             }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            currentStatus.setLastResult("ERROR");
+            currentStatus.setLastError("Internal error: " + e.getMessage());
         }
-        appointmentRepository.saveAll(appointments);
     }
 }

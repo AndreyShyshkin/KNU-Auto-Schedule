@@ -17,6 +17,7 @@ import ua.kiev.univ.schedule.scheduler.point.RestrictionMap;
 import ua.kiev.univ.schedule.service.core.DataService;
 import ua.kiev.univ.schedule.util.EntityFilter;
 
+import java.time.LocalDate;
 import java.util.*;
 
 public class Executor {
@@ -37,8 +38,12 @@ public class Executor {
     private boolean clear;
     private AuditoriumRepository repository;
 
-    public Executor() {
-        dates = EntityFilter.getActiveDates();
+    public Executor(LocalDate startDate, LocalDate endDate) {
+        if (startDate != null && endDate != null) {
+            dates = EntityFilter.getCalendarDates(startDate, endDate);
+        } else {
+            dates = EntityFilter.getActiveDates();
+        }
         count = dates.size();
         colorMap = new ColorMap(count);
 
@@ -334,4 +339,4 @@ public class Executor {
     public List<Point> getPoints() {
         return points;
     }
-    }
+}

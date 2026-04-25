@@ -1,6 +1,7 @@
 package ua.kiev.univ.schedule.model.appointment;
 
 import jakarta.persistence.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -18,7 +19,11 @@ public class ScheduleVersion {
     private LocalDateTime createdAt;
 
     @Column(nullable = false)
+    @com.fasterxml.jackson.annotation.JsonProperty("current")
     private boolean isCurrent;
+
+    private LocalDate startDate;
+    private LocalDate endDate;
 
     public ScheduleVersion() {
     }
@@ -27,6 +32,12 @@ public class ScheduleVersion {
         this.name = name;
         this.createdAt = createdAt;
         this.isCurrent = isCurrent;
+    }
+
+    public ScheduleVersion(String name, LocalDateTime createdAt, boolean isCurrent, LocalDate startDate, LocalDate endDate) {
+        this(name, createdAt, isCurrent);
+        this.startDate = startDate;
+        this.endDate = endDate;
     }
 
     public Long getId() {
@@ -59,5 +70,21 @@ public class ScheduleVersion {
 
     public void setCurrent(boolean current) {
         isCurrent = current;
+    }
+
+    public LocalDate getStartDate() {
+        return startDate;
+    }
+
+    public void setStartDate(LocalDate startDate) {
+        this.startDate = startDate;
+    }
+
+    public LocalDate getEndDate() {
+        return endDate;
+    }
+
+    public void setEndDate(LocalDate endDate) {
+        this.endDate = endDate;
     }
 }

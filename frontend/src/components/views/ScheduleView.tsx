@@ -77,9 +77,10 @@ export default function ScheduleView() {
 	})
 
 	const columns: GridColDef[] = [
-		{ field: 'dayName', headerName: 'Day', width: 120 },
-		{ field: 'timeStart', headerName: 'Start', width: 90 },
-		{ field: 'timeEnd', headerName: 'End', width: 90 },
+		{ field: 'actualDate', headerName: 'Date', width: 110 },
+		{ field: 'dayName', headerName: 'Day', width: 100 },
+		{ field: 'timeStart', headerName: 'Start', width: 80 },
+		{ field: 'timeEnd', headerName: 'End', width: 80 },
 		{ field: 'subjectName', headerName: 'Subject', flex: 1 },
 		{ field: 'lessonTypeName', headerName: 'Lesson Type', width: 130 },
 		{ field: 'buildingName', headerName: 'Building', width: 120 },
@@ -249,7 +250,7 @@ export default function ScheduleView() {
 						hideFooter
 						initialState={{
 							sorting: {
-								sortModel: [{ field: 'dayName', sort: 'asc' }],
+								sortModel: [{ field: 'actualDate', sort: 'asc' }],
 							},
 						}}
 					/>

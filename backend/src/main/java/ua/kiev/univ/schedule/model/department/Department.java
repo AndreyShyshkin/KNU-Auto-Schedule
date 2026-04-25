@@ -31,6 +31,7 @@ public class Department extends DescriptionedEntity {
         return super.isActive() && faculty.isActive();
     }
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     public Faculty getFaculty() {
         return faculty;
     }

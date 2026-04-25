@@ -10,6 +10,7 @@ public class ScheduleEntryDto {
     private String buildingName;
     private String auditoriumName;
     private String additionalInfo;
+    private String actualDate;
 
     public ScheduleEntryDto() {}
 
@@ -43,4 +44,6 @@ public class ScheduleEntryDto {
     public void setAuditoriumName(String auditoriumName) { this.auditoriumName = auditoriumName; }
     public String getAdditionalInfo() { return additionalInfo; }
     public void setAdditionalInfo(String additionalInfo) { this.additionalInfo = additionalInfo; }
+    public String getActualDate() { return actualDate; }
+    public void setActualDate(String actualDate) { this.actualDate = actualDate; }
 }

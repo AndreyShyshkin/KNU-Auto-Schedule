@@ -35,6 +35,7 @@ public class DtoMapper {
         Day day = new Day();
         day.setId(dto.getId());
         day.setName(dto.getName());
+        day.setDayOfWeek(dto.getDayOfWeek());
         if (times != null) {
             day.setTimes(times);
         }
@@ -55,6 +56,9 @@ public class DtoMapper {
         lesson.setOnline(dto.isOnline());
         lesson.setOnlineLink(dto.getOnlineLink());
         lesson.setAllowMultipleAuditoriums(dto.isAllowMultipleAuditoriums());
+        lesson.setTotalHours(dto.getTotalHours());
+        lesson.setStartDate(dto.getStartDate());
+        lesson.setEndDate(dto.getEndDate());
         return lesson;
     }
 
@@ -66,6 +70,9 @@ public class DtoMapper {
         dto.setOnline(lesson.isOnline());
         dto.setOnlineLink(lesson.getOnlineLink());
         dto.setAllowMultipleAuditoriums(lesson.isAllowMultipleAuditoriums());
+        dto.setTotalHours(lesson.getTotalHours());
+        dto.setStartDate(lesson.getStartDate());
+        dto.setEndDate(lesson.getEndDate());
         if (lesson.getSubject() != null) {
             dto.setSubjectId(lesson.getSubject().getId());
             dto.setSubjectName(lesson.getSubject().getName());
@@ -113,6 +120,7 @@ public class DtoMapper {
         DayDto dto = new DayDto();
         dto.setId(day.getId());
         dto.setName(day.getName());
+        dto.setDayOfWeek(day.getDayOfWeek());
         if (day.getTimes() != null) {
             dto.setTimes(day.getTimes().stream()
                     .map(DtoMapper::toDto)

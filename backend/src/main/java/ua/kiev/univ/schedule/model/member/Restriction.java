@@ -19,6 +19,7 @@ public class Restriction extends ua.kiev.univ.schedule.model.core.Entity {
     @OneToMany(mappedBy = "restriction", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     private List<RestrictionEntryJpa> entries = new ArrayList<>();
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     public Map<Date, Grade> getGradeMap() {
         return gradeMap;
     }

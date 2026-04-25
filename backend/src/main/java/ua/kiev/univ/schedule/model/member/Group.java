@@ -23,6 +23,7 @@ public class Group extends Restrictor<Speciality> {
     private Integer size = 20;
 
     @Override
+    @com.fasterxml.jackson.annotation.JsonIgnore
     public Speciality getDepartment() {
         return department;
     }

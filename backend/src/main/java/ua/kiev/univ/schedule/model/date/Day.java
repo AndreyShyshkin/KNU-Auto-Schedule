@@ -9,6 +9,7 @@ import ua.kiev.univ.schedule.model.core.NamedEntity;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -17,11 +18,22 @@ public class Day extends NamedEntity {
 
     @ManyToMany
     @JoinTable(
-        name = "day_time_slot",
+        name = "day_times",
         joinColumns = @JoinColumn(name = "day_id"),
-        inverseJoinColumns = @JoinColumn(name = "time_slot_id")
+        inverseJoinColumns = @JoinColumn(name = "time_id")
     )
-    private List<Time> times = new LinkedList<>();
+    private List<Time> times = new ArrayList<>();
+
+    private int dayOfWeek; // 1 = Monday, ..., 7 = Sunday
+
+    public int getDayOfWeek() {
+        return dayOfWeek;
+    }
+
+    public void setDayOfWeek(int dayOfWeek) {
+        this.dayOfWeek = dayOfWeek;
+    }
+
 
     @Override
     public void read(DataInputStream is) throws IOException {

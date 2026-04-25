@@ -90,6 +90,9 @@ public class LessonController {
             existing.setOnline(dto.isOnline());
             existing.setOnlineLink(dto.getOnlineLink());
             existing.setAllowMultipleAuditoriums(dto.isAllowMultipleAuditoriums());
+            existing.setTotalHours(dto.getTotalHours());
+            existing.setStartDate(dto.getStartDate());
+            existing.setEndDate(dto.getEndDate());
 
             Lesson saved = lessonRepository.save(existing);
             dataInitializationService.initializeData();

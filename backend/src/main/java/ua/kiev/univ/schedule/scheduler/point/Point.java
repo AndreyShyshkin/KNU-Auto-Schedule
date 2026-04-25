@@ -1,6 +1,7 @@
 package ua.kiev.univ.schedule.scheduler.point;
 
 import ua.kiev.univ.schedule.model.appointment.Appointment;
+import ua.kiev.univ.schedule.model.appointment.AppointmentEntry;
 import ua.kiev.univ.schedule.model.appointment.Part;
 import ua.kiev.univ.schedule.model.core.Entity;
 import ua.kiev.univ.schedule.model.date.Date;
@@ -40,17 +41,20 @@ public class Point {
     public int size;
     public int[] restriction;
     public List<Point> verges = new LinkedList<>();
+    public int both;
+    
+    // Поля, які необхідні для роботи Executor (ад'юцентність чисельника/знаменника)
     public int[] first;
     public int[] second;
-    public int both;
     public int part;
+    
+    // Нові поля для збереження результатів розрахунку
+    protected int initialPairCount;
+    protected int multiplier;
+    protected int totalStudents;
 
     public static Point getPoint(Lesson lesson, List<Date> dates, List<BuildingEarmark> types, RestrictionMap restrictionMap) {
-        if (lesson.getCount() % 2 == 0) {
-            return new Point(lesson, dates, types, restrictionMap);
-        } else {
-            return new HalvedPoint(lesson, dates, types, restrictionMap);
-        }
+        return new Point(lesson, dates, types, restrictionMap);
     }
 
     protected Point(Lesson lesson, List<Date> dates, List<BuildingEarmark> types, RestrictionMap restrictionMap) {
@@ -63,118 +67,108 @@ public class Point {
         this.lessonTypeNames = lesson.getLessonTypes() != null ? 
             lesson.getLessonTypes().stream().map(t -> t.getName()).collect(Collectors.joining(", ")) : "";
 
-        // Пріоритет: будівля з уроку -> будівля з обраної аудиторії -> null
         this.building = lesson.getBuilding() != null ? lesson.getBuilding() : (fixedAuditorium != null ? fixedAuditorium.getBuilding() : null);
         
         this.groups = new LinkedList<>(lesson.getGroups());
         this.teachers = new LinkedList<>(lesson.getTeachers());
         
-        int totalStudents = groups.stream().mapToInt(g -> g.getSize() != null ? g.getSize() : 0).sum();
-        int initialPairCount = lesson.getCount() / 2;
-        int multiplier = 1;
+        this.totalStudents = groups.stream().mapToInt(g -> g.getSize() != null ? g.getSize() : 0).sum();
+        
+        this.initialPairCount = (int) Math.ceil((double) (lesson.getTotalHours() != null ? lesson.getTotalHours() : 30) / 1.5);
+        if (this.initialPairCount <= 0) this.initialPairCount = 1;
+        
+        this.multiplier = 1;
         int calculatedSize = 1;
         int index = -1;
 
-        // Якщо онлайн, тип аудиторії не потрібен
         if (this.online) {
             this.earmark = -1;
             this.size = 0;
         } else {
             int teacherCount = this.teachers.size() > 0 ? this.teachers.size() : 1;
             
-            // Шукаємо підходящий тип аудиторії
             for (int i = 0; i < types.size(); i++) {
                 BuildingEarmark type = types.get(i);
-                if (Objects.equals(type.getBuilding(), this.building) && 
-                    Objects.equals(type.getEarmark(), lesson.getEarmark())) {
-                    
+                if (Objects.equals(type.getBuilding(), this.building) && Objects.equals(type.getEarmark(), lesson.getEarmark())) {
                     Integer audSize = type.getEarmark() != null ? type.getEarmark().getSize() : null;
-                    if (audSize == null || audSize <= 0) audSize = 49; // Дефолт для вашого корпусу
-                    
+                    if (audSize == null || audSize <= 0) audSize = 49; 
                     if (audSize >= totalStudents) {
                         index = i;
                         calculatedSize = 1;
-                        multiplier = 1;
+                        this.multiplier = 1;
                         break;
                     } else if (lesson.isAllowMultipleAuditoriums()) {
                         int needed = (int) Math.ceil((double) totalStudents / audSize);
                         if (teacherCount >= needed) {
-                            // Є вчителі для паралельних занять (один час, багато залів)
                             index = i;
                             calculatedSize = needed;
-                            multiplier = 1;
+                            this.multiplier = 1;
                         } else {
-                            // Вчителів мало, проводимо послідовно (різний час, один зал)
                             index = i;
                             calculatedSize = 1;
-                            multiplier = needed;
+                            this.multiplier = needed;
                         }
                         break;
                     }
                 }
             }
             
-            // Fallback: шукаємо будь-де
             if (index == -1) {
                 for (int i = 0; i < types.size(); i++) {
                     Earmark e = types.get(i).getEarmark();
                     if (e != null && Objects.equals(e, lesson.getEarmark())) {
                         Integer audSize = e.getSize();
                         if (audSize == null || audSize <= 0) audSize = 49;
-
                         if (audSize >= totalStudents) {
                             index = i;
                             calculatedSize = 1;
-                            multiplier = 1;
+                            this.multiplier = 1;
                             break;
                         } else if (lesson.isAllowMultipleAuditoriums()) {
                             int needed = (int) Math.ceil((double) totalStudents / audSize);
                             if (teacherCount >= needed) {
                                 index = i;
                                 calculatedSize = needed;
-                                multiplier = 1;
+                                this.multiplier = 1;
                             } else {
                                 index = i;
                                 calculatedSize = 1;
-                                multiplier = needed;
+                                this.multiplier = needed;
                             }
                             break;
                         }
                     }
                 }
             }
-
             this.earmark = index;
             this.size = calculatedSize;
-
-            if (this.earmark == -1) {
-                System.out.println("DEBUG: Lesson '" + lesson.getSubject().getName() + "' REJECTED: Немає підходящих аудиторій");
-            } else if (multiplier > 1) {
-                System.out.println("DEBUG: Lesson '" + lesson.getSubject().getName() + "' split into " + multiplier + " time slots");
-            }
         }
         
         this.restriction = new int[count];
-
         restrictionMap.addRestrictions(lesson.getGroups(), this);
         restrictionMap.addRestrictions(lesson.getTeachers(), this);
 
-        // Обмеження по корпусу
-        if (!this.online) {
-            for (int i = 0; i < count; i++) {
-                Building slotBuilding = dates.get(i).getTime().getBuilding();
+        for (int i = 0; i < count; i++) {
+            Date date = dates.get(i);
+            if (!this.online) {
+                Building slotBuilding = date.getTime().getBuilding();
                 if (slotBuilding != null && !Objects.equals(slotBuilding.getId(), (this.building != null ? this.building.getId() : null))) {
                     this.restriction[i] -= 100000;
                 }
+            }
+            if (lesson.getStartDate() != null && date.getLocalDate() != null) {
+                if (date.getLocalDate().isBefore(lesson.getStartDate())) this.restriction[i] -= 1000000;
+            }
+            if (lesson.getEndDate() != null && date.getLocalDate() != null) {
+                if (date.getLocalDate().isAfter(lesson.getEndDate())) this.restriction[i] -= 1000000;
             }
         }
 
         int totalPairCount = initialPairCount * multiplier;
         colors = new int[totalPairCount];
         maxes = new int[totalPairCount];
-
         Progress.DONE.value += totalPairCount;
-
+        
         this.first = new int[count];
         this.second = new int[count];
         this.both = count;
@@ -182,9 +176,7 @@ public class Point {
 
     private static <E extends Entity> boolean isIntersect(List<E> list1, List<E> list2) {
         for (E bean : list1) {
-            if (list2.contains(bean)) {
-                return true;
-            }
+            if (list2.contains(bean)) return true;
         }
         return false;
     }
@@ -218,22 +210,68 @@ public class Point {
         appointment.setOnlineLink(onlineLink);
         appointment.setEarmarkName(earmarkName);
         appointment.setLessonTypeNames(lessonTypeNames);
+        
+        // Populate persistent fields for DB
+        appointment.setSubjectName(subject != null ? subject.getName() : "Без назви");
+        appointment.setTeacherNames(getTeacherNames());
+        appointment.setGroupNames(getGroupNames());
+        appointment.setTeacherIds(teachers.stream().map(t -> t.getId().toString()).collect(Collectors.joining(",")));
+        appointment.setGroupIds(groups.stream().map(g -> g.getId().toString()).collect(Collectors.joining(",")));
 
-        Map<Date, List<Auditorium>> auditoriumMap = appointment.getAuditoriumMap();
         AuditoriumRepository repository = repositoryFactory.getAuditoriumRepository(Part.BOTH);
 
-        for (int color : colors) {
+        for (int i = 0; i < colors.length; i++) {
+            int color = colors[i];
             Date date = dates.get(colorMap.getDate(color));
-            List<Auditorium> auditoriums;
-            if (online) {
-                auditoriums = List.of(); 
-            } else if (fixedAuditorium != null) {
-                auditoriums = List.of(fixedAuditorium);
+            String dayName = date.getDay().getName();
+            String start = date.getTime().getStart();
+            String end = date.getTime().getEnd();
+            String bName = date.getTime().getBuilding() != null ? date.getTime().getBuilding().getName() : "";
+
+            List<Auditorium> auds;
+            if (online) auds = List.of();
+            else if (fixedAuditorium != null) auds = List.of(fixedAuditorium);
+            else auds = repository.getAuditoriums(color, earmark, size);
+
+            int groupPartIndex = i / initialPairCount;
+            int audCount = auds.size();
+
+            if (audCount <= 1) {
+                for (Auditorium aud : auds) {
+                    String tNames = (teachers.size() >= multiplier) ? teachers.get(groupPartIndex).getName() : getTeacherNames();
+                    int startG = (groupPartIndex * groups.size()) / multiplier;
+                    int endG = ((groupPartIndex + 1) * groups.size()) / multiplier;
+                    List<Group> subGroups = groups.subList(startG, Math.min(endG, groups.size()));
+                    String gNames = subGroups.stream().map(Group::getName).collect(Collectors.joining(", "));
+                    if (gNames.isEmpty()) gNames = getGroupNames();
+
+                    AppointmentEntry entry = new AppointmentEntry(appointment, dayName, start, end, bName, aud.getName(), tNames, gNames);
+                    entry.setActualDate(date.getLocalDate());
+                    appointment.getEntries().add(entry);
+                }
             } else {
-                auditoriums = repository.getAuditoriums(color, earmark, size);
+                for (int j = 0; j < audCount; j++) {
+                    Auditorium aud = auds.get(j);
+                    String tNames = (teachers.size() >= audCount) ? teachers.get(j).getName() : getTeacherNames();
+                    int startG = (j * groups.size()) / audCount;
+                    int endG = ((j + 1) * groups.size()) / audCount;
+                    List<Group> subGroups = groups.subList(startG, Math.min(endG, groups.size()));
+                    String gNames = subGroups.stream().map(Group::getName).collect(Collectors.joining(", "));
+
+                    AppointmentEntry entry = new AppointmentEntry(appointment, dayName, start, end, bName, aud.getName(), tNames, gNames);
+                    entry.setActualDate(date.getLocalDate());
+                    appointment.getEntries().add(entry);
+                }
             }
-            auditoriumMap.put(date, auditoriums);
         }
+    }
+
+    private String getTeacherNames() {
+        return teachers.stream().map(Teacher::getName).collect(Collectors.joining(", "));
+    }
+
+    private String getGroupNames() {
+        return groups.stream().map(Group::getName).collect(Collectors.joining(", "));
     }
 
     public Appointment getAppointment(List<Date> dates, ColorMap colorMap, AuditoriumRepositoryFactory repositoryFactory) {

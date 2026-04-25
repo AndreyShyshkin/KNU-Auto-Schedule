@@ -1,15 +1,21 @@
 package ua.kiev.univ.schedule.service;
 
 import org.springframework.stereotype.Service;
+import ua.kiev.univ.schedule.model.appointment.Appointment;
+import ua.kiev.univ.schedule.model.appointment.ScheduleVersion;
 import ua.kiev.univ.schedule.model.date.Day;
 import ua.kiev.univ.schedule.model.date.Time;
 import ua.kiev.univ.schedule.model.lesson.Lesson;
-import ua.kiev.univ.schedule.model.placement.Auditorium;
-import ua.kiev.univ.schedule.model.placement.Earmark;
+import ua.kiev.univ.schedule.repository.AppointmentRepository;
+import ua.kiev.univ.schedule.repository.ScheduleVersionRepository;
 import ua.kiev.univ.schedule.scheduler.Executor;
 import ua.kiev.univ.schedule.scheduler.Progress;
+import ua.kiev.univ.schedule.service.core.DataInitializationService;
 import ua.kiev.univ.schedule.service.core.DataService;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -35,8 +41,17 @@ public class BuildService {
 
     private final ExecutorService threadPool = Executors.newSingleThreadExecutor();
     private final BuildStatus currentStatus = new BuildStatus();
+    private final AppointmentRepository appointmentRepository;
+    private final ScheduleVersionRepository scheduleVersionRepository;
+    private final DataInitializationService dataInitializationService;
 
-    public String buildSchedule() {
+    public BuildService(AppointmentRepository appointmentRepository, ScheduleVersionRepository scheduleVersionRepository, DataInitializationService dataInitializationService) {
+        this.appointmentRepository = appointmentRepository;
+        this.scheduleVersionRepository = scheduleVersionRepository;
+        this.dataInitializationService = dataInitializationService;
+    }
+
+    public String buildSchedule(java.time.LocalDate startDate, java.time.LocalDate endDate) {
         if (currentStatus.isBuilding()) {
             return "Build already in progress";
         }
@@ -45,7 +60,7 @@ public class BuildService {
         currentStatus.setLastError(null);
         currentStatus.setSteps(0);
 
-        CompletableFuture.runAsync(this::runBuildProcess, threadPool)
+        CompletableFuture.runAsync(() -> runBuildProcess(startDate, endDate), threadPool)
                 .thenRun(() -> {
                     currentStatus.setBuilding(false);
                     System.out.println("Build finished.");
@@ -54,9 +69,12 @@ public class BuildService {
         return "Build started";
     }
 
-    private void runBuildProcess() {
+    private void runBuildProcess(java.time.LocalDate startDate, java.time.LocalDate endDate) {
         try {
-            System.out.println("Starting schedule generation...");
+            System.out.println("Refreshing data before build...");
+            dataInitializationService.initializeData();
+
+            System.out.println("Starting schedule generation for period: " + startDate + " to " + endDate);
             
             int lessonsCount = DataService.getEntities(Lesson.class).size();
             int daysCount = DataService.getEntities(Day.class).size();
@@ -73,7 +91,7 @@ public class BuildService {
                 return;
             }
 
-            Executor executor = new Executor();
+            Executor executor = new Executor(startDate, endDate);
             Progress progress = executor.initialize();
 
             int steps = 0;
@@ -84,38 +102,62 @@ public class BuildService {
                 if (steps % 1000 == 0) {
                     System.out.println("Step " + steps + "...");
                 }
+                if (steps > 1000000) { // Extended safety break for calendar mode
+                    progress = Progress.FAIL;
+                    break;
+                }
             }
 
             currentStatus.setLastResult(progress.toString());
             if (progress == Progress.DONE) {
                 System.out.println("Schedule found! Steps: " + steps);
+                
+                // Create new version
+                ScheduleVersion version = new ScheduleVersion(
+                    "Розклад " + (startDate != null ? startDate.format(DateTimeFormatter.ofPattern("dd.MM")) : "") + 
+                    " - " + (endDate != null ? endDate.format(DateTimeFormatter.ofPattern("dd.MM")) : ""),
+                    LocalDateTime.now(),
+                    true,
+                    startDate,
+                    endDate
+                );
+                
+                // Deactivate others
+                scheduleVersionRepository.findAll().forEach(v -> {
+                    v.setCurrent(false);
+                    scheduleVersionRepository.save(v);
+                });
+                
+                ScheduleVersion savedVersion = scheduleVersionRepository.save(version);
+                
+                // Clear memory appointments and regenerate from points
+                List<Appointment> appointments = DataService.getEntities(Appointment.class);
+                appointments.clear();
                 executor.setAppointments();
+                
+                // Link each appointment to the new version
+                for (Appointment app : appointments) {
+                    app.setVersion(savedVersion);
+                }
+                
+                appointmentRepository.saveAll(appointments);
                 DataService.write(null);
             } else {
                 System.out.println("Failed to build schedule. Final status: " + progress + ". Steps: " + steps);
                 
-                // Збираємо інформацію про причини відмови для кожного уроку
                 StringBuilder errorDetail = new StringBuilder();
                 errorDetail.append("Не вдалося знайти рішення для всіх занять. Причини:\n");
                 
                 for (ua.kiev.univ.schedule.scheduler.point.Point p : executor.getPoints()) {
                     if (p.earmark == -1) {
                         int totalStudents = p.getGroups().stream().mapToInt(g -> g.getSize() != null ? g.getSize() : 0).sum();
-                        int teacherCount = p.getTeachers().size();
-                        if (teacherCount == 0) teacherCount = 1;
-                        
-                        if (totalStudents > 49 && teacherCount == 1) {
-                            errorDetail.append(String.format("• '%s': Студентів (%d) більше, ніж місць (49), а вчитель лише один. Він не може бути у двох залах одночасно.\n", p.getSubjectName(), totalStudents));
-                        } else {
-                            errorDetail.append(String.format("• '%s': Немає аудиторій з місткістю %d ос.\n", p.getSubjectName(), totalStudents));
-                        }
+                        errorDetail.append(String.format("• '%s': Студентів (%d) забагато для наявних аудиторій.\n", p.getSubjectName(), totalStudents));
                     }
                 }
                 
-                if (errorDetail.length() < 100) { // Якщо специфічних помилок не знайдено
+                if (errorDetail.length() < 100) {
                     errorDetail.append("• Перевірте обмеження викладачів та груп або кількість доступних аудиторій.");
                 }
-                
                 currentStatus.setLastError(errorDetail.toString());
             }
 

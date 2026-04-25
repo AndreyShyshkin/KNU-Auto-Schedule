@@ -14,6 +14,7 @@ public class Teacher extends Restrictor<Chair> {
     private Chair department;
 
     @Override
+    @com.fasterxml.jackson.annotation.JsonIgnore
     public Chair getDepartment() {
         return department;
     }

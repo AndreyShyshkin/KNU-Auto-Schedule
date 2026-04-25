@@ -70,6 +70,7 @@ public class Appointment extends ua.kiev.univ.schedule.model.core.Entity {
     public boolean isActive() { return enable; }
     public void setEnable(boolean enable) { this.enable = enable; }
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     public Map<Date, List<Auditorium>> getAuditoriumMap() { return auditoriumMap; }
     public List<AppointmentEntry> getEntries() { return entries; }
     public void setEntries(List<AppointmentEntry> entries) { this.entries = entries; }
@@ -96,6 +97,7 @@ public class Appointment extends ua.kiev.univ.schedule.model.core.Entity {
     public String getLessonTypeNames() { return lessonTypeNames; }
     public void setLessonTypeNames(String lessonTypeNames) { this.lessonTypeNames = lessonTypeNames; }
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     public ScheduleVersion getVersion() { return version; }
     public void setVersion(ScheduleVersion version) { this.version = version; }
 

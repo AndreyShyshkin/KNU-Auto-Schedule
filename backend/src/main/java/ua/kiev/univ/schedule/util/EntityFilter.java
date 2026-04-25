@@ -8,6 +8,7 @@ import ua.kiev.univ.schedule.model.department.Department;
 import ua.kiev.univ.schedule.model.department.Faculty;
 import ua.kiev.univ.schedule.service.core.DataService;
 
+import java.time.LocalDate;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -49,5 +50,32 @@ public class EntityFilter {
             }
         }
         return active;
+    }
+
+    public static List<Date> getCalendarDates(LocalDate start, LocalDate end) {
+        List<Date> active = new LinkedList<>();
+        List<Day> templateDays = DataService.getEntities(Day.class);
+        
+        for (LocalDate date = start; !date.isAfter(end); date = date.plusDays(1)) {
+            Day dayOfWeek = findDayForLocalDate(templateDays, date);
+            if (dayOfWeek != null && dayOfWeek.isActive()) {
+                for (Time time : dayOfWeek.getTimes()) {
+                    if (time.isActive()) {
+                        Date d = new Date(dayOfWeek, time);
+                        d.setLocalDate(date);
+                        active.add(d);
+                    }
+                }
+            }
+        }
+        return active;
+    }
+
+    private static Day findDayForLocalDate(List<Day> allDays, LocalDate date) {
+        int targetDay = date.getDayOfWeek().getValue(); // 1 = Monday, 7 = Sunday
+        for (Day d : allDays) {
+            if (d.getDayOfWeek() == targetDay) return d;
+        }
+        return null;
     }
 }

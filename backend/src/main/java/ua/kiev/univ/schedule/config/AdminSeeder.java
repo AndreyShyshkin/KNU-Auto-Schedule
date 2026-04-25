@@ -1,6 +1,5 @@
 package ua.kiev.univ.schedule.config;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,11 +9,15 @@ import ua.kiev.univ.schedule.model.user.User;
 import ua.kiev.univ.schedule.repository.UserRepository;
 
 @Configuration
-@RequiredArgsConstructor
 public class AdminSeeder {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+
+    public AdminSeeder(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     @Bean
     public CommandLineRunner seedAdmin() {

@@ -41,7 +41,7 @@ public class ScheduleQueryService {
             if (!found) continue;
 
             for (AppointmentEntry entry : app.getEntries()) {
-                result.add(new ScheduleEntryDto(
+                ScheduleEntryDto dto = new ScheduleEntryDto(
                         entry.getDayName(),
                         entry.getTimeStart(),
                         entry.getTimeEnd(),
@@ -51,7 +51,11 @@ public class ScheduleQueryService {
                         entry.getBuildingName(),
                         entry.getAuditoriumName(),
                         entry.getGroupNames() != null ? entry.getGroupNames() : app.getGroupNames()
-                ));
+                );
+                if (entry.getActualDate() != null) {
+                    dto.setActualDate(entry.getActualDate().toString());
+                }
+                result.add(dto);
             }
         }
         return sortSchedule(result);
@@ -79,7 +83,7 @@ public class ScheduleQueryService {
             if (!found) continue;
 
             for (AppointmentEntry entry : app.getEntries()) {
-                result.add(new ScheduleEntryDto(
+                ScheduleEntryDto dto = new ScheduleEntryDto(
                         entry.getDayName(),
                         entry.getTimeStart(),
                         entry.getTimeEnd(),
@@ -89,7 +93,11 @@ public class ScheduleQueryService {
                         entry.getBuildingName(),
                         entry.getAuditoriumName(),
                         entry.getTeacherNames() != null ? entry.getTeacherNames() : app.getTeacherNames()
-                ));
+                );
+                if (entry.getActualDate() != null) {
+                    dto.setActualDate(entry.getActualDate().toString());
+                }
+                result.add(dto);
             }
         }
         return sortSchedule(result);
@@ -109,7 +117,7 @@ public class ScheduleQueryService {
             for (AppointmentEntry entry : app.getEntries()) {
                 String tNames = entry.getTeacherNames() != null ? entry.getTeacherNames() : app.getTeacherNames();
                 String gNames = entry.getGroupNames() != null ? entry.getGroupNames() : app.getGroupNames();
-                result.add(new ScheduleEntryDto(
+                ScheduleEntryDto dto = new ScheduleEntryDto(
                         entry.getDayName(),
                         entry.getTimeStart(),
                         entry.getTimeEnd(),
@@ -119,13 +127,25 @@ public class ScheduleQueryService {
                         entry.getBuildingName(),
                         entry.getAuditoriumName(),
                         tNames + " | " + gNames
-                ));
+                );
+                if (entry.getActualDate() != null) {
+                    dto.setActualDate(entry.getActualDate().toString());
+                }
+                result.add(dto);
             }
         }
         return sortSchedule(result);
     }
 
     private List<ScheduleEntryDto> sortSchedule(List<ScheduleEntryDto> list) {
+        // Сортування за датою, а потім за часом
+        list.sort((e1, e2) -> {
+            if (e1.getActualDate() != null && e2.getActualDate() != null) {
+                int res = e1.getActualDate().compareTo(e2.getActualDate());
+                if (res != 0) return res;
+            }
+            return e1.getTimeStart().compareTo(e2.getTimeStart());
+        });
         return list;
     }
 }

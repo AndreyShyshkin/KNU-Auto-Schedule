@@ -1,5 +1,6 @@
 package ua.kiev.univ.schedule.dto;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public class LessonDto {
@@ -22,6 +23,10 @@ public class LessonDto {
     private List<String> lessonTypeNames;
     private Integer count;
     private boolean allowMultipleAuditoriums;
+    
+    private Integer totalHours;
+    private LocalDate startDate;
+    private LocalDate endDate;
 
     public LessonDto() {}
 
@@ -63,4 +68,11 @@ public class LessonDto {
     public void setCount(Integer count) { this.count = count; }
     public boolean isAllowMultipleAuditoriums() { return allowMultipleAuditoriums; }
     public void setAllowMultipleAuditoriums(boolean allowMultipleAuditoriums) { this.allowMultipleAuditoriums = allowMultipleAuditoriums; }
+
+    public Integer getTotalHours() { return totalHours; }
+    public void setTotalHours(Integer totalHours) { this.totalHours = totalHours; }
+    public LocalDate getStartDate() { return startDate; }
+    public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
+    public LocalDate getEndDate() { return endDate; }
+    public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
 }

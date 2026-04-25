@@ -36,6 +36,7 @@ public class RestrictionEntryJpa {
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+    @com.fasterxml.jackson.annotation.JsonIgnore
     public Restriction getRestriction() { return restriction; }
     public void setRestriction(Restriction restriction) { this.restriction = restriction; }
     public Day getDay() { return day; }

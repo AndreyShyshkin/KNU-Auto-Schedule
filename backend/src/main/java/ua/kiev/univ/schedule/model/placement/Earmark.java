@@ -65,6 +65,7 @@ public class Earmark extends NamedEntity {
         this.building = building;
     }
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     public List<Auditorium> getAuditoriums() {
         return auditoriums;
     }

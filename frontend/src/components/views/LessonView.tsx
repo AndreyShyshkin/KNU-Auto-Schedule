@@ -119,6 +119,9 @@ export default function LessonView() {
 		online: false,
 		onlineLink: '',
 		allowMultipleAuditoriums: false,
+		totalHours: 30,
+		startDate: '',
+		endDate: '',
 	})
 
 	const handleAdd = () => {
@@ -130,6 +133,9 @@ export default function LessonView() {
 			online: false,
 			onlineLink: '',
 			allowMultipleAuditoriums: false,
+			totalHours: 30,
+			startDate: '',
+			endDate: '',
 		})
 		setDialogMode('create')
 		setOpenDialog(true)
@@ -146,6 +152,9 @@ export default function LessonView() {
 				online: lesson.online || false,
 				onlineLink: lesson.onlineLink || '',
 				allowMultipleAuditoriums: lesson.allowMultipleAuditoriums || false,
+				totalHours: lesson.totalHours || 30,
+				startDate: lesson.startDate || '',
+				endDate: lesson.endDate || '',
 			})
 			setDialogMode('edit')
 			setOpenDialog(true)
@@ -203,7 +212,7 @@ export default function LessonView() {
 			flex: 1,
 			valueGetter: (value: string[]) => (value ? value.join(', ') : ''),
 		},
-		{ field: 'count', headerName: 'К-ть', width: 60 },
+		{ field: 'totalHours', headerName: 'Годин', width: 80 },
 	]
 
 	return (
@@ -519,18 +528,41 @@ export default function LessonView() {
 							</Select>
 						</FormControl>
 
-						{/* Count */}
-						<TextField
-							margin='dense'
-							label='К-ть годин (кількість занять)'
-							type='number'
-							fullWidth
-							size='small'
-							value={formData.count || ''}
-							onChange={e =>
-								setFormData({ ...formData, count: parseInt(e.target.value) })
-							}
-						/>
+						<Divider sx={{ my: 1 }}>Обсяг та період</Divider>
+
+						<Box sx={{ display: 'flex', gap: 2 }}>
+							<TextField
+								label='Всього годин'
+								type='number'
+								fullWidth
+								size='small'
+								value={formData.totalHours || ''}
+								onChange={(e) =>
+									setFormData({ ...formData, totalHours: parseInt(e.target.value) })
+								}
+							/>
+						</Box>
+
+						<Box sx={{ display: 'flex', gap: 2 }}>
+							<TextField
+								label='Дата початку'
+								type='date'
+								fullWidth
+								size='small'
+								InputLabelProps={{ shrink: true }}
+								value={formData.startDate || ''}
+								onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+							/>
+							<TextField
+								label='Дата закінчення'
+								type='date'
+								fullWidth
+								size='small'
+								InputLabelProps={{ shrink: true }}
+								value={formData.endDate || ''}
+								onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+							/>
+						</Box>
 					</Box>
 				</DialogContent>
 				<DialogActions>
