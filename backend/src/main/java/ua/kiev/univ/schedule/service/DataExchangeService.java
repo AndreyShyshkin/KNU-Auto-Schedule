@@ -39,6 +39,8 @@ public class DataExchangeService {
                                LessonRepository lessonRepository,
                                ScheduleVersionRepository scheduleVersionRepository,
                                AppointmentRepository appointmentRepository,
+                               RestrictionRepository restrictionRepository,
+                               RestrictionEntryRepository restrictionEntryRepository,
                                DataInitializationService dataInitializationService) {
         this.objectMapper = objectMapper;
         this.dataInitializationService = dataInitializationService;
@@ -54,7 +56,9 @@ public class DataExchangeService {
         repositories.put("subjects", subjectRepository);
         repositories.put("chairs", chairRepository);
         repositories.put("specialities", specialityRepository);
+        repositories.put("restrictions", restrictionRepository);
         repositories.put("teachers", teacherRepository);
+        repositories.put("teacher_restrictions", restrictionEntryRepository);
         repositories.put("groups", groupRepository);
         repositories.put("auditoriums", auditoriumRepository);
         repositories.put("lessons", lessonRepository);
@@ -69,16 +73,29 @@ public class DataExchangeService {
     public void exportToZip(List<String> tables, OutputStream outputStream) throws IOException {
         try (ZipOutputStream zos = new ZipOutputStream(outputStream)) {
             for (String tableName : tables) {
-                Object repo = repositories.get(tableName);
-                if (repo instanceof org.springframework.data.jpa.repository.JpaRepository) {
-                    List<?> data = ((org.springframework.data.jpa.repository.JpaRepository<?, ?>) repo).findAll();
-                    ZipEntry entry = new ZipEntry(tableName + ".json");
-                    zos.putNextEntry(entry);
-                    objectMapper.writeValue(zos, data);
-                    zos.closeEntry();
-                    log.info("Exported table: {}", tableName);
+                try {
+                    Object repo = repositories.get(tableName);
+                    if (repo instanceof org.springframework.data.jpa.repository.JpaRepository) {
+                        List<?> data = ((org.springframework.data.jpa.repository.JpaRepository<?, ?>) repo).findAll();
+                        ZipEntry entry = new ZipEntry(tableName + ".json");
+                        zos.putNextEntry(entry);
+                        
+                        // Використовуємо JsonGenerator з вимкненим AUTO_CLOSE_TARGET, 
+                        // щоб Jackson не закривав ZipOutputStream після запису одного файлу
+                        com.fasterxml.jackson.core.JsonGenerator gen = objectMapper.getFactory().createGenerator(zos);
+                        gen.configure(com.fasterxml.jackson.core.JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
+                        objectMapper.writeValue(gen, data);
+                        gen.flush(); // ВАЖЛИВО: скидаємо буфер у потік
+                        
+                        zos.closeEntry();
+                        log.info("Exported table: {}", tableName);
+                    }
+                } catch (Exception e) {
+                    log.error("Failed to export table: " + tableName, e);
+                    // Продовжуємо експорт інших таблиць, навіть якщо одна впала
                 }
             }
+            zos.finish();
         }
     }
 
@@ -161,6 +178,8 @@ public class DataExchangeService {
             case "auditoriums" -> ua.kiev.univ.schedule.model.placement.Auditorium.class;
             case "subjects" -> ua.kiev.univ.schedule.model.subject.Subject.class;
             case "lessons" -> ua.kiev.univ.schedule.model.lesson.Lesson.class;
+            case "restrictions" -> ua.kiev.univ.schedule.model.member.Restriction.class;
+            case "teacher_restrictions" -> ua.kiev.univ.schedule.model.member.RestrictionEntryJpa.class;
             case "schedule_versions" -> ua.kiev.univ.schedule.model.appointment.ScheduleVersion.class;
             case "appointments" -> ua.kiev.univ.schedule.model.appointment.Appointment.class;
             default -> throw new IllegalArgumentException("Unknown table: " + tableName);

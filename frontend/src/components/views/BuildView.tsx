@@ -119,9 +119,11 @@ export default function BuildView() {
 						severity={lastStatus.lastResult === 'DONE' ? "success" : "error"}
 						sx={{ mt: 2 }}
 					>
-						{lastStatus.lastResult === 'DONE' 
-							? `Розклад успішно згенеровано за ${lastStatus.steps} кроків!`
-							: `Помилка: ${lastStatus.lastError || 'Не вдалося знайти рішення'}`}
+						<Box sx={{ whiteSpace: 'pre-line' }}>
+							{lastStatus.lastResult === 'DONE' 
+								? `Розклад успішно згенеровано за ${lastStatus.steps} кроків!`
+								: `Помилка: ${lastStatus.lastError || 'Не вдалося знайти рішення'}`}
+						</Box>
 					</Alert>
 				)}
 			</Paper>

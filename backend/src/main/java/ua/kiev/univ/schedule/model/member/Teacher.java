@@ -10,6 +10,7 @@ import ua.kiev.univ.schedule.service.core.DataService;
 public class Teacher extends Restrictor<Chair> {
 
     @ManyToOne
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Chair department;
 
     @Override

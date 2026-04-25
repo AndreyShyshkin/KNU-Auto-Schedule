@@ -16,6 +16,7 @@ import java.io.IOException;
 public class Group extends Restrictor<Speciality> {
 
     @ManyToOne
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Speciality department;
 
     private Year year = Year.FIRST;

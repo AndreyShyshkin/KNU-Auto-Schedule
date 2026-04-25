@@ -29,14 +29,27 @@ public abstract class AuditoriumRepository {
 
     // occupy 'count' auditoriums of specified 'type' for specified 'color'
     public boolean get(int color, int type, int count) {
-        // Заборона розміщення: якщо будівля дати не збігається з будівлею предмета
-        if (!Objects.equals(dates.get(color).getTime().getBuilding(), types.get(type).getBuilding())) {
+        if (type < 0) {
             return false;
+        }
+        // Заборона розміщення: якщо будівля дати вказана і не збігається з будівлею предмета
+        ua.kiev.univ.schedule.model.placement.Building slotBuilding = dates.get(color).getTime().getBuilding();
+        ua.kiev.univ.schedule.model.placement.Building lessonBuilding = types.get(type).getBuilding();
+        
+        if (slotBuilding != null) {
+            Long slotBuildingId = slotBuilding.getId();
+            Long lessonBuildingId = (lessonBuilding != null) ? lessonBuilding.getId() : null;
+            if (!Objects.equals(slotBuildingId, lessonBuildingId)) {
+                return false;
+            }
         }
 
         int value = amount[type][color] + count;
-        int size = getSize(color, type, lists[type].size());
+        int totalAuds = lists[type].size();
+        int size = getSize(color, type, totalAuds);
         if (value > size) {
+            System.out.println("DEBUG: Repository REJECTED Color " + color + " for Type " + type + 
+                ". Value (" + value + ") > Size (" + size + "). Total auds in list: " + totalAuds);
             return false;
         }
         amount[type][color] = value;
@@ -45,6 +58,9 @@ public abstract class AuditoriumRepository {
 
     // deliver 'count' auditoriums of specified 'type' for specified 'color'
     public void put(int color, int type, int count) {
+        if (type < 0) {
+            return;
+        }
         amount[type][color] -= count;
     }
 

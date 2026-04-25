@@ -5,6 +5,7 @@ import ua.kiev.univ.schedule.model.core.ActivableEntity;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.Objects;
 
 public class Date extends ActivableEntity {
 
@@ -44,14 +45,21 @@ public class Date extends ActivableEntity {
         if (this == obj) return true;
         if (!(obj instanceof Date)) return false;
         Date date = (Date) obj;
-        // Залишаємо порівняння через ==, як в оригіналі (reference equality)
-        return day == date.getDay() && time == date.getTime();
+        
+        Long d1 = (day != null) ? day.getId() : null;
+        Long d2 = (date.getDay() != null) ? date.getDay().getId() : null;
+        if (!Objects.equals(d1, d2)) return false;
+        
+        Long t1 = (time != null) ? time.getId() : null;
+        Long t2 = (date.getTime() != null) ? date.getTime().getId() : null;
+        return Objects.equals(t1, t2);
     }
 
     @Override
     public int hashCode() {
-        // Логіка хешування залишена без змін
-        return ((day.hashCode() & 0x0000FFFF) << 16) + (time.hashCode() & 0x0000FFFF);
+        Long dId = (day != null) ? day.getId() : null;
+        Long tId = (time != null) ? time.getId() : null;
+        return Objects.hash(dId, tId);
     }
 
     @Override

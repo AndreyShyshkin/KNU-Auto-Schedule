@@ -200,11 +200,83 @@ public class DataInitializationService implements PersistenceService {
                 
                 if (app.isOnline()) {
                     AppointmentEntry entry = new AppointmentEntry(app, dayName, start, end, "Online", "Метод: " + (app.getOnlineLink() != null ? app.getOnlineLink() : ""));
+                    entry.setTeacherNames(app.getTeacherNames());
+                    entry.setGroupNames(app.getGroupNames());
                     app.getEntries().add(entry);
                 } else {
-                    for (Auditorium aud : mapEntry.getValue()) {
-                        AppointmentEntry entry = new AppointmentEntry(app, dayName, start, end, bName, aud.getName());
-                        app.getEntries().add(entry);
+                    List<Auditorium> auds = mapEntry.getValue();
+                    int audCount = auds.size();
+                    
+                    // Отримуємо всі записи для цього призначення, щоб зрозуміти загальну кількість слотів
+                    int totalTimeSlots = app.getAuditoriumMap().size();
+                    int initialPairCount = 1; // За замовчуванням
+                    
+                    // Намагаємось знайти оригінальний урок, щоб дізнатися початкову кількість пар
+                    List<Lesson> allLessons = DataService.getEntities(Lesson.class);
+                    for (Lesson l : allLessons) {
+                        if (l.getSubject().equals(app.getSubject()) && l.getTeachers().equals(app.getTeachers())) {
+                            initialPairCount = l.getCount() / 2;
+                            break;
+                        }
+                    }
+                    
+                    int multiplier = totalTimeSlots / initialPairCount;
+                    if (multiplier < 1) multiplier = 1;
+
+                    // Знаходимо індекс поточного часового слоту серед усіх
+                    List<Date> sortedDates = app.getAuditoriumMap().keySet().stream()
+                        .sorted((d1, d2) -> {
+                            Long d1DayId = d1.getDay() != null ? d1.getDay().getId() : 0L;
+                            Long d2DayId = d2.getDay() != null ? d2.getDay().getId() : 0L;
+                            int res = Long.compare(d1DayId, d2DayId);
+                            if (res == 0) {
+                                Long d1TimeId = d1.getTime() != null ? d1.getTime().getId() : 0L;
+                                Long d2TimeId = d2.getTime() != null ? d2.getTime().getId() : 0L;
+                                res = Long.compare(d1TimeId, d2TimeId);
+                            }
+                            return res;
+                        }).collect(Collectors.toList());
+                    
+                    int timeSlotIndex = sortedDates.indexOf(date);
+                    int groupPartIndex = timeSlotIndex / initialPairCount;
+
+                    List<Group> appGroups = app.getGroups();
+                    List<Teacher> appTeachers = app.getTeachers();
+
+                    if (audCount <= 1) {
+                        for (Auditorium aud : auds) {
+                            // Розподіляємо вчителів по часу (якщо їх > 1)
+                            String tNames;
+                            if (appTeachers.size() >= multiplier) {
+                                tNames = appTeachers.get(groupPartIndex).getName();
+                            } else {
+                                tNames = app.getTeacherNames();
+                            }
+
+                            // Розподіляємо групи по часу
+                            int startG = (groupPartIndex * appGroups.size()) / multiplier;
+                            int endG = ((groupPartIndex + 1) * appGroups.size()) / multiplier;
+                            List<Group> subGroups = appGroups.subList(startG, Math.min(endG, appGroups.size()));
+                            String gNames = subGroups.stream().map(Group::getName).collect(Collectors.joining(", "));
+                            if (gNames.isEmpty()) gNames = app.getGroupNames();
+
+                            AppointmentEntry entry = new AppointmentEntry(app, dayName, start, end, bName, aud.getName(), tNames, gNames);
+                            app.getEntries().add(entry);
+                        }
+                    } else {
+                        // Розподіляємо вчителів та групи між аудиторіями (одночасні заняття)
+                        for (int i = 0; i < audCount; i++) {
+                            Auditorium aud = auds.get(i);
+                            String tNames = (appTeachers.size() >= audCount) ? appTeachers.get(i).getName() : app.getTeacherNames();
+                            
+                            int startG = (i * appGroups.size()) / audCount;
+                            int endG = ((i + 1) * appGroups.size()) / audCount;
+                            List<Group> subGroups = appGroups.subList(startG, Math.min(endG, appGroups.size()));
+                            String gNames = subGroups.stream().map(Group::getName).collect(Collectors.joining(", "));
+                            
+                            AppointmentEntry entry = new AppointmentEntry(app, dayName, start, end, bName, aud.getName(), tNames, gNames);
+                            app.getEntries().add(entry);
+                        }
                     }
                 }
             }

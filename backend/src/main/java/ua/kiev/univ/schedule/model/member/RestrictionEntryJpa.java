@@ -13,6 +13,7 @@ public class RestrictionEntryJpa {
     private Long id;
 
     @ManyToOne
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Restriction restriction;
 
     @ManyToOne

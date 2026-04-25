@@ -10,6 +10,7 @@ import PlacementView from '@/components/views/PlacementView'
 import SpecialityView from '@/components/views/SpecialityView'
 import SubjectView from '@/components/views/SubjectView'
 import TeacherView from '@/components/views/TeacherView'
+import TeacherWishesView from '@/components/views/TeacherWishesView'
 import DataExchangeView from '@/components/views/DataExchangeView'
 import BuildView from '@/components/views/BuildView'
 import AdminUserView from '@/components/views/AdminUserView'
@@ -148,6 +149,7 @@ export default function Home() {
 							<Tab label='Chair' />
 							<Tab label='Speciality' />
 							<Tab label='Teacher' />
+							<Tab label='Побажання' />
 							<Tab label='Group' />
 							<Tab label='Placement' />
 							<Tab label='Subject' />
@@ -181,18 +183,21 @@ export default function Home() {
 							<TeacherView />
 						</TabPanel>
 						<TabPanel value={value} index={7}>
-							<GroupView />
+							<TeacherWishesView />
 						</TabPanel>
 						<TabPanel value={value} index={8}>
-							<PlacementView />
+							<GroupView />
 						</TabPanel>
 						<TabPanel value={value} index={9}>
-							<SubjectView />
+							<PlacementView />
 						</TabPanel>
 						<TabPanel value={value} index={10}>
-							<LessonView />
+							<SubjectView />
 						</TabPanel>
 						<TabPanel value={value} index={11}>
+							<LessonView />
+						</TabPanel>
+						<TabPanel value={value} index={12}>
 							<AdminUserView />
 						</TabPanel>
 					</Box>

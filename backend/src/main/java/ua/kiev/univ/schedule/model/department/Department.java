@@ -11,6 +11,7 @@ import java.io.IOException;
 public class Department extends DescriptionedEntity {
 
     @ManyToOne
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Faculty faculty;
 
     @Override

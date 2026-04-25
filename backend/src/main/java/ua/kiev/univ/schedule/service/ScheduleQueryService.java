@@ -5,14 +5,10 @@ import org.springframework.transaction.annotation.Transactional;
 import ua.kiev.univ.schedule.dto.ScheduleEntryDto;
 import ua.kiev.univ.schedule.model.appointment.Appointment;
 import ua.kiev.univ.schedule.model.appointment.AppointmentEntry;
-import ua.kiev.univ.schedule.model.date.Date;
-import ua.kiev.univ.schedule.model.placement.Auditorium;
 import ua.kiev.univ.schedule.repository.AppointmentRepository;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 public class ScheduleQueryService {
@@ -54,7 +50,7 @@ public class ScheduleQueryService {
                         app.getEarmarkName(),
                         entry.getBuildingName(),
                         entry.getAuditoriumName(),
-                        app.getGroupNames()
+                        entry.getGroupNames() != null ? entry.getGroupNames() : app.getGroupNames()
                 ));
             }
         }
@@ -92,7 +88,7 @@ public class ScheduleQueryService {
                         app.getEarmarkName(),
                         entry.getBuildingName(),
                         entry.getAuditoriumName(),
-                        app.getTeacherNames()
+                        entry.getTeacherNames() != null ? entry.getTeacherNames() : app.getTeacherNames()
                 ));
             }
         }
@@ -111,6 +107,8 @@ public class ScheduleQueryService {
         List<ScheduleEntryDto> result = new ArrayList<>();
         for (Appointment app : appointments) {
             for (AppointmentEntry entry : app.getEntries()) {
+                String tNames = entry.getTeacherNames() != null ? entry.getTeacherNames() : app.getTeacherNames();
+                String gNames = entry.getGroupNames() != null ? entry.getGroupNames() : app.getGroupNames();
                 result.add(new ScheduleEntryDto(
                         entry.getDayName(),
                         entry.getTimeStart(),
@@ -120,7 +118,7 @@ public class ScheduleQueryService {
                         app.getEarmarkName(),
                         entry.getBuildingName(),
                         entry.getAuditoriumName(),
-                        app.getTeacherNames() + " | " + app.getGroupNames()
+                        tNames + " | " + gNames
                 ));
             }
         }

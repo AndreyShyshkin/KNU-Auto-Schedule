@@ -27,11 +27,20 @@ public class BuildingEarmark {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         BuildingEarmark that = (BuildingEarmark) o;
-        return Objects.equals(building, that.building) && Objects.equals(earmark, that.earmark);
+        
+        Long b1 = (building != null) ? building.getId() : null;
+        Long b2 = (that.building != null) ? that.building.getId() : null;
+        if (!Objects.equals(b1, b2)) return false;
+        
+        Long e1 = (earmark != null) ? earmark.getId() : null;
+        Long e2 = (that.earmark != null) ? that.earmark.getId() : null;
+        return Objects.equals(e1, e2);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(building, earmark);
+        Long bId = (building != null) ? building.getId() : null;
+        Long eId = (earmark != null) ? earmark.getId() : null;
+        return Objects.hash(bId, eId);
     }
 }

@@ -69,13 +69,89 @@ public class Point {
         this.groups = new LinkedList<>(lesson.getGroups());
         this.teachers = new LinkedList<>(lesson.getTeachers());
         
+        int totalStudents = groups.stream().mapToInt(g -> g.getSize() != null ? g.getSize() : 0).sum();
+        int initialPairCount = lesson.getCount() / 2;
+        int multiplier = 1;
+        int calculatedSize = 1;
+        int index = -1;
+
         // Якщо онлайн, тип аудиторії не потрібен
         if (this.online) {
             this.earmark = -1;
             this.size = 0;
         } else {
-            this.earmark = types.indexOf(new BuildingEarmark(this.building, lesson.getEarmark()));
-            this.size = this.teachers.size();
+            int teacherCount = this.teachers.size() > 0 ? this.teachers.size() : 1;
+            
+            // Шукаємо підходящий тип аудиторії
+            for (int i = 0; i < types.size(); i++) {
+                BuildingEarmark type = types.get(i);
+                if (Objects.equals(type.getBuilding(), this.building) && 
+                    Objects.equals(type.getEarmark(), lesson.getEarmark())) {
+                    
+                    Integer audSize = type.getEarmark() != null ? type.getEarmark().getSize() : null;
+                    if (audSize == null || audSize <= 0) audSize = 49; // Дефолт для вашого корпусу
+                    
+                    if (audSize >= totalStudents) {
+                        index = i;
+                        calculatedSize = 1;
+                        multiplier = 1;
+                        break;
+                    } else if (lesson.isAllowMultipleAuditoriums()) {
+                        int needed = (int) Math.ceil((double) totalStudents / audSize);
+                        if (teacherCount >= needed) {
+                            // Є вчителі для паралельних занять (один час, багато залів)
+                            index = i;
+                            calculatedSize = needed;
+                            multiplier = 1;
+                        } else {
+                            // Вчителів мало, проводимо послідовно (різний час, один зал)
+                            index = i;
+                            calculatedSize = 1;
+                            multiplier = needed;
+                        }
+                        break;
+                    }
+                }
+            }
+            
+            // Fallback: шукаємо будь-де
+            if (index == -1) {
+                for (int i = 0; i < types.size(); i++) {
+                    Earmark e = types.get(i).getEarmark();
+                    if (e != null && Objects.equals(e, lesson.getEarmark())) {
+                        Integer audSize = e.getSize();
+                        if (audSize == null || audSize <= 0) audSize = 49;
+
+                        if (audSize >= totalStudents) {
+                            index = i;
+                            calculatedSize = 1;
+                            multiplier = 1;
+                            break;
+                        } else if (lesson.isAllowMultipleAuditoriums()) {
+                            int needed = (int) Math.ceil((double) totalStudents / audSize);
+                            if (teacherCount >= needed) {
+                                index = i;
+                                calculatedSize = needed;
+                                multiplier = 1;
+                            } else {
+                                index = i;
+                                calculatedSize = 1;
+                                multiplier = needed;
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+
+            this.earmark = index;
+            this.size = calculatedSize;
+
+            if (this.earmark == -1) {
+                System.out.println("DEBUG: Lesson '" + lesson.getSubject().getName() + "' REJECTED: Немає підходящих аудиторій");
+            } else if (multiplier > 1) {
+                System.out.println("DEBUG: Lesson '" + lesson.getSubject().getName() + "' split into " + multiplier + " time slots");
+            }
         }
         
         this.restriction = new int[count];
@@ -83,25 +159,21 @@ public class Point {
         restrictionMap.addRestrictions(lesson.getGroups(), this);
         restrictionMap.addRestrictions(lesson.getTeachers(), this);
 
-        // Додаємо жорстке обмеження по корпусу, якщо НЕ онлайн
+        // Обмеження по корпусу
         if (!this.online) {
             for (int i = 0; i < count; i++) {
                 Building slotBuilding = dates.get(i).getTime().getBuilding();
-                if (this.building != null && slotBuilding != null) {
-                    if (!Objects.equals(slotBuilding.getId(), this.building.getId())) {
-                        this.restriction[i] += 10000;
-                    }
-                } else if (!Objects.equals(this.building, slotBuilding)) {
-                    this.restriction[i] += 10000;
+                if (slotBuilding != null && !Objects.equals(slotBuilding.getId(), (this.building != null ? this.building.getId() : null))) {
+                    this.restriction[i] -= 100000;
                 }
             }
         }
 
-        int pairCount = lesson.getCount() / 2;
-        colors = new int[pairCount];
-        maxes = new int[pairCount];
+        int totalPairCount = initialPairCount * multiplier;
+        colors = new int[totalPairCount];
+        maxes = new int[totalPairCount];
 
-        Progress.DONE.value += pairCount;
+        Progress.DONE.value += totalPairCount;
 
         this.first = new int[count];
         this.second = new int[count];
@@ -122,7 +194,6 @@ public class Point {
         for (Point point1 : points) {
             list.remove(point1);
             for (Point point2 : list) {
-                // Якщо є спільні групи або викладачі — це ребро в графі (конфлікт)
                 if (isIntersect(point1.groups, point2.groups) || isIntersect(point1.teachers, point2.teachers)) {
                     point1.verges.add(point2);
                     point2.verges.add(point1);
@@ -155,7 +226,7 @@ public class Point {
             Date date = dates.get(colorMap.getDate(color));
             List<Auditorium> auditoriums;
             if (online) {
-                auditoriums = List.of(); // Немає аудиторії для онлайн
+                auditoriums = List.of(); 
             } else if (fixedAuditorium != null) {
                 auditoriums = List.of(fixedAuditorium);
             } else {
@@ -169,5 +240,17 @@ public class Point {
         Appointment appointment = new Appointment();
         initAppointment(appointment, dates, colorMap, repositoryFactory);
         return appointment;
+    }
+
+    public String getSubjectName() {
+        return subject != null ? subject.getName() : "Без назви";
+    }
+
+    public List<Group> getGroups() {
+        return groups;
+    }
+
+    public List<Teacher> getTeachers() {
+        return teachers;
     }
 }

@@ -11,6 +11,7 @@ public class AppointmentEntry {
     private Long id;
 
     @ManyToOne
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Appointment appointment;
 
     private String dayName;
@@ -18,6 +19,9 @@ public class AppointmentEntry {
     private String timeEnd;
     private String buildingName;
     private String auditoriumName;
+    
+    private String teacherNames;
+    private String groupNames;
 
     public AppointmentEntry() {}
 
@@ -28,6 +32,12 @@ public class AppointmentEntry {
         this.timeEnd = timeEnd;
         this.buildingName = buildingName;
         this.auditoriumName = auditoriumName;
+    }
+
+    public AppointmentEntry(Appointment appointment, String dayName, String timeStart, String timeEnd, String buildingName, String auditoriumName, String teacherNames, String groupNames) {
+        this(appointment, dayName, timeStart, timeEnd, buildingName, auditoriumName);
+        this.teacherNames = teacherNames;
+        this.groupNames = groupNames;
     }
 
     public Long getId() { return id; }
@@ -44,4 +54,8 @@ public class AppointmentEntry {
     public void setBuildingName(String buildingName) { this.buildingName = buildingName; }
     public String getAuditoriumName() { return auditoriumName; }
     public void setAuditoriumName(String auditoriumName) { this.auditoriumName = auditoriumName; }
+    public String getTeacherNames() { return teacherNames; }
+    public void setTeacherNames(String teacherNames) { this.teacherNames = teacherNames; }
+    public String getGroupNames() { return groupNames; }
+    public void setGroupNames(String groupNames) { this.groupNames = groupNames; }
 }

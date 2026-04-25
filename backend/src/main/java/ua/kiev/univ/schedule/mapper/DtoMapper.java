@@ -54,6 +54,7 @@ public class DtoMapper {
         lesson.setCount(dto.getCount());
         lesson.setOnline(dto.isOnline());
         lesson.setOnlineLink(dto.getOnlineLink());
+        lesson.setAllowMultipleAuditoriums(dto.isAllowMultipleAuditoriums());
         return lesson;
     }
 
@@ -64,6 +65,7 @@ public class DtoMapper {
         dto.setCount(lesson.getCount());
         dto.setOnline(lesson.isOnline());
         dto.setOnlineLink(lesson.getOnlineLink());
+        dto.setAllowMultipleAuditoriums(lesson.isAllowMultipleAuditoriums());
         if (lesson.getSubject() != null) {
             dto.setSubjectId(lesson.getSubject().getId());
             dto.setSubjectName(lesson.getSubject().getName());

@@ -38,6 +38,9 @@ public class Lesson extends MemberedEntity {
 
     private Integer count = 2;
 
+    @Column(name = "allow_multiple_auditoriums", nullable = false, columnDefinition = "boolean default false")
+    private Boolean allowMultipleAuditoriums = false;
+
     @Override
     public boolean isActive() {
         return super.isActive() && (online || (earmark != null && earmark.isActive()));
@@ -52,6 +55,7 @@ public class Lesson extends MemberedEntity {
         online = is.readBoolean();
         onlineLink = is.readUTF();
         count = is.readInt();
+        allowMultipleAuditoriums = is.readBoolean();
     }
 
     @Override
@@ -63,6 +67,7 @@ public class Lesson extends MemberedEntity {
         os.writeBoolean(online);
         os.writeUTF(onlineLink != null ? onlineLink : "");
         os.writeInt(count);
+        os.writeBoolean(allowMultipleAuditoriums);
     }
 
     public boolean isOnline() {
@@ -119,5 +124,13 @@ public class Lesson extends MemberedEntity {
 
     public void setCount(Integer count) {
         this.count = count;
+    }
+
+    public Boolean isAllowMultipleAuditoriums() {
+        return allowMultipleAuditoriums;
+    }
+
+    public void setAllowMultipleAuditoriums(Boolean allowMultipleAuditoriums) {
+        this.allowMultipleAuditoriums = allowMultipleAuditoriums;
     }
 }

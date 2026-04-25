@@ -278,6 +278,32 @@ export const deleteAuditorium = async (id: number): Promise<void> => {
 	await axios.delete(`/api/auditoriums/${id}`)
 }
 
+// --- Teacher Restrictions ---
+
+export interface RestrictedSlot {
+	dayId: number
+	timeId: number
+}
+
+export interface TeacherRestrictions {
+	teacherId: number
+	restrictedSlots: RestrictedSlot[]
+}
+
+export const fetchTeacherRestrictions = async (
+	teacherId: number
+): Promise<TeacherRestrictions> => {
+	const { data } = await axios.get(`/api/teachers/${teacherId}/restrictions`)
+	return data
+}
+
+export const updateTeacherRestrictions = async (
+	teacherId: number,
+	restrictions: TeacherRestrictions
+): Promise<void> => {
+	await axios.put(`/api/teachers/${teacherId}/restrictions`, restrictions)
+}
+
 export interface Earmark {
 	id: number
 	name: string
@@ -380,6 +406,7 @@ export interface Lesson {
 	lessonTypeIds: number[]
 	lessonTypeNames: string[]
 	count: number
+	allowMultipleAuditoriums: boolean
 	teacherIds: number[]
 	teacherNames: string[]
 	groupIds: number[]

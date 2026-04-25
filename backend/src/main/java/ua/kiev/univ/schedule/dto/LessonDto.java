@@ -21,6 +21,7 @@ public class LessonDto {
     private List<Long> lessonTypeIds;
     private List<String> lessonTypeNames;
     private Integer count;
+    private boolean allowMultipleAuditoriums;
 
     public LessonDto() {}
 
@@ -60,4 +61,6 @@ public class LessonDto {
     public void setLessonTypeNames(List<String> lessonTypeNames) { this.lessonTypeNames = lessonTypeNames; }
     public Integer getCount() { return count; }
     public void setCount(Integer count) { this.count = count; }
+    public boolean isAllowMultipleAuditoriums() { return allowMultipleAuditoriums; }
+    public void setAllowMultipleAuditoriums(boolean allowMultipleAuditoriums) { this.allowMultipleAuditoriums = allowMultipleAuditoriums; }
 }

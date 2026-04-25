@@ -74,8 +74,21 @@ public class Executor {
         Progress.DONE.value = 0;
         Progress.BUILD.value = 0;
 
+        System.out.println("DEBUG: Dates count: " + count);
+        System.out.println("DEBUG: Types (BuildingEarmark) collected: " + types.size());
+        for (int i = 0; i < types.size(); i++) {
+            BuildingEarmark type = types.get(i);
+            System.out.println("  Type " + i + ": " + 
+                (type.getEarmark() != null ? type.getEarmark().getName() : "null") + " in " + 
+                (type.getBuilding() != null ? type.getBuilding().getName() : "null"));
+        }
+
         for (Lesson lesson : lessons) {
-            points.add(Point.getPoint(lesson, dates, types, restrictionMap));
+            Point p = Point.getPoint(lesson, dates, types, restrictionMap);
+            points.add(p);
+            System.out.println("DEBUG: Lesson '" + lesson.getSubject().getName() + 
+                "' (ID: " + lesson.getId() + ") -> Point earmark index: " + p.earmark + 
+                ", Building: " + (lesson.getBuilding() != null ? lesson.getBuilding().getName() : "null"));
         }
         Point.setVerges(points);
         // Сортуємо точки за кількістю зв'язків (евристика: починати з найскладніших)
@@ -85,7 +98,7 @@ public class Executor {
 
     public Progress initialize() {
         iterator = points.listIterator();
-        max = Math.min(1, count);
+        max = count; // Дозволяємо використовувати всі доступні часові слоти
         return nextPoint();
     }
 
@@ -286,19 +299,25 @@ public class Executor {
             }
             addAdjacent(point);
             if (!point.online && !repository.get(color, point.earmark, point.size)) {
+                if (progress == 0) System.out.println("DEBUG: Color " + color + " skipped by repository");
                 continue;
             }
-            /*
+            
             colorMap.addRestriction(color, point.restriction);
-            if (colorMap.getEstimate() < -100) {
+            if (colorMap.getEstimate() < -500) {
+                if (progress == 0) System.out.println("DEBUG: Color " + color + " skipped by estimate: " + colorMap.getEstimate());
                 colorMap.removeRestriction(color, point.restriction);
-                // repository.remove (не дописано в оригіналі)
+                if (!point.online) {
+                    repository.put(color, point.earmark, point.size);
+                }
                 continue;
             }
-            */
+            
+            if (progress == 0) System.out.println("DEBUG: Color " + color + " ACCEPTED for first lesson");
             setColor();
             return next();
         }
+        if (progress == 0) System.out.println("DEBUG: No valid colors found for first lesson");
         return prev();
     }
 
@@ -311,4 +330,8 @@ public class Executor {
             }
         }
     }
-}
+
+    public List<Point> getPoints() {
+        return points;
+    }
+    }

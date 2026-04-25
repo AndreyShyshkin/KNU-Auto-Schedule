@@ -18,6 +18,7 @@ public class Earmark extends NamedEntity {
     @ManyToOne
     private Building building;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @OneToMany(mappedBy = "earmark", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Auditorium> auditoriums = new ArrayList<>();
 

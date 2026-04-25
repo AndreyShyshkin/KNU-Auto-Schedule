@@ -23,6 +23,7 @@ import {
 import {
 	Box,
 	Button,
+	Checkbox,
 	Chip,
 	Dialog,
 	DialogActions,
@@ -117,16 +118,25 @@ export default function LessonView() {
 		lessonTypeIds: [],
 		online: false,
 		onlineLink: '',
+		allowMultipleAuditoriums: false,
 	})
 
 	const handleAdd = () => {
-		setFormData({ count: 2, teacherIds: [], groupIds: [], lessonTypeIds: [], online: false, onlineLink: '' })
+		setFormData({
+			count: 2,
+			teacherIds: [],
+			groupIds: [],
+			lessonTypeIds: [],
+			online: false,
+			onlineLink: '',
+			allowMultipleAuditoriums: false,
+		})
 		setDialogMode('create')
 		setOpenDialog(true)
 	}
 
 	const handleEdit = () => {
-		const lesson = lessons.find(l => l.id === selectedLessonId)
+		const lesson = lessons.find((l) => l.id === selectedLessonId)
 		if (lesson) {
 			setFormData({
 				...lesson,
@@ -135,6 +145,7 @@ export default function LessonView() {
 				lessonTypeIds: lesson.lessonTypeIds || [],
 				online: lesson.online || false,
 				onlineLink: lesson.onlineLink || '',
+				allowMultipleAuditoriums: lesson.allowMultipleAuditoriums || false,
 			})
 			setDialogMode('edit')
 			setOpenDialog(true)
@@ -407,6 +418,21 @@ export default function LessonView() {
 										))}
 									</Select>
 								</FormControl>
+
+								<FormControlLabel
+									control={
+										<Checkbox
+											checked={formData.allowMultipleAuditoriums || false}
+											onChange={(e) =>
+												setFormData({
+													...formData,
+													allowMultipleAuditoriums: e.target.checked,
+												})
+											}
+										/>
+									}
+									label='Дозволити декілька аудиторій (якщо не вистачає місця)'
+								/>
 							</>
 						) : (
 							<TextField
@@ -496,7 +522,7 @@ export default function LessonView() {
 						{/* Count */}
 						<TextField
 							margin='dense'
-							label='К-ть годин (пар на 2 тижні)'
+							label='К-ть годин (кількість занять)'
 							type='number'
 							fullWidth
 							size='small'

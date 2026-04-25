@@ -89,6 +89,7 @@ public class LessonController {
             existing.setCount(dto.getCount());
             existing.setOnline(dto.isOnline());
             existing.setOnlineLink(dto.getOnlineLink());
+            existing.setAllowMultipleAuditoriums(dto.isAllowMultipleAuditoriums());
 
             Lesson saved = lessonRepository.save(existing);
             dataInitializationService.initializeData();

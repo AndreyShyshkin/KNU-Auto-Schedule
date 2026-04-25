@@ -93,11 +93,30 @@ public class BuildService {
                 DataService.write(null);
             } else {
                 System.out.println("Failed to build schedule. Final status: " + progress + ". Steps: " + steps);
-                String error = "Could not find a valid combination for all lessons. ";
-                if (steps <= lessonsCount) {
-                    error += "Check if you have enough auditoriums or if there are conflicting restrictions for some lessons.";
+                
+                // Збираємо інформацію про причини відмови для кожного уроку
+                StringBuilder errorDetail = new StringBuilder();
+                errorDetail.append("Не вдалося знайти рішення для всіх занять. Причини:\n");
+                
+                for (ua.kiev.univ.schedule.scheduler.point.Point p : executor.getPoints()) {
+                    if (p.earmark == -1) {
+                        int totalStudents = p.getGroups().stream().mapToInt(g -> g.getSize() != null ? g.getSize() : 0).sum();
+                        int teacherCount = p.getTeachers().size();
+                        if (teacherCount == 0) teacherCount = 1;
+                        
+                        if (totalStudents > 49 && teacherCount == 1) {
+                            errorDetail.append(String.format("• '%s': Студентів (%d) більше, ніж місць (49), а вчитель лише один. Він не може бути у двох залах одночасно.\n", p.getSubjectName(), totalStudents));
+                        } else {
+                            errorDetail.append(String.format("• '%s': Немає аудиторій з місткістю %d ос.\n", p.getSubjectName(), totalStudents));
+                        }
+                    }
                 }
-                currentStatus.setLastError(error);
+                
+                if (errorDetail.length() < 100) { // Якщо специфічних помилок не знайдено
+                    errorDetail.append("• Перевірте обмеження викладачів та груп або кількість доступних аудиторій.");
+                }
+                
+                currentStatus.setLastError(errorDetail.toString());
             }
 
         } catch (Exception e) {

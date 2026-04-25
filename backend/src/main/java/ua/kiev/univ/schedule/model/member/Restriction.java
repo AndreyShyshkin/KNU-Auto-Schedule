@@ -1,7 +1,6 @@
 package ua.kiev.univ.schedule.model.member;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Transient;
+import jakarta.persistence.*;
 import ua.kiev.univ.schedule.model.date.Date;
 import ua.kiev.univ.schedule.model.date.Day;
 import ua.kiev.univ.schedule.model.date.Time;
@@ -9,10 +8,7 @@ import ua.kiev.univ.schedule.model.date.Time;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Entity
 public class Restriction extends ua.kiev.univ.schedule.model.core.Entity {
@@ -20,8 +16,27 @@ public class Restriction extends ua.kiev.univ.schedule.model.core.Entity {
     @Transient
     private final Map<Date, Grade> gradeMap = new HashMap<>();
 
+    @OneToMany(mappedBy = "restriction", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    private List<RestrictionEntryJpa> entries = new ArrayList<>();
+
     public Map<Date, Grade> getGradeMap() {
         return gradeMap;
+    }
+
+    public List<RestrictionEntryJpa> getEntries() {
+        return entries;
+    }
+
+    @PostLoad
+    public void syncGradeMap() {
+        gradeMap.clear();
+        if (entries != null) {
+            for (RestrictionEntryJpa entry : entries) {
+                if (entry.getDay() != null && entry.getTimeSlot() != null) {
+                    gradeMap.put(new Date(entry.getDay(), entry.getTimeSlot()), entry.getGrade());
+                }
+            }
+        }
     }
 
     @Override

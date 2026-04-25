@@ -55,6 +55,7 @@ public class Appointment extends ua.kiev.univ.schedule.model.core.Entity {
 
     @ManyToOne
     @JoinColumn(name = "version_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private ScheduleVersion version;
 
     public Appointment() {}
