@@ -59,6 +59,7 @@ public class DtoMapper {
         lesson.setTotalHours(dto.getTotalHours());
         lesson.setStartDate(dto.getStartDate());
         lesson.setEndDate(dto.getEndDate());
+        lesson.setWeekFrequency(dto.getWeekFrequency());
         return lesson;
     }
 
@@ -73,6 +74,7 @@ public class DtoMapper {
         dto.setTotalHours(lesson.getTotalHours());
         dto.setStartDate(lesson.getStartDate());
         dto.setEndDate(lesson.getEndDate());
+        dto.setWeekFrequency(lesson.getWeekFrequency());
         if (lesson.getSubject() != null) {
             dto.setSubjectId(lesson.getSubject().getId());
             dto.setSubjectName(lesson.getSubject().getName());

@@ -93,6 +93,7 @@ public class LessonController {
             existing.setTotalHours(dto.getTotalHours());
             existing.setStartDate(dto.getStartDate());
             existing.setEndDate(dto.getEndDate());
+            existing.setWeekFrequency(dto.getWeekFrequency());
 
             Lesson saved = lessonRepository.save(existing);
             dataInitializationService.initializeData();

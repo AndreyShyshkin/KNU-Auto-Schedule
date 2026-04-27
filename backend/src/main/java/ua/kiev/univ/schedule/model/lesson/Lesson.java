@@ -37,13 +37,13 @@ public class Lesson extends MemberedEntity {
     @Column(length = 1000)
     private String onlineLink = "";
 
-    // Deprecated for calendar mode, but kept for DB compatibility if needed.
-    // We will use totalHours instead.
     private Integer count = 2;
 
     private Integer totalHours = 30;
     private LocalDate startDate;
     private LocalDate endDate;
+    
+    private Integer weekFrequency = 0; // 0=Every week, 1=Odd, 2=Even
 
     @Column(name = "allow_multiple_auditoriums", nullable = false, columnDefinition = "boolean default false")
     private Boolean allowMultipleAuditoriums = false;
@@ -64,7 +64,6 @@ public class Lesson extends MemberedEntity {
         count = is.readInt();
         allowMultipleAuditoriums = is.readBoolean();
         
-        // Reading new fields
         totalHours = is.readInt();
         if (is.readBoolean()) {
             startDate = LocalDate.ofEpochDay(is.readLong());
@@ -72,6 +71,7 @@ public class Lesson extends MemberedEntity {
         if (is.readBoolean()) {
             endDate = LocalDate.ofEpochDay(is.readLong());
         }
+        weekFrequency = is.readInt();
     }
 
     @Override
@@ -85,7 +85,6 @@ public class Lesson extends MemberedEntity {
         os.writeInt(count != null ? count : 2);
         os.writeBoolean(allowMultipleAuditoriums != null ? allowMultipleAuditoriums : false);
         
-        // Writing new fields
         os.writeInt(totalHours != null ? totalHours : 0);
         os.writeBoolean(startDate != null);
         if (startDate != null) {
@@ -95,6 +94,7 @@ public class Lesson extends MemberedEntity {
         if (endDate != null) {
             os.writeLong(endDate.toEpochDay());
         }
+        os.writeInt(weekFrequency != null ? weekFrequency : 0);
     }
 
     public boolean isOnline() {
@@ -175,6 +175,14 @@ public class Lesson extends MemberedEntity {
 
     public void setEndDate(LocalDate endDate) {
         this.endDate = endDate;
+    }
+
+    public Integer getWeekFrequency() {
+        return weekFrequency;
+    }
+
+    public void setWeekFrequency(Integer weekFrequency) {
+        this.weekFrequency = weekFrequency;
     }
 
     public Boolean isAllowMultipleAuditoriums() {

@@ -120,6 +120,7 @@ export default function LessonView() {
 		onlineLink: '',
 		allowMultipleAuditoriums: false,
 		totalHours: 30,
+		weekFrequency: 0,
 		startDate: '',
 		endDate: '',
 	})
@@ -134,6 +135,7 @@ export default function LessonView() {
 			onlineLink: '',
 			allowMultipleAuditoriums: false,
 			totalHours: 30,
+			weekFrequency: 0,
 			startDate: '',
 			endDate: '',
 		})
@@ -153,6 +155,7 @@ export default function LessonView() {
 				onlineLink: lesson.onlineLink || '',
 				allowMultipleAuditoriums: lesson.allowMultipleAuditoriums || false,
 				totalHours: lesson.totalHours || 30,
+				weekFrequency: lesson.weekFrequency || 0,
 				startDate: lesson.startDate || '',
 				endDate: lesson.endDate || '',
 			})
@@ -563,6 +566,19 @@ export default function LessonView() {
 								onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
 							/>
 						</Box>
+
+						<FormControl fullWidth size='small' sx={{ mt: 1 }}>
+							<InputLabel>Періодичність тижнів</InputLabel>
+							<Select
+								value={formData.weekFrequency || 0}
+								label="Періодичність тижнів"
+								onChange={(e) => setFormData({ ...formData, weekFrequency: e.target.value as number })}
+							>
+								<MenuItem value={0}>Щотижня (Кожен)</MenuItem>
+								<MenuItem value={1}>Тільки чисельник (Непарні)</MenuItem>
+								<MenuItem value={2}>Тільки знаменник (Парні)</MenuItem>
+							</Select>
+						</FormControl>
 					</Box>
 				</DialogContent>
 				<DialogActions>

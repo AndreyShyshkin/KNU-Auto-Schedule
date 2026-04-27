@@ -27,6 +27,7 @@ public class LessonDto {
     private Integer totalHours;
     private LocalDate startDate;
     private LocalDate endDate;
+    private Integer weekFrequency;
 
     public LessonDto() {}
 
@@ -75,4 +76,6 @@ public class LessonDto {
     public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
     public LocalDate getEndDate() { return endDate; }
     public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
+    public Integer getWeekFrequency() { return weekFrequency; }
+    public void setWeekFrequency(Integer weekFrequency) { this.weekFrequency = weekFrequency; }
 }

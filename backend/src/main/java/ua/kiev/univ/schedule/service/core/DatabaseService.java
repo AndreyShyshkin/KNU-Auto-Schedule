@@ -286,7 +286,9 @@ public class DatabaseService {
                 if (sd != null) l.setStartDate(sd.toLocalDate());
                 java.sql.Date ed = rs.getDate("end_date");
                 if (ed != null) l.setEndDate(ed.toLocalDate());
+                l.setWeekFrequency(rs.getInt("week_frequency"));
                 l.setAllowMultipleAuditoriums(rs.getBoolean("allow_multiple_auditoriums"));
+
 
                 // Correct table names lesson_teachers and lesson_groups
                 try (PreparedStatement ts = conn.prepareStatement("SELECT teacher_id FROM lesson_teachers WHERE lesson_id = ?")) {

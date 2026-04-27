@@ -6,8 +6,10 @@ import ua.kiev.univ.schedule.model.appointment.Part;
 import ua.kiev.univ.schedule.model.core.Entity;
 import ua.kiev.univ.schedule.model.date.Date;
 import ua.kiev.univ.schedule.model.lesson.Lesson;
+import ua.kiev.univ.schedule.model.member.Grade;
 import ua.kiev.univ.schedule.model.member.Group;
 import ua.kiev.univ.schedule.model.member.Teacher;
+import ua.kiev.univ.schedule.model.member.Year;
 import ua.kiev.univ.schedule.model.placement.Auditorium;
 import ua.kiev.univ.schedule.model.placement.Building;
 import ua.kiev.univ.schedule.model.placement.Earmark;
@@ -18,8 +20,11 @@ import ua.kiev.univ.schedule.scheduler.auditoriumRepository.AuditoriumRepository
 import ua.kiev.univ.schedule.scheduler.auditoriumRepository.AuditoriumRepositoryFactory;
 import ua.kiev.univ.schedule.scheduler.auditoriumRepository.BuildingEarmark;
 
+import java.time.LocalDate;
+import java.time.temporal.WeekFields;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -150,17 +155,30 @@ public class Point {
 
         for (int i = 0; i < count; i++) {
             Date date = dates.get(i);
+            LocalDate localDate = date.getLocalDate();
+            
             if (!this.online) {
                 Building slotBuilding = date.getTime().getBuilding();
                 if (slotBuilding != null && !Objects.equals(slotBuilding.getId(), (this.building != null ? this.building.getId() : null))) {
                     this.restriction[i] -= 100000;
                 }
             }
-            if (lesson.getStartDate() != null && date.getLocalDate() != null) {
-                if (date.getLocalDate().isBefore(lesson.getStartDate())) this.restriction[i] -= 1000000;
-            }
-            if (lesson.getEndDate() != null && date.getLocalDate() != null) {
-                if (date.getLocalDate().isAfter(lesson.getEndDate())) this.restriction[i] -= 1000000;
+            
+            if (localDate != null) {
+                if (lesson.getStartDate() != null && localDate.isBefore(lesson.getStartDate())) this.restriction[i] -= 1000000;
+                if (lesson.getEndDate() != null && localDate.isAfter(lesson.getEndDate())) this.restriction[i] -= 1000000;
+                
+                // Періодичність тижнів
+                if (lesson.getWeekFrequency() != null && lesson.getWeekFrequency() > 0) {
+                    int weekNum = localDate.get(WeekFields.of(Locale.getDefault()).weekOfWeekBasedYear());
+                    boolean isOddWeek = (weekNum % 2 != 0);
+                    
+                    if (lesson.getWeekFrequency() == 1 && !isOddWeek) { // Тільки непарні
+                        this.restriction[i] -= 1000000;
+                    } else if (lesson.getWeekFrequency() == 2 && isOddWeek) { // Тільки парні
+                        this.restriction[i] -= 1000000;
+                    }
+                }
             }
         }
 
@@ -211,7 +229,6 @@ public class Point {
         appointment.setEarmarkName(earmarkName);
         appointment.setLessonTypeNames(lessonTypeNames);
         
-        // Populate persistent fields for DB
         appointment.setSubjectName(subject != null ? subject.getName() : "Без назви");
         appointment.setTeacherNames(getTeacherNames());
         appointment.setGroupNames(getGroupNames());

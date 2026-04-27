@@ -74,6 +74,7 @@ export interface Lesson {
 	lessonTypeNames: string[]
 	count: number
 	allowMultipleAuditoriums: boolean
+	weekFrequency: number
 	totalHours: number
 	startDate?: string
 	endDate?: string
