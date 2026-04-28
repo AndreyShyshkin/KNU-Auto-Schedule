@@ -1,18 +1,46 @@
 'use client'
 
 import ScheduleView from '@/components/views/ScheduleView'
-import { AppBar, Box, Button, Toolbar, Typography, Paper } from '@mui/material'
+import ScheduleWizard from '@/components/views/ScheduleWizard'
+import { AppBar, Box, Button, Toolbar, Typography, Container, Fab, Tooltip } from '@mui/material'
 import Link from 'next/link'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import LoginIcon from '@mui/icons-material/Login'
+import SettingsIcon from '@mui/icons-material/Settings'
 import { useAuth } from '@/app/providers'
+import { useEffect, useState } from 'react'
 
 export default function ResultsPage() {
 	const { isAuthenticated } = useAuth()
+	const [userPrefs, setUserPrefs] = useState<{ role: 'student' | 'teacher'; id: number } | null>(null)
+	const [isLoaded, setIsLoaded] = useState(false)
+
+	useEffect(() => {
+		const role = localStorage.getItem('userRole') as 'student' | 'teacher' | null
+		const id = localStorage.getItem('userId')
+		if (role && id) {
+			setUserPrefs({ role, id: Number(id) })
+		}
+		setIsLoaded(true)
+	}, [])
+
+	const handleWizardComplete = (role: 'student' | 'teacher', id: number) => {
+		localStorage.setItem('userRole', role)
+		localStorage.setItem('userId', id.toString())
+		setUserPrefs({ role, id })
+	}
+
+	const handleResetPrefs = () => {
+		localStorage.removeItem('userRole')
+		localStorage.removeItem('userId')
+		setUserPrefs(null)
+	}
+
+	if (!isLoaded) return null
 
 	return (
-		<Box sx={{ flexGrow: 1, height: '100vh', display: 'flex', flexDirection: 'column' }}>
-			<AppBar position='static' color='primary' elevation={1}>
+		<Box sx={{ flexGrow: 1, height: '100vh', display: 'flex', flexDirection: 'column', bgcolor: userPrefs ? '#f5f5f5' : 'background.default' }}>
+			<AppBar position='static' color={userPrefs ? 'primary' : 'default'} elevation={userPrefs ? 1 : 0}>
 				<Toolbar variant='dense'>
 					{isAuthenticated ? (
 						<Button
@@ -22,7 +50,7 @@ export default function ResultsPage() {
 							color="inherit"
 							sx={{ mr: 2 }}
 						>
-							Назад до управління
+							Управління
 						</Button>
 					) : (
 						<Button
@@ -32,19 +60,37 @@ export default function ResultsPage() {
 							color="inherit"
 							sx={{ mr: 2 }}
 						>
-							Увійти як адмін
+							Вхід
 						</Button>
 					)}
 					<Typography variant='h6' color='inherit' component='div' sx={{ flexGrow: 1 }}>
-						Повний розклад
+						{userPrefs ? 'Ваш розклад' : 'KNU Schedule'}
 					</Typography>
+					
+					{userPrefs && (
+						<Button 
+							color="inherit" 
+							startIcon={<SettingsIcon />} 
+							onClick={handleResetPrefs}
+							size="small"
+						>
+							Змінити дані
+						</Button>
+					)}
 				</Toolbar>
 			</AppBar>
 
-			<Box sx={{ flexGrow: 1, p: 3, overflow: 'hidden', bgcolor: '#f5f5f5' }}>
-				<Paper sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column', borderRadius: 2 }}>
-					<ScheduleView />
-				</Paper>
+			<Box sx={{ flexGrow: 1, overflow: userPrefs ? 'hidden' : 'auto', display: 'flex', flexDirection: 'column' }}>
+				{userPrefs ? (
+					<Box sx={{ flexGrow: 1, p: { xs: 1, md: 3 }, overflow: 'hidden', display: 'flex' }}>
+						<ScheduleView 
+							initialMode={userPrefs.role === 'student' ? 'group' : 'teacher'} 
+							initialId={userPrefs.id} 
+						/>
+					</Box>
+				) : (
+					<ScheduleWizard onComplete={handleWizardComplete} />
+				)}
 			</Box>
 		</Box>
 	)

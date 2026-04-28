@@ -14,7 +14,6 @@ import {
 import {
 	Autocomplete,
 	Box,
-	Grid,
 	Paper,
 	TextField,
 	ToggleButton,
@@ -25,17 +24,26 @@ import {
 	MenuItem,
 	Typography,
 	Button,
+	Chip,
 } from '@mui/material'
 import { DataGrid, GridColDef, useGridApiRef } from '@mui/x-data-grid'
 import { useQuery } from '@tanstack/react-query'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import FileDownloadIcon from '@mui/icons-material/FileDownload'
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
+import TodayIcon from '@mui/icons-material/Today'
+import DateRangeIcon from '@mui/icons-material/DateRange'
 
-export default function ScheduleView() {
-	const [mode, setMode] = useState<'teacher' | 'group' | 'all'>('all')
-	const [selectedId, setSelectedId] = useState<number | null>(null)
+interface ScheduleViewProps {
+	initialMode?: 'teacher' | 'group' | 'all'
+	initialId?: number | null
+}
+
+export default function ScheduleView({ initialMode = 'all', initialId = null }: ScheduleViewProps) {
+	const [mode, setMode] = useState<'teacher' | 'group' | 'all'>(initialMode)
+	const [selectedId, setSelectedId] = useState<number | null>(initialId)
 	const [selectedVersionId, setSelectedVersionId] = useState<number | ''>('')
+	const [filterToday, setFilterToday] = useState(true)
 	const apiRef = useGridApiRef()
 
 	const { data: versions = [] } = useQuery({
@@ -77,22 +85,21 @@ export default function ScheduleView() {
 	})
 
 	const columns: GridColDef[] = [
-		{ field: 'actualDate', headerName: 'Date', width: 110 },
-		{ field: 'dayName', headerName: 'Day', width: 100 },
-		{ field: 'timeStart', headerName: 'Start', width: 80 },
-		{ field: 'timeEnd', headerName: 'End', width: 80 },
-		{ field: 'subjectName', headerName: 'Subject', flex: 1 },
-		{ field: 'lessonTypeName', headerName: 'Lesson Type', width: 130 },
-		{ field: 'buildingName', headerName: 'Building', width: 120 },
-		{ field: 'earmarkName', headerName: 'Room Type', width: 100 },
+		{ field: 'actualDate', headerName: 'Дата', width: 110 },
+		{ field: 'dayName', headerName: 'День', width: 100 },
+		{ field: 'timeStart', headerName: 'Початок', width: 80 },
+		{ field: 'timeEnd', headerName: 'Кінець', width: 80 },
+		{ field: 'subjectName', headerName: 'Предмет', minWidth: 250, flex: 1 },
+		{ field: 'lessonTypeName', headerName: 'Тип', width: 130 },
+		{ field: 'buildingName', headerName: 'Корпус', width: 120 },
+		{ field: 'earmarkName', headerName: 'Тип ауд.', width: 100 },
 		{ 
 			field: 'auditoriumName', 
-			headerName: 'Auditorium', 
+			headerName: 'Аудиторія', 
 			width: 150,
 			renderCell: (params) => {
 				const value = params.value as string
 				if (value?.includes('http')) {
-					// Витягуємо саме посилання, якщо є префікс "Метод: "
 					const linkMatch = value.match(/https?:\/\/[^\s]+/);
 					if (linkMatch) {
 						return (
@@ -112,16 +119,23 @@ export default function ScheduleView() {
 		},
 		{
 			field: 'additionalInfo',
-			headerName: mode === 'teacher' ? 'Groups' : mode === 'group' ? 'Teachers' : 'Teachers | Groups',
+			headerName: mode === 'teacher' ? 'Групи' : mode === 'group' ? 'Викладачі' : 'Викладачі | Групи',
+			minWidth: 300,
 			flex: 1,
 		},
 	]
 
-	// Client-side mapping for unique IDs required by DataGrid
-	const rows = schedule.map((entry, index) => ({ id: index, ...entry }))
+	const todayStr = useMemo(() => new Date().toISOString().split('T')[0], [])
+
+	const filteredRows = useMemo(() => {
+		let rows = schedule.map((entry, index) => ({ id: index, ...entry }))
+		if (filterToday) {
+			rows = rows.filter(r => r.actualDate === todayStr)
+		}
+		return rows
+	}, [schedule, filterToday, todayStr])
 
 	const getExportData = () => {
-		// Use apiRef to get filtered and sorted rows
 		const api = apiRef.current
 		if (!api) return []
 		const visibleRowIds = api.getSortedRowIds()
@@ -145,117 +159,146 @@ export default function ScheduleView() {
 	}
 
 	return (
-		<Grid
-			container
-			spacing={2}
-			sx={{ height: '100%', flexDirection: 'column' }}
-		>
-			<Grid>
-				<Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
-					<FormControl size='small' sx={{ minWidth: 200 }}>
-						<InputLabel>Версія розкладу</InputLabel>
-						<Select
-							value={selectedVersionId}
-							label='Версія розкладу'
-							onChange={(e) => setSelectedVersionId(e.target.value as number)}
-						>
-							{versions.map((v) => (
-								<MenuItem key={v.id} value={v.id}>
-									{v.name} {v.current ? '(Поточна)' : ''}
-								</MenuItem>
-							))}
-						</Select>
-					</FormControl>
-					
-					<ToggleButtonGroup
-						value={mode}
-						exclusive
-						onChange={(e, newMode) => {
-							if (newMode) {
-								setMode(newMode)
-								setSelectedId(null)
-							}
-						}}
-						size='small'
+		<Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', gap: 2 }}>
+			{/* Header with Filters */}
+			<Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap', p: 1 }}>
+				<FormControl size='small' sx={{ minWidth: 220 }}>
+					<InputLabel>Версія розкладу</InputLabel>
+					<Select
+						value={selectedVersionId}
+						label='Версія розкладу'
+						onChange={(e) => setSelectedVersionId(e.target.value as number)}
 					>
-						<ToggleButton value='all'>All</ToggleButton>
-						<ToggleButton value='teacher'>Teacher</ToggleButton>
-						<ToggleButton value='group'>Group</ToggleButton>
-					</ToggleButtonGroup>
+						{versions.map((v) => (
+							<MenuItem key={v.id} value={v.id}>
+								{v.name} {v.current ? '(Поточна)' : ''}
+							</MenuItem>
+						))}
+					</Select>
+				</FormControl>
+				
+				<ToggleButtonGroup
+					value={mode}
+					exclusive
+					onChange={(e, newMode) => {
+						if (newMode) {
+							setMode(newMode)
+							setSelectedId(null)
+						}
+					}}
+					size='small'
+				>
+					<ToggleButton value='all'>Всі</ToggleButton>
+					<ToggleButton value='teacher'>Викладач</ToggleButton>
+					<ToggleButton value='group'>Група</ToggleButton>
+				</ToggleButtonGroup>
 
-					<Box sx={{ width: 300 }}>
-						{mode === 'teacher' && (
-							<Autocomplete
-								options={teachers}
-								getOptionLabel={option => option.name}
-								renderInput={params => (
-									<TextField {...params} label='Select Teacher' size='small' />
-								)}
-								onChange={(e, value) => setSelectedId(value?.id || null)}
-								value={teachers.find(t => t.id === selectedId) || null}
-							/>
-						)}
-						{mode === 'group' && (
-							<Autocomplete
-								options={groups}
-								getOptionLabel={option => option.name}
-								renderInput={params => (
-									<TextField {...params} label='Select Group' size='small' />
-								)}
-								onChange={(e, value) => setSelectedId(value?.id || null)}
-								value={groups.find(g => g.id === selectedId) || null}
-							/>
-						)}
-						{mode === 'all' && (
-							<Typography variant="body2" color="text.secondary">
-								Показ повного розкладу для версії
-							</Typography>
-						)}
-					</Box>
-
-					<Box sx={{ flexGrow: 1 }} />
-
-					<Box sx={{ display: 'flex', gap: 1 }}>
-						<Button
-							variant="outlined"
-							size="small"
-							startIcon={<FileDownloadIcon />}
-							onClick={handleExportExcel}
-							disabled={rows.length === 0}
-						>
-							Excel
-						</Button>
-						<Button
-							variant="outlined"
-							size="small"
-							color="secondary"
-							startIcon={<PictureAsPdfIcon />}
-							onClick={handleExportPdf}
-							disabled={rows.length === 0}
-						>
-							PDF
-						</Button>
-					</Box>
+				<Box sx={{ width: 300 }}>
+					{mode === 'teacher' && (
+						<Autocomplete
+							options={teachers}
+							getOptionLabel={option => option.name}
+							renderInput={params => (
+								<TextField {...params} label='Виберіть викладача' size='small' />
+							)}
+							onChange={(e, value) => setSelectedId(value?.id || null)}
+							value={teachers.find(t => t.id === selectedId) || null}
+						/>
+					)}
+					{mode === 'group' && (
+						<Autocomplete
+							options={groups}
+							getOptionLabel={option => option.name}
+							renderInput={params => (
+								<TextField {...params} label='Виберіть групу' size='small' />
+							)}
+							onChange={(e, value) => setSelectedId(value?.id || null)}
+							value={groups.find(g => g.id === selectedId) || null}
+						/>
+					)}
 				</Box>
-			</Grid>
 
-			<Grid sx={{ flexGrow: 1 }}>
-				<Paper sx={{ height: '100%' }}>
+				<Box sx={{ display: 'flex', gap: 1, ml: 2 }}>
+					<Chip 
+						icon={<TodayIcon />} 
+						label="На сьогодні" 
+						onClick={() => setFilterToday(true)}
+						color={filterToday ? "primary" : "default"}
+						variant={filterToday ? "filled" : "outlined"}
+					/>
+					<Chip 
+						icon={<DateRangeIcon />} 
+						label="Весь період" 
+						onClick={() => setFilterToday(false)}
+						color={!filterToday ? "primary" : "default"}
+						variant={!filterToday ? "filled" : "outlined"}
+					/>
+				</Box>
+
+				<Box sx={{ flexGrow: 1 }} />
+
+				<Box sx={{ display: 'flex', gap: 1 }}>
+					<Button
+						variant="outlined"
+						size="small"
+						startIcon={<FileDownloadIcon />}
+						onClick={handleExportExcel}
+						disabled={filteredRows.length === 0}
+					>
+						Excel
+					</Button>
+					<Button
+						variant="outlined"
+						size="small"
+						color="secondary"
+						startIcon={<PictureAsPdfIcon />}
+						onClick={handleExportPdf}
+						disabled={filteredRows.length === 0}
+					>
+						PDF
+					</Button>
+				</Box>
+			</Box>
+
+			{filteredRows.length === 0 && !isLoading && (
+				<Box sx={{ p: 4, textAlign: 'center', bgcolor: 'background.paper', borderRadius: 2 }}>
+					<Typography variant="h6" color="text.secondary">
+						{filterToday ? "На сьогодні занять немає" : "Розклад порожній"}
+					</Typography>
+					{filterToday && (
+						<Button sx={{ mt: 2 }} variant="outlined" onClick={() => setFilterToday(false)}>
+							Показати весь період
+						</Button>
+					)}
+				</Box>
+			)}
+
+			{/* Table area */}
+			<Box sx={{ flexGrow: 1, minHeight: 0, width: '100%', display: filteredRows.length > 0 ? 'block' : 'none' }}>
+				<Paper sx={{ height: '100%', borderRadius: 2 }}>
 					<DataGrid
 						apiRef={apiRef}
-						rows={rows}
+						rows={filteredRows}
 						columns={columns}
 						loading={isLoading}
 						density='compact'
-						hideFooter
+						disableRowSelectionOnClick
 						initialState={{
 							sorting: {
 								sortModel: [{ field: 'actualDate', sort: 'asc' }],
 							},
+							pagination: { paginationModel: { pageSize: 100 } }
+						}}
+						sx={{
+							border: 'none',
+							'& .MuiDataGrid-columnHeaders': {
+								bgcolor: 'rgba(0,0,0,0.02)',
+								fontWeight: 'bold',
+							},
 						}}
 					/>
 				</Paper>
-			</Grid>
-		</Grid>
+			</Box>
+		</Box>
 	)
 }
