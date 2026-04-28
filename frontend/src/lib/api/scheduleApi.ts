@@ -481,7 +481,7 @@ export const deleteAdminUser = deleteUser
 
 // Excel/PDF Exports
 export const exportScheduleExcel = async (data: any[], title: string): Promise<void> => {
-	const { data: blob } = await axios.post('/api/export/excel', data, {
+	const { data: blob } = await axios.post('/api/schedule/export/excel', data, {
 		params: { title },
 		responseType: 'blob',
 	})
@@ -495,7 +495,7 @@ export const exportScheduleExcel = async (data: any[], title: string): Promise<v
 }
 
 export const exportSchedulePdf = async (data: any[], title: string): Promise<void> => {
-	const { data: blob } = await axios.post('/api/export/pdf', data, {
+	const { data: blob } = await axios.post('/api/schedule/export/pdf', data, {
 		params: { title },
 		responseType: 'blob',
 	})

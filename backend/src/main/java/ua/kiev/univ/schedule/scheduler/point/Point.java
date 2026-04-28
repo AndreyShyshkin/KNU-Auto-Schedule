@@ -246,9 +246,19 @@ public class Point {
             String bName = date.getTime().getBuilding() != null ? date.getTime().getBuilding().getName() : "";
 
             List<Auditorium> auds;
-            if (online) auds = List.of();
-            else if (fixedAuditorium != null) auds = List.of(fixedAuditorium);
-            else auds = repository.getAuditoriums(color, earmark, size);
+            if (online) {
+                String tNames = getTeacherNames();
+                String gNames = getGroupNames();
+                String audName = (onlineLink != null && !onlineLink.isEmpty()) ? onlineLink : "Дистанційно";
+                AppointmentEntry entry = new AppointmentEntry(appointment, dayName, start, end, "Онлайн", audName, tNames, gNames);
+                entry.setActualDate(date.getLocalDate());
+                appointment.getEntries().add(entry);
+                continue;
+            } else if (fixedAuditorium != null) {
+                auds = List.of(fixedAuditorium);
+            } else {
+                auds = repository.getAuditoriums(color, earmark, size);
+            }
 
             int groupPartIndex = i / initialPairCount;
             int audCount = auds.size();

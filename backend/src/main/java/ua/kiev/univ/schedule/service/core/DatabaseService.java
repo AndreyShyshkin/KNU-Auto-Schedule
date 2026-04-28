@@ -10,6 +10,7 @@ import ua.kiev.univ.schedule.model.department.Chair;
 import ua.kiev.univ.schedule.model.department.Faculty;
 import ua.kiev.univ.schedule.model.department.Speciality;
 import ua.kiev.univ.schedule.model.lesson.Lesson;
+import ua.kiev.univ.schedule.model.lesson.LessonType;
 import ua.kiev.univ.schedule.model.member.*;
 import ua.kiev.univ.schedule.model.placement.Auditorium;
 import ua.kiev.univ.schedule.model.placement.Building;
@@ -49,7 +50,8 @@ public class DatabaseService {
             Map<Long, Auditorium> auditoriumMap = loadAuditoriums(conn, earmarkMap, buildingMap);
             Map<Long, Teacher> teacherMap = loadTeachers(conn, chairMap, dayMap, timeMap);
             Map<Long, Group> groupMap = loadGroups(conn, specialityMap, dayMap, timeMap);
-            loadLessons(conn, subjectMap, earmarkMap, buildingMap, teacherMap, groupMap);
+            Map<Long, LessonType> lessonTypeMap = loadLessonTypes(conn);
+            loadLessons(conn, subjectMap, earmarkMap, buildingMap, teacherMap, groupMap, lessonTypeMap);
             loadAppointments(conn, subjectMap, teacherMap, groupMap, dayMap, timeMap, auditoriumMap);
         } catch (SQLException e) {
             System.err.println("Database loadAll failed: " + e.getMessage());
@@ -269,7 +271,22 @@ public class DatabaseService {
         return map;
     }
 
-    private static void loadLessons(Connection conn, Map<Long, Subject> subjectMap, Map<Long, Earmark> earmarkMap, Map<Long, Building> buildingMap, Map<Long, Teacher> teacherMap, Map<Long, Group> groupMap) throws SQLException {
+    private static Map<Long, LessonType> loadLessonTypes(Connection conn) throws SQLException {
+        Map<Long, LessonType> map = new HashMap<>();
+        EntityList<LessonType> list = DataService.getEntities(LessonType.class);
+        try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery("SELECT * FROM lesson_type")) {
+            while (rs.next()) {
+                LessonType lt = list.add();
+                lt.setId(rs.getLong("id"));
+                lt.setName(rs.getString("name"));
+                lt.setEnable(rs.getBoolean("enable"));
+                map.put(lt.getId(), lt);
+            }
+        }
+        return map;
+    }
+
+    private static void loadLessons(Connection conn, Map<Long, Subject> subjectMap, Map<Long, Earmark> earmarkMap, Map<Long, Building> buildingMap, Map<Long, Teacher> teacherMap, Map<Long, Group> groupMap, Map<Long, LessonType> lessonTypeMap) throws SQLException {
         EntityList<Lesson> list = DataService.getEntities(Lesson.class);
         try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery("SELECT * FROM lesson")) {
             while (rs.next()) {
@@ -305,6 +322,14 @@ public class DatabaseService {
                     while (grs.next()) {
                         Group g = groupMap.get(grs.getLong(1));
                         if (g != null) l.getGroups().add(g);
+                    }
+                }
+                try (PreparedStatement lts = conn.prepareStatement("SELECT lesson_type_id FROM lesson_lesson_types WHERE lesson_id = ?")) {
+                    lts.setLong(1, l.getId());
+                    ResultSet ltrs = lts.executeQuery();
+                    while (ltrs.next()) {
+                        LessonType lt = lessonTypeMap.get(ltrs.getLong(1));
+                        if (lt != null) l.getLessonTypes().add(lt);
                     }
                 }
             }

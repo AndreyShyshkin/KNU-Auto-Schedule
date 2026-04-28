@@ -46,15 +46,15 @@ public class ScheduleExportService {
             int rowIdx = 3;
             for (ScheduleEntryDto entry : schedule) {
                 org.apache.poi.ss.usermodel.Row row = sheet.createRow(rowIdx++);
-                row.createCell(0).setCellValue(entry.getDayName());
-                row.createCell(1).setCellValue(entry.getTimeStart());
-                row.createCell(2).setCellValue(entry.getTimeEnd());
-                row.createCell(3).setCellValue(entry.getSubjectName());
-                row.createCell(4).setCellValue(entry.getLessonTypeName());
-                row.createCell(5).setCellValue(entry.getBuildingName());
-                row.createCell(6).setCellValue(entry.getAuditoriumName());
-                row.createCell(7).setCellValue(entry.getEarmarkName());
-                row.createCell(8).setCellValue(entry.getAdditionalInfo());
+                row.createCell(0).setCellValue(entry.getDayName() != null ? entry.getDayName() : "");
+                row.createCell(1).setCellValue(entry.getTimeStart() != null ? entry.getTimeStart() : "");
+                row.createCell(2).setCellValue(entry.getTimeEnd() != null ? entry.getTimeEnd() : "");
+                row.createCell(3).setCellValue(entry.getSubjectName() != null ? entry.getSubjectName() : "");
+                row.createCell(4).setCellValue(entry.getLessonTypeName() != null ? entry.getLessonTypeName() : "");
+                row.createCell(5).setCellValue(entry.getBuildingName() != null ? entry.getBuildingName() : "");
+                row.createCell(6).setCellValue(entry.getAuditoriumName() != null ? entry.getAuditoriumName() : "");
+                row.createCell(7).setCellValue(entry.getEarmarkName() != null ? entry.getEarmarkName() : "");
+                row.createCell(8).setCellValue(entry.getAdditionalInfo() != null ? entry.getAdditionalInfo() : "");
             }
 
             for (int i = 0; i < columns.length; i++) {
