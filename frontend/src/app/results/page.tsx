@@ -2,7 +2,8 @@
 
 import ScheduleView from '@/components/views/ScheduleView'
 import ScheduleWizard from '@/components/views/ScheduleWizard'
-import { AppBar, Box, Button, Toolbar, Typography, Container, Fab, Tooltip } from '@mui/material'
+import InstallPWA from '@/components/InstallPWA'
+import { AppBar, Box, Button, Toolbar, Typography } from '@mui/material'
 import Link from 'next/link'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import LoginIcon from '@mui/icons-material/Login'
@@ -40,6 +41,7 @@ export default function ResultsPage() {
 
 	return (
 		<Box sx={{ flexGrow: 1, height: '100vh', display: 'flex', flexDirection: 'column', bgcolor: userPrefs ? '#f5f5f5' : 'background.default' }}>
+			<InstallPWA />
 			<AppBar position='static' color={userPrefs ? 'primary' : 'default'} elevation={userPrefs ? 1 : 0}>
 				<Toolbar variant='dense'>
 					{isAuthenticated ? (
