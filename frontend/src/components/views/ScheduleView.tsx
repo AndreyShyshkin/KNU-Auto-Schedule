@@ -9,6 +9,11 @@ import {
 	fetchAllSchedule,
 	exportScheduleExcel,
 	exportSchedulePdf,
+	fetchBuildings,
+	fetchLessonTypes,
+	fetchFaculties,
+	fetchSpecialities,
+	fetchChairs,
 	ScheduleVersion,
 	ScheduleEntryDto,
 } from '@/lib/api/scheduleApi'
@@ -29,6 +34,10 @@ import {
 	Tooltip,
 	Slider,
 	Stack,
+	Drawer,
+	Divider,
+	Badge,
+	InputAdornment,
 } from '@mui/material'
 import { useQuery } from '@tanstack/react-query'
 import { useState, useEffect, useMemo } from 'react'
@@ -37,6 +46,10 @@ import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import ZoomInIcon from '@mui/icons-material/ZoomIn'
+import FilterListIcon from '@mui/icons-material/FilterList'
+import CloseIcon from '@mui/icons-material/Close'
+import SearchIcon from '@mui/icons-material/Search'
+import ClearIcon from '@mui/icons-material/Clear'
 import { Calendar, dateFnsLocalizer, Views, View } from 'react-big-calendar'
 import { 
 	format, 
@@ -79,9 +92,43 @@ export default function ScheduleView({ initialMode = 'all', initialId = null }: 
 	const [currentDate, setCurrentDate] = useState(new Date())
 	const [zoom, setZoom] = useState(60)
 
+	// Additional Filters
+	const [filtersOpen, setFiltersOpen] = useState(false)
+	const [searchQuery, setSearchQuery] = useState('')
+	const [filterBuilding, setFilterBuilding] = useState<string>('')
+	const [filterLessonType, setFilterLessonType] = useState<string>('')
+	const [selectedFacultyId, setSelectedFacultyId] = useState<number | null>(null)
+	const [selectedSpecialityId, setSelectedSpecialityId] = useState<number | null>(null)
+	const [selectedChairId, setSelectedChairId] = useState<number | null>(null)
+
 	const { data: versions = [] } = useQuery({
 		queryKey: ['scheduleVersions'],
 		queryFn: fetchScheduleVersions,
+	})
+
+	const { data: buildings = [] } = useQuery({
+		queryKey: ['buildings'],
+		queryFn: fetchBuildings,
+	})
+
+	const { data: lessonTypes = [] } = useQuery({
+		queryKey: ['lessonTypes'],
+		queryFn: fetchLessonTypes,
+	})
+
+	const { data: faculties = [] } = useQuery({
+		queryKey: ['faculties'],
+		queryFn: fetchFaculties,
+	})
+
+	const { data: specialities = [] } = useQuery({
+		queryKey: ['specialities'],
+		queryFn: fetchSpecialities,
+	})
+
+	const { data: chairs = [] } = useQuery({
+		queryKey: ['chairs'],
+		queryFn: fetchChairs,
 	})
 
 	useEffect(() => {
@@ -98,12 +145,10 @@ export default function ScheduleView({ initialMode = 'all', initialId = null }: 
 	const { data: teachers = [] } = useQuery({
 		queryKey: ['teachers'],
 		queryFn: fetchTeachers,
-		enabled: mode === 'teacher',
 	})
 	const { data: groups = [] } = useQuery({
 		queryKey: ['groups'],
 		queryFn: fetchGroups,
-		enabled: mode === 'group',
 	})
 
 	const { data: schedule = [], isLoading } = useQuery({
@@ -117,8 +162,24 @@ export default function ScheduleView({ initialMode = 'all', initialId = null }: 
 		enabled: selectedVersionId !== '' && (mode === 'all' || !!selectedId),
 	})
 
+	const filteredSchedule = useMemo(() => {
+		return schedule.filter(entry => {
+			const query = searchQuery.toLowerCase()
+			const matchesSearch = !searchQuery || 
+				entry.subjectName.toLowerCase().includes(query) ||
+				entry.buildingName.toLowerCase().includes(query) ||
+				entry.auditoriumName.toLowerCase().includes(query) ||
+				entry.additionalInfo.toLowerCase().includes(query)
+			
+			const matchesBuilding = !filterBuilding || entry.buildingName === filterBuilding
+			const matchesLessonType = !filterLessonType || entry.lessonTypeName.includes(filterLessonType)
+
+			return matchesSearch && matchesBuilding && matchesLessonType
+		})
+	}, [schedule, searchQuery, filterBuilding, filterLessonType])
+
 	const events = useMemo(() => {
-		return schedule.map((entry, index) => {
+		return filteredSchedule.map((entry, index) => {
 			const datePart = entry.actualDate || format(new Date(), 'yyyy-MM-dd')
 			const start = parse(`${datePart} ${entry.timeStart}`, 'yyyy-MM-dd HH:mm', new Date())
 			const end = parse(`${datePart} ${entry.timeEnd}`, 'yyyy-MM-dd HH:mm', new Date())
@@ -131,7 +192,30 @@ export default function ScheduleView({ initialMode = 'all', initialId = null }: 
 				resource: entry,
 			}
 		})
-	}, [schedule])
+	}, [filteredSchedule])
+
+	const activeFiltersCount = useMemo(() => {
+		let count = 0
+		if (mode !== 'all') count++
+		if (searchQuery) count++
+		if (filterBuilding) count++
+		if (filterLessonType) count++
+		if (selectedFacultyId) count++
+		if (selectedSpecialityId) count++
+		if (selectedChairId) count++
+		return count
+	}, [mode, searchQuery, filterBuilding, filterLessonType, selectedFacultyId, selectedSpecialityId, selectedChairId])
+
+	const resetFilters = () => {
+		setMode('all')
+		setSelectedId(null)
+		setSearchQuery('')
+		setFilterBuilding('')
+		setFilterLessonType('')
+		setSelectedFacultyId(null)
+		setSelectedSpecialityId(null)
+		setSelectedChairId(null)
+	}
 
 	const getVisibleRange = (date: Date, view: View) => {
 		if (view === Views.MONTH) {
@@ -153,7 +237,7 @@ export default function ScheduleView({ initialMode = 'all', initialId = null }: 
 
 	const getExportData = () => {
 		const { start, end } = getVisibleRange(currentDate, currentView)
-		return schedule.filter(entry => {
+		return filteredSchedule.filter(entry => {
 			if (!entry.actualDate) return false
 			const date = parse(entry.actualDate, 'yyyy-MM-dd', new Date())
 			return date >= start && date <= end
@@ -250,46 +334,16 @@ export default function ScheduleView({ initialMode = 'all', initialId = null }: 
 					</Select>
 				</FormControl>
 				
-				<ToggleButtonGroup
-					value={mode}
-					exclusive
-					onChange={(e, newMode) => {
-						if (newMode) {
-							setMode(newMode)
-							setSelectedId(null)
-						}
-					}}
-					size='small'
+				<Button
+					variant={activeFiltersCount > 0 ? "contained" : "outlined"}
+					startIcon={<FilterListIcon />}
+					onClick={() => setFiltersOpen(true)}
+					size="small"
 				>
-					<ToggleButton value='all'>Всі</ToggleButton>
-					<ToggleButton value='teacher'>Викладач</ToggleButton>
-					<ToggleButton value='group'>Група</ToggleButton>
-				</ToggleButtonGroup>
-
-				<Box sx={{ width: 250 }}>
-					{mode === 'teacher' && (
-						<Autocomplete
-							options={teachers}
-							getOptionLabel={option => option.name}
-							renderInput={params => (
-								<TextField {...params} label='Виберіть викладача' size='small' />
-							)}
-							onChange={(e, value) => setSelectedId(value?.id || null)}
-							value={teachers.find(t => t.id === selectedId) || null}
-						/>
-					)}
-					{mode === 'group' && (
-						<Autocomplete
-							options={groups}
-							getOptionLabel={option => option.name}
-							renderInput={params => (
-								<TextField {...params} label='Виберіть групу' size='small' />
-							)}
-							onChange={(e, value) => setSelectedId(value?.id || null)}
-							value={groups.find(g => g.id === selectedId) || null}
-						/>
-					)}
-				</Box>
+					<Badge badgeContent={activeFiltersCount} color="error" sx={{ '& .MuiBadge-badge': { right: -10, top: 0 } }}>
+						Фільтри
+					</Badge>
+				</Button>
 
 				<Box sx={{ flexGrow: 1 }} />
 
@@ -315,6 +369,202 @@ export default function ScheduleView({ initialMode = 'all', initialId = null }: 
 					</Button>
 				</Box>
 			</Box>
+
+			{/* Filter Drawer */}
+			<Drawer
+				anchor="right"
+				open={filtersOpen}
+				onClose={() => setFiltersOpen(false)}
+			>
+				<Box sx={{ width: 320, p: 3, display: 'flex', flexDirection: 'column', gap: 3 }}>
+					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+						<Typography variant="h6">Фільтри</Typography>
+						<IconButton onClick={() => setFiltersOpen(false)}>
+							<CloseIcon />
+						</IconButton>
+					</Box>
+					
+					<Divider />
+
+					<Box>
+						<Typography variant="subtitle2" gutterBottom>Режим перегляду</Typography>
+						<ToggleButtonGroup
+							value={mode}
+							exclusive
+							onChange={(e, newMode) => {
+								if (newMode) {
+									setMode(newMode)
+									setSelectedId(null)
+									setSelectedFacultyId(null)
+									setSelectedSpecialityId(null)
+									setSelectedChairId(null)
+								}
+							}}
+							size='small'
+							fullWidth
+						>
+							<ToggleButton value='all'>Всі</ToggleButton>
+							<ToggleButton value='teacher'>Викладач</ToggleButton>
+							<ToggleButton value='group'>Група</ToggleButton>
+						</ToggleButtonGroup>
+					</Box>
+
+					{mode === 'teacher' && (
+						<>
+							<Autocomplete
+								options={faculties}
+								getOptionLabel={option => option.name}
+								renderInput={params => (
+									<TextField {...params} label='Факультет' size='small' />
+								)}
+								onChange={(e, value) => {
+									setSelectedFacultyId(value?.id || null)
+									setSelectedChairId(null)
+									setSelectedId(null)
+								}}
+								value={faculties.find(f => f.id === selectedFacultyId) || null}
+							/>
+							<Autocomplete
+								options={chairs.filter(c => !selectedFacultyId || c.facultyId === selectedFacultyId)}
+								getOptionLabel={option => option.name}
+								renderInput={params => (
+									<TextField {...params} label='Кафедра' size='small' />
+								)}
+								onChange={(e, value) => {
+									setSelectedChairId(value?.id || null)
+									setSelectedId(null)
+								}}
+								value={chairs.find(c => c.id === selectedChairId) || null}
+								disabled={!selectedFacultyId}
+							/>
+							<Autocomplete
+								options={teachers.filter(t => !selectedChairId || t.departmentId === selectedChairId)}
+								getOptionLabel={option => option.name}
+								renderInput={params => (
+									<TextField {...params} label='Виберіть викладача' size='small' />
+								)}
+								onChange={(e, value) => setSelectedId(value?.id || null)}
+								value={teachers.find(t => t.id === selectedId) || null}
+								disabled={!selectedChairId}
+							/>
+						</>
+					)}
+					{mode === 'group' && (
+						<>
+							<Autocomplete
+								options={faculties}
+								getOptionLabel={option => option.name}
+								renderInput={params => (
+									<TextField {...params} label='Факультет' size='small' />
+								)}
+								onChange={(e, value) => {
+									setSelectedFacultyId(value?.id || null)
+									setSelectedSpecialityId(null)
+									setSelectedId(null)
+								}}
+								value={faculties.find(f => f.id === selectedFacultyId) || null}
+							/>
+							<Autocomplete
+								options={specialities.filter(s => !selectedFacultyId || s.facultyId === selectedFacultyId)}
+								getOptionLabel={option => option.name}
+								renderInput={params => (
+									<TextField {...params} label='Спеціальність' size='small' />
+								)}
+								onChange={(e, value) => {
+									setSelectedSpecialityId(value?.id || null)
+									setSelectedId(null)
+								}}
+								value={specialities.find(s => s.id === selectedSpecialityId) || null}
+								disabled={!selectedFacultyId}
+							/>
+							<Autocomplete
+								options={groups.filter(g => !selectedSpecialityId || g.departmentId === selectedSpecialityId)}
+								getOptionLabel={option => option.name}
+								renderInput={params => (
+									<TextField {...params} label='Виберіть групу' size='small' />
+								)}
+								onChange={(e, value) => setSelectedId(value?.id || null)}
+								value={groups.find(g => g.id === selectedId) || null}
+								disabled={!selectedSpecialityId}
+							/>
+						</>
+					)}
+
+					<Autocomplete
+						freeSolo
+						options={Array.from(new Set(schedule.map(entry => entry.subjectName)))}
+						renderInput={(params) => (
+							<TextField
+								{...params}
+								label="Пошук"
+								size="small"
+								placeholder="Предмет, викладач, аудиторія..."
+								InputProps={{
+									...params.InputProps,
+									startAdornment: (
+										<InputAdornment position="start">
+											<SearchIcon fontSize="small" />
+										</InputAdornment>
+									),
+									endAdornment: (
+										<>
+											{searchQuery && (
+												<InputAdornment position="end">
+													<IconButton size="small" onClick={() => setSearchQuery('')}>
+														<ClearIcon fontSize="small" />
+													</IconButton>
+												</InputAdornment>
+											)}
+											{params.InputProps.endAdornment}
+										</>
+									)
+								}}
+							/>
+						)}
+						value={searchQuery}
+						onInputChange={(e, value) => setSearchQuery(value)}
+					/>
+
+					<FormControl size='small' fullWidth>
+						<InputLabel>Корпус</InputLabel>
+						<Select
+							value={filterBuilding}
+							label='Корпус'
+							onChange={(e) => setFilterBuilding(e.target.value)}
+						>
+							<MenuItem value="">Всі корпуси</MenuItem>
+							{buildings.map((b) => (
+								<MenuItem key={b.id} value={b.name}>{b.name}</MenuItem>
+							))}
+						</Select>
+					</FormControl>
+
+					<FormControl size='small' fullWidth>
+						<InputLabel>Тип заняття</InputLabel>
+						<Select
+							value={filterLessonType}
+							label='Тип заняття'
+							onChange={(e) => setFilterLessonType(e.target.value)}
+						>
+							<MenuItem value="">Всі типи</MenuItem>
+							{lessonTypes.map((t) => (
+								<MenuItem key={t.id} value={t.name}>{t.name}</MenuItem>
+							))}
+						</Select>
+					</FormControl>
+
+					<Box sx={{ flexGrow: 1 }} />
+
+					<Button 
+						variant="outlined" 
+						color="inherit" 
+						onClick={resetFilters}
+						fullWidth
+					>
+						Скинути фільтри
+					</Button>
+				</Box>
+			</Drawer>
 
 			{/* Calendar Controls */}
 			<Box sx={{ display: 'flex', alignItems: 'center', gap: 3, px: 1 }}>
@@ -383,7 +633,7 @@ export default function ScheduleView({ initialMode = 'all', initialId = null }: 
 				flexGrow: 1, 
 				minHeight: 0, 
 				width: '100%',
-				position: 'relative', // Ensure relative positioning for absolute child
+				position: 'relative',
 				'& .rbc-calendar': {
 					display: 'flex',
 					flexDirection: 'column',
@@ -465,8 +715,8 @@ export default function ScheduleView({ initialMode = 'all', initialId = null }: 
 						components={{
 							event: CustomEvent,
 						}}
-						min={new Date(0, 0, 0, 8, 0, 0)} // Start at 8 AM
-						max={new Date(0, 0, 0, 20, 0, 0)} // End at 8 PM
+						min={new Date(0, 0, 0, 8, 0, 0)}
+						max={new Date(0, 0, 0, 20, 0, 0)}
 					/>
 				</Paper>
 			</Box>

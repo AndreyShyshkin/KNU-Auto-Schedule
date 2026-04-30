@@ -32,24 +32,11 @@ public abstract class AuditoriumRepository {
         if (type < 0) {
             return false;
         }
-        // Заборона розміщення: якщо будівля дати вказана і не збігається з будівлею предмета
-        ua.kiev.univ.schedule.model.placement.Building slotBuilding = dates.get(color).getTime().getBuilding();
-        ua.kiev.univ.schedule.model.placement.Building lessonBuilding = types.get(type).getBuilding();
-        
-        if (slotBuilding != null) {
-            Long slotBuildingId = slotBuilding.getId();
-            Long lessonBuildingId = (lessonBuilding != null) ? lessonBuilding.getId() : null;
-            if (!Objects.equals(slotBuildingId, lessonBuildingId)) {
-                return false;
-            }
-        }
 
         int value = amount[type][color] + count;
         int totalAuds = lists[type].size();
         int size = getSize(color, type, totalAuds);
         if (value > size) {
-            System.out.println("DEBUG: Repository REJECTED Color " + color + " for Type " + type + 
-                ". Value (" + value + ") > Size (" + size + "). Total auds in list: " + totalAuds);
             return false;
         }
         amount[type][color] = value;

@@ -342,11 +342,11 @@ public class DatabaseService {
             while (rs.next()) {
                 Appointment a = list.add();
                 a.setId(rs.getLong("id"));
-                a.setSubject(subjectMap.get(rs.getLong("subject_id")));
                 a.setOnline(rs.getBoolean("online"));
                 a.setOnlineLink(rs.getString("online_link"));
                 a.setEarmarkName(rs.getString("earmark_name"));
                 a.setLessonTypeNames(rs.getString("lesson_type_names"));
+                a.setSubjectName(rs.getString("subject_name"));
 
                 // We don't load teachers/groups for appointments since they aren't saved in join tables by JPA yet.
                 // But we don't need them for the BUILD step anyway.
@@ -355,17 +355,9 @@ public class DatabaseService {
                     es.setLong(1, a.getId());
                     ResultSet ers = es.executeQuery();
                     while (ers.next()) {
-                        Day d = dayMap.get(ers.getLong("day_id"));
-                        Time t = timeMap.get(ers.getLong("time_slot_id"));
-                        Auditorium aud = auditoriumMap.get(ers.getLong("auditorium_id"));
-                        if (d != null && t != null) {
-                            Date date = new Date(d, t);
-                            java.sql.Date ad = ers.getDate("actual_date");
-                            if (ad != null) date.setLocalDate(ad.toLocalDate());
-                            
-                            List<Auditorium> audList = a.getAuditoriumMap().computeIfAbsent(date, k -> new ArrayList<>());
-                            if (aud != null) audList.add(aud);
-                        }
+                        // Ми не можемо відновити об'єкти Day/Time/Auditorium з таблиці, 
+                        // бо там збережені лише рядки (dayName, auditoriumName і т.д.).
+                        // Для BUILD ці дані не потрібні, тому просто пропускаємо заповнення мапи.
                     }
                 }
             }

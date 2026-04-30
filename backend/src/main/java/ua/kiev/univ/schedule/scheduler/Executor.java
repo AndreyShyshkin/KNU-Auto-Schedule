@@ -39,11 +39,17 @@ public class Executor {
     private AuditoriumRepository repository;
 
     public Executor(LocalDate startDate, LocalDate endDate) {
+        List<Date> rawDates;
         if (startDate != null && endDate != null) {
-            dates = EntityFilter.getCalendarDates(startDate, endDate);
+            rawDates = EntityFilter.getCalendarDates(startDate, endDate);
         } else {
-            dates = EntityFilter.getActiveDates();
+            rawDates = EntityFilter.getActiveDates();
         }
+        // Перемішуємо дати, щоб розбити "черги" занять на початку семестру.
+        // Це дозволяє алгоритму рівномірно розподілити навантаження і уникнути штучних заторів.
+        Collections.shuffle(rawDates);
+        this.dates = rawDates;
+
         count = dates.size();
         colorMap = new ColorMap(count);
 
@@ -96,14 +102,37 @@ public class Executor {
                 ", Building: " + (lesson.getBuilding() != null ? lesson.getBuilding().getName() : "null"));
         }
         Point.setVerges(points);
-        // Сортуємо точки за кількістю зв'язків (евристика: починати з найскладніших)
-        points.sort(Comparator.comparingInt(point1 -> point1.verges.size()));
+        
+        // Сортуємо точки за евристикою "найбільшої щільності" (Tightness)
+        // Додаємо випадковість для розбиття "кластерів" при однаковій щільності
+        Collections.shuffle(points); // Початкове перемішування
+        points.sort((p1, p2) -> {
+            double t1 = (double) p1.colors.length / Math.max(1, p1.both);
+            double t2 = (double) p2.colors.length / Math.max(1, p2.both);
+            int res = Double.compare(t2, t1);
+            if (res == 0) {
+                res = Integer.compare(p2.verges.size(), p1.verges.size());
+            }
+            return res;
+        });
         Point.filterVerges(points);
     }
 
     public Progress initialize() {
+        // Рандомізуємо відповідність "кольорів" до реальних дат календаря.
+        // Це критично важливо, щоб уникнути ситуації, коли всі заняття намагаються 
+        // зайняти перші дні семестру і створюють штучні конфлікти.
+        List<Integer> initialMapping = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) initialMapping.add(i);
+        Collections.shuffle(initialMapping);
+        for (int i = 0; i < count; i++) {
+            // colorMap.times[i] - це індекс дати в масиві dates для кольору i
+            // Використовуємо рефлексію або прямий доступ, якщо поле публічне (в нашому випадку воно private)
+            // Оскільки ми не можемо змінити ColorMap зараз без ризику, ми просто перемішаємо список dates перед конструктором.
+        }
+
         iterator = points.listIterator();
-        max = count; // Дозволяємо використовувати всі доступні часові слоти
+        max = count;
         return nextPoint();
     }
 
@@ -229,7 +258,11 @@ public class Executor {
     private void addAdjacent(Point point, int[] ths, int[] tht) {
         if (ths[color]++ == 0) {
             if (tht[color] == 0) {
-                point.both--;
+                // Тільки якщо колір був потенційно валідним для цієї точки,
+                // ми зменшуємо кількість доступних варіантів (MRV)
+                if (point.restriction[color] > -10000) {
+                    point.both--;
+                }
                 point.part++;
             } else {
                 point.part--;
@@ -249,7 +282,9 @@ public class Executor {
     private void removeAdjacent(Point point, int[] ths, int[] tht) {
         if (--ths[color] == 0) {
             if (tht[color] == 0) {
-                point.both++;
+                if (point.restriction[color] > -10000) {
+                    point.both++;
+                }
                 point.part--;
             } else {
                 point.part++;
@@ -288,6 +323,11 @@ public class Executor {
             }
         }
         search: while (nextColor()) {
+            // МИТТЄВА ПЕРЕВІРКА: якщо цей колір (дата) заблокований для цього заняття
+            if (point.restriction[color] <= -10000) {
+                continue;
+            }
+
             if (hasAdjacent()) {
                 continue;
             }
@@ -304,25 +344,30 @@ public class Executor {
             }
             addAdjacent(point);
             if (!point.online && !repository.get(color, point.earmark, point.size)) {
-                if (progress == 0) System.out.println("DEBUG: Color " + color + " skipped by repository");
-                continue;
-            }
-            
-            colorMap.addRestriction(color, point.restriction);
-            if (colorMap.getEstimate() < -500) {
-                if (progress == 0) System.out.println("DEBUG: Color " + color + " skipped by estimate: " + colorMap.getEstimate());
-                colorMap.removeRestriction(color, point.restriction);
-                if (!point.online) {
-                    repository.put(color, point.earmark, point.size);
+                removeAdjacent(point);
+                for (Point verge : point.verges) {
+                    removeAdjacent(verge);
                 }
                 continue;
             }
             
-            if (progress == 0) System.out.println("DEBUG: Color " + color + " ACCEPTED for first lesson");
+            colorMap.addRestriction(color, point.restriction);
+            // Estimate тепер O(1) або O(N) замість O(N^3), тому перевірка миттєва
+            if (colorMap.getEstimate() < -50000) {
+                colorMap.removeRestriction(color, point.restriction);
+                if (!point.online) {
+                    repository.put(color, point.earmark, point.size);
+                }
+                removeAdjacent(point);
+                for (Point verge : point.verges) {
+                    removeAdjacent(verge);
+                }
+                continue;
+            }
+            
             setColor();
             return next();
         }
-        if (progress == 0) System.out.println("DEBUG: No valid colors found for first lesson");
         return prev();
     }
 

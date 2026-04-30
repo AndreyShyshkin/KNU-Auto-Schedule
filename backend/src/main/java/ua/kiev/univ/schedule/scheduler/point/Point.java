@@ -54,8 +54,8 @@ public class Point {
     public int part;
     
     // Нові поля для збереження результатів розрахунку
-    protected int initialPairCount;
-    protected int multiplier;
+    public int initialPairCount;
+    public int multiplier;
     protected int totalStudents;
 
     public static Point getPoint(Lesson lesson, List<Date> dates, List<BuildingEarmark> types, RestrictionMap restrictionMap) {
@@ -174,9 +174,9 @@ public class Point {
                     boolean isOddWeek = (weekNum % 2 != 0);
                     
                     if (lesson.getWeekFrequency() == 1 && !isOddWeek) { // Тільки непарні
-                        this.restriction[i] -= 1000000;
+                        this.restriction[i] -= 2000000; // Distinct value for weeks
                     } else if (lesson.getWeekFrequency() == 2 && isOddWeek) { // Тільки парні
-                        this.restriction[i] -= 1000000;
+                        this.restriction[i] -= 2000000; // Distinct value for weeks
                     }
                 }
             }
@@ -189,7 +189,13 @@ public class Point {
         
         this.first = new int[count];
         this.second = new int[count];
-        this.both = count;
+        
+        // Ініціалізуємо 'both' реально доступними слотами (де немає жорстких обмежень)
+        int possibleSlotsCount = 0;
+        for (int res : this.restriction) {
+            if (res > -10000) possibleSlotsCount++;
+        }
+        this.both = possibleSlotsCount;
     }
 
     private static <E extends Entity> boolean isIntersect(List<E> list1, List<E> list2) {
@@ -317,5 +323,9 @@ public class Point {
 
     public List<Teacher> getTeachers() {
         return teachers;
+    }
+
+    public int getInitialPairCount() {
+        return initialPairCount;
     }
 }

@@ -92,17 +92,107 @@ public class BuildService {
             }
 
             Executor executor = new Executor(startDate, endDate);
-            Progress progress = executor.initialize();
+            
+            // Діагностика перед початком
+            StringBuilder diagnosticErrors = new StringBuilder();
+            java.util.Map<Object, Integer> requiredLoad = new java.util.HashMap<>();
+            java.util.Map<Object, java.util.Set<Integer>> availableSlots = new java.util.HashMap<>();
+            
+            // Статистика блокувань для детального звіту (рахуємо унікальні слоти на об'єкт)
+            java.util.Map<Object, java.util.Set<Integer>> buildingBlocked = new java.util.HashMap<>();
+            java.util.Map<Object, java.util.Set<Integer>> gradeBlocked = new java.util.HashMap<>();
+            java.util.Map<Object, java.util.Set<Integer>> dateBlocked = new java.util.HashMap<>();
+            java.util.Map<Object, java.util.Set<Integer>> weekBlocked = new java.util.HashMap<>();
 
+            for (ua.kiev.univ.schedule.scheduler.point.Point p : executor.getPoints()) {
+                if (!p.online && p.earmark == -1) {
+                    diagnosticErrors.append(String.format("• '%s': Немає відповідного типу аудиторії для %d студентів.\n", p.getSubjectName(), p.getGroups().stream().mapToInt(g -> g.getSize() != null ? g.getSize() : 0).sum()));
+                } else {
+                    int neededForTeacher = p.colors.length;
+                    int perGroup = p.getInitialPairCount();
+
+                    for (int i = 0; i < p.restriction.length; i++) {
+                        boolean isPossible = true;
+                        if (p.restriction[i] <= -2000000) {
+                            for (Object obj : p.getGroups()) weekBlocked.computeIfAbsent(obj, k -> new java.util.HashSet<>()).add(i);
+                            for (Object obj : p.getTeachers()) weekBlocked.computeIfAbsent(obj, k -> new java.util.HashSet<>()).add(i);
+                            isPossible = false;
+                        } else if (p.restriction[i] <= -1000000) {
+                            for (Object obj : p.getGroups()) dateBlocked.computeIfAbsent(obj, k -> new java.util.HashSet<>()).add(i);
+                            for (Object obj : p.getTeachers()) dateBlocked.computeIfAbsent(obj, k -> new java.util.HashSet<>()).add(i);
+                            isPossible = false;
+                        } else if (p.restriction[i] <= -100000) {
+                            for (Object obj : p.getGroups()) buildingBlocked.computeIfAbsent(obj, k -> new java.util.HashSet<>()).add(i);
+                            for (Object obj : p.getTeachers()) buildingBlocked.computeIfAbsent(obj, k -> new java.util.HashSet<>()).add(i);
+                            isPossible = false;
+                        } else if (p.restriction[i] <= -10) {
+                            for (Object obj : p.getGroups()) gradeBlocked.computeIfAbsent(obj, k -> new java.util.HashSet<>()).add(i);
+                            for (Object obj : p.getTeachers()) gradeBlocked.computeIfAbsent(obj, k -> new java.util.HashSet<>()).add(i);
+                            isPossible = false;
+                        }
+
+                        if (isPossible) {
+                            for (ua.kiev.univ.schedule.model.member.Group g : p.getGroups()) {
+                                availableSlots.computeIfAbsent(g, k -> new java.util.HashSet<>()).add(i);
+                            }
+                            for (ua.kiev.univ.schedule.model.member.Teacher t : p.getTeachers()) {
+                                availableSlots.computeIfAbsent(t, k -> new java.util.HashSet<>()).add(i);
+                            }
+                        }
+                    }
+
+                    for (ua.kiev.univ.schedule.model.member.Group g : p.getGroups()) {
+                        requiredLoad.put(g, requiredLoad.getOrDefault(g, 0) + perGroup);
+                    }
+                    for (ua.kiev.univ.schedule.model.member.Teacher t : p.getTeachers()) {
+                        requiredLoad.put(t, requiredLoad.getOrDefault(t, 0) + neededForTeacher);
+                    }
+                }
+            }
+            
+            // Перевірка сумарного перевантаження
+            for (java.util.Map.Entry<Object, Integer> entry : requiredLoad.entrySet()) {
+                int needed = entry.getValue();
+                int available = availableSlots.getOrDefault(entry.getKey(), java.util.Collections.emptySet()).size();
+                
+                if (needed > available) {
+                    Object key = entry.getKey();
+                    String name = (key instanceof ua.kiev.univ.schedule.model.member.Group) 
+                        ? ((ua.kiev.univ.schedule.model.member.Group) key).getName()
+                        : ((ua.kiev.univ.schedule.model.member.Teacher) key).getName();
+                    
+                    int bBuild = buildingBlocked.getOrDefault(key, java.util.Collections.emptySet()).size();
+                    int bGrade = gradeBlocked.getOrDefault(key, java.util.Collections.emptySet()).size();
+                    int bDates = dateBlocked.getOrDefault(key, java.util.Collections.emptySet()).size();
+                    int bWeeks = weekBlocked.getOrDefault(key, java.util.Collections.emptySet()).size();
+
+                    StringBuilder reason = new StringBuilder();
+                    if (bDates > 0) reason.append(String.format(" період занять заблокував %d вікон;", bDates));
+                    if (bWeeks > 0) reason.append(String.format(" періодичність заблокувала %d вікон;", bWeeks));
+                    if (bBuild > 0) reason.append(String.format(" корпуси заблокували %d вікон;", bBuild));
+                    if (bGrade > 0) reason.append(String.format(" обмеження викладачів заблокували %d вікон;", bGrade));
+
+                    diagnosticErrors.append(String.format("• %s: Перевантаження. Потрібно %d пар, але є лише %d вільних вікон. Причини:%s\n", 
+                        name, needed, available, reason.length() > 0 ? reason.toString() : " загальний брак часу."));
+                }
+            }
+
+            if (diagnosticErrors.length() > 0) {
+                currentStatus.setLastResult("FAIL");
+                currentStatus.setLastError("Виявлено критичні конфлікти:\n" + diagnosticErrors.toString());
+                return;
+            }
+
+            Progress progress = executor.initialize();
             int steps = 0;
             while (progress == Progress.BUILD) {
                 progress = executor.step();
                 steps++;
                 currentStatus.setSteps(steps);
-                if (steps % 1000 == 0) {
+                if (steps % 10000 == 0) {
                     System.out.println("Step " + steps + "...");
                 }
-                if (steps > 1000000) { // Extended safety break for calendar mode
+                if (steps > 50000000) { // Safety break
                     progress = Progress.FAIL;
                     break;
                 }
@@ -153,6 +243,14 @@ public class BuildService {
                         int totalStudents = p.getGroups().stream().mapToInt(g -> g.getSize() != null ? g.getSize() : 0).sum();
                         errorDetail.append(String.format("• '%s': Студентів (%d) забагато для наявних аудиторій.\n", p.getSubjectName(), totalStudents));
                     }
+                }
+                
+                for (java.util.Map.Entry<Object, Integer> entry : requiredLoad.entrySet()) {
+                    String name = (entry.getKey() instanceof ua.kiev.univ.schedule.model.member.Group) 
+                        ? ((ua.kiev.univ.schedule.model.member.Group) entry.getKey()).getName()
+                        : ((ua.kiev.univ.schedule.model.member.Teacher) entry.getKey()).getName();
+                    int available = availableSlots.getOrDefault(entry.getKey(), java.util.Collections.emptySet()).size();
+                    errorDetail.append(String.format("• %s: Навантаження %d занять на %d реально доступних слотів.\n", name, entry.getValue(), available));
                 }
                 
                 if (errorDetail.length() < 100) {
